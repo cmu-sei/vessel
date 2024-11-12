@@ -1,0 +1,122 @@
+---
+flags:
+  #  - id: 'RI-2-2'
+  #    description: 'A timestamp diff caused when files are modified at different times.'
+  #    filepath: '.'
+  #    filetype: '.'
+  #    command: 'stat {}'
+  #    comment: '.'
+  #    indiff: 'Modify: [0-9]{1,4}-[0-9]{1,2}-[0-9]{1,2}[ ]+[0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}(\.[0-9]+)?'
+    
+  - id: 'RI-2-4'
+    description: 'Time diff when executing git clone command in Dockerfile.'
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '\d+ \+\d{4}\tclone:'
+
+  - id: 'RI-2-5'
+    description: "Files in zip have different time stamp."
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: 'bx stor \d{2}-[A-Za-z]{3}-\d{2} \d{2}:\d{2}'
+
+  - id: 'RI-2-6'
+    description: "Time difference in different format that starts with 1714"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '\b1714\d*\b'
+
+  - id: 'RI-2-7'
+    description: "File listing time difference in different format."
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '\b\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}\b'
+
+  - id: 'RI-2-8'
+    description: "Logging time difference."
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}'
+
+  - id: 'RI-2-9'
+    description: "Date and time difference for Go Build"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s([0-2]?[0-9]|3[01])\s([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])\sUTC\s[0-9]{4}'
+
+  - id: 'RI-2-10'
+    description: "Date and time difference for Go binary output"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s([0-2]?[0-9]|3[01])\s([01][0-9]|2[0-3]):([0-5][0-9])'
+
+  - id: 'RI-2-11'
+    description: "Modified and build time in different format"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '1719\d*'
+
+  - id: 'Inode_diff'
+    description: 'Inode diff when we are installing tars in Dockerfile.'
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: 'Inode:\s*\d+'
+
+  - id: 'Pack Hash Diff'
+    description: '.Pack hash difference, cause is unknown'
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: 'pack-[a-fA-F0-9]+\.pack'
+
+  - id: 'GNU Offset Difference'
+    description: 'GNU related compilation difference'
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '\(strp\) \(offset: 0x[0-9a-fA-F]+\)'
+
+  - id: 'Size Difference'
+    description: 'Build size difference in multiple kinds of build'
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: 'Size: \d+'
+
+  - id: 'Block Difference'
+    description: 'Block size difference in multiple kinds of build'
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '\tBlocks:\s*\d+'
+
+
+
+  
+
+
+
+
+  
