@@ -8,13 +8,18 @@ packages = [
   { include = "vessel" }
 ]
 
+[tool.poetry.group.extra_dependencies]
+optional = true
+
+[tool.poetry.group.qa]
+optional = true
+
 [tool.poetry.dependencies]
 python = "^3.11"
 diffoscope = "^259"
 click = "^8.1.7"
 platformdirs = "^4.2.0"
-ruff = "^0.3.1"
-portion = "^2.4.2"
+portion = "^2.6.0"
 PyYAML = "^6.0.1"
 
 [tool.poetry.group.extra_dependencies.dependencies]
@@ -29,6 +34,11 @@ r2pipe = "1.9.4"
 python-debian = "0.1.49"
 rpm = "0.2.0"
 python-tlsh = "4.5.0"
+
+[tool.poetry.group.qa.dependencies]
+ruff = "^0.7.4"
+mypy = "^1.13.0"
+types-PyYAML = "^6.0.12"
 
 [build-system]
 requires = ["poetry-core"]

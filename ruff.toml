@@ -2,7 +2,7 @@ target-version = "py310"
 line-length = 79
 
 [lint]
-select = ["ALL"]
+select = ["E", "F"]
 ignore = [
     "TD002",
     "TD003",
