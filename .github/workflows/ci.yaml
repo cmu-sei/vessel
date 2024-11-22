@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: Vessel Linting, Tests and Docker Image Creation
 
 on:
   - push

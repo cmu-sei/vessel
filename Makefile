@@ -13,14 +13,16 @@ format:
 check-format:
 	poetry run ruff format --check
 
-# Lint all source code
+# Lint all source code and workflows
 .PHONY: lint
 lint:
 	poetry run ruff check --fix
+	poetry run actionlint
 
 .PHONY: check-lint
 check-lint:
 	poetry run ruff check
+	poetry run actionlint
 
 # Typecheck all source code
 .PHONY: typecheck
@@ -41,7 +43,7 @@ qa: format lint typecheck
 
 # Check all QA tasks
 .PHONY: check
-check: check-lint check-typecheck
+check: check-format check-lint check-typecheck
 
 # Run unit tests with pytest
 .PHONY: test
