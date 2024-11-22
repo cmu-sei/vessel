@@ -5,7 +5,7 @@ on:
   - pull_request
 
 jobs:
-  test:
+  lint_and_test:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -17,7 +17,7 @@ jobs:
       - name: Install poetry
         run: curl -sSL https://install.python-poetry.org | python -
       - name: Install dependencies
-        run: poetry install --with extra_dependencies
+        run: poetry install --with qa,extra_dependencies
       - name: Check format
         run: make check-format        
       - name: Lint code
