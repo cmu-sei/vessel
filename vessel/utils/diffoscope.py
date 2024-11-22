@@ -186,7 +186,8 @@ def parse_diffoscope_output(
                     (
                         diff.comments != []
                         and not any(
-                            flag.regex["comment"].search(comment) for comment in diff.comments
+                            flag.regex["comment"].search(comment) 
+                            for comment in diff.comments
                         )
                     )
                     or (

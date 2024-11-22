@@ -26,7 +26,7 @@ To set up additional external tools that are used:
       * Run `diffoscope --list-tools` for a full list. Also, the Dockerfile
       should install all of them.
 
-Note that it is much simpler to run Vessel in a Docker container, which already contains all these dependencies. See [Docker Setup](#docker).
+Note that it is much simpler to run Vessel in a Docker container, which already contains all these dependencies. See [Docker Setup](#docker-setup).
 
 ### Docker Setup
 
@@ -65,14 +65,19 @@ Example running on two images from a private Docker registry:
 
 ## Development
 
-To lint the code, execute:
-* `ruff check`
+Follow the instructions at [Local Environment Setup](#local-environment-setup) first to set up your local environment.
 
-To apply the safe lint fixes, execute:
-* `ruff check --fix`
+To lint the code, and check for format and type issues, execute:
+* `make check`
 
-To format the code, execute:
-* `ruff format`
+To apply the safe lint fixes, and format fixes, execute:
+* `make qa`
+
+To run unit tests, execute:
+* `make test`
+
+To run all the above, execute:
+* `make ci`
 
 ### Building
 
