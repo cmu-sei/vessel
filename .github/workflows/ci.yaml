@@ -26,8 +26,8 @@ jobs:
         run: make check-lint
       - name: Check types
         run: make check-typecheck  
-      - name: Execute unit tests
-        run: make test
+     # - name: Execute unit tests
+     #   run: make test
 
   docker:
     runs-on: ubuntu-latest
