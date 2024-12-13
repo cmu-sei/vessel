@@ -4,6 +4,15 @@
 # QA
 # -----------------------------------------------------------------------------
 
+# Sort imports.
+.PHONY: isort
+isort:
+	poetry run ruff check --select I --fix
+
+.PHONY: check-isort
+check-isort:
+	poetry run ruff check --select I
+
 # Format all source code
 .PHONY: format
 format:
@@ -39,11 +48,11 @@ clean:
 
 # All quality assurance
 .PHONY: qa
-qa: format lint typecheck
+qa: isort format lint typecheck
 
 # Check all QA tasks
 .PHONY: check
-check: check-format check-lint check-typecheck
+check: check-isort check-format check-lint check-typecheck
 
 # Run unit tests with pytest
 .PHONY: test
@@ -51,7 +60,7 @@ test:
 	poetry run pytest test
 
 # -----------------------------------------------------------------------------
-# All actions and checks needed to update and review for pushing.
+# All actions and checks equivalent to what the CI does.
 # -----------------------------------------------------------------------------
 .PHONY: ci
-ci: clean qa test
+ci: clean check test

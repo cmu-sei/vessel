@@ -18,12 +18,14 @@ jobs:
         run: curl -sSL https://install.python-poetry.org | python -
       - name: Install dependencies
         run: poetry install --with qa,extra_dependencies
+      - name: Check import sorting
+        run: make check-isort
       - name: Check format
-        run: make check-format        
+        run: make check-format
       - name: Lint code
         run: make check-lint
       - name: Check types
-        run: make typecheck  
+        run: make check-typecheck  
       - name: Execute unit tests
         run: make test
 
