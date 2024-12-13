@@ -68,7 +68,7 @@ class DiffCommand:
         self.output_dir: str = output_dir
         self.temp_dir: tempfile.TemporaryDirectory[str] | None = None
         self.image_uris: list[ImageURI] = []
-        self.unpacked_image_paths = []
+        self.unpacked_image_paths: list[str] = []
         self.umoci_image_paths = []
         self.diffoscope_output_file_name = "diffoscope_output.json"
         self.summary_output_file_name = "summary.json"
