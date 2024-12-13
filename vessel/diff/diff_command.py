@@ -155,10 +155,10 @@ class DiffCommand:
                         flag["comment"],
                         flag["indiff"],
                     )
-                    for key in temp_flag.regex:
+                    for key in temp_flag.regex_str:
                         try:
                             temp_flag.regex[key] = re.compile(
-                                temp_flag.regex[key],
+                                temp_flag.regex_str[key],
                             )
                         except re.error:
                             logger.exception(
