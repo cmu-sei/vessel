@@ -14,7 +14,7 @@ Pre-requisites:
 
 To set up the Python environment and the required packages:
 1. `poetry shell`
-2. `poetry install`
+2. `poetry install --with extra_dependencies`
 
 To set up additional external tools that are used:
 * Install the skopeo package (e.g., `apt-get install skopeo`)
@@ -66,6 +66,9 @@ Example running on two images from a private Docker registry:
 ## Development
 
 Follow the instructions at [Local Environment Setup](#local-environment-setup) first to set up your local environment.
+
+To install the dev dependencies, run:
+* `poetry install --with qa`
 
 To lint the code, and check for format and type issues, execute:
 * `make check`
