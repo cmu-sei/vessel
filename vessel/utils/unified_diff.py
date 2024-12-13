@@ -29,7 +29,7 @@ import typing
 from logging import getLogger
 from typing import Any
 
-import portion
+import portion  # type: ignore
 
 from vessel.utils.flag import Flag
 
