@@ -245,8 +245,8 @@ def issues_from_difflines(
     :return: List of flagged issues, list of unknown issues, updated intervals
                 in each line that haven't been matched by regex
     """
-    flagged_issues = []
-    unknown_issues = []
+    flagged_issues: list[dict[str, Any]] = []
+    unknown_issues: list[dict[str, Any]] = []
     minus_matched_intervals = (
         [
             match.span()
@@ -347,7 +347,7 @@ def make_issue_dict(
     minus_str: str | None,
     plus_str: str | None,
     flag: Flag | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Create issue dict object.
 
     Used to ensure consistency in all issue objects that
