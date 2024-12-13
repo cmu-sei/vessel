@@ -76,7 +76,7 @@ To apply the safe lint fixes, and format fixes, execute:
 To run unit tests, execute:
 * `make test`
 
-To run all the above, execute:
+To run all checks and tests in a clean environment, similar to the Ci workflow, execute:
 * `make ci`
 
 ### Building
