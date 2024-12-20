@@ -39,7 +39,7 @@ def create_test_manifest(manifest_path: Path, hash: str):
 
 
 def test_get_manifest_digest(tmp_path: Path):
-    """Tests tha parsing works for common sample transport strings."""
+    """Tests that a hash can be properly obtained from a manifest file."""
 
     test_hash = (
         "f3b3b28a45160805bb16542c9531888519430e9e6d6ffc09d72261b0d26ff74f"

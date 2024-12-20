@@ -47,7 +47,7 @@ TEST_TRANSPORT_STRINGS = [
 
 @pytest.mark.parametrize("test_input, expected", TEST_TRANSPORT_STRINGS)
 def test_parse_container_transport(test_input: str, expected: tuple[str, str]):
-    """Tests tha parsing works for common sample transport strings."""
+    """Tests that parsing works for common sample transport strings."""
 
     image_name, tag = parse_container_transport(test_input)
 
@@ -56,7 +56,7 @@ def test_parse_container_transport(test_input: str, expected: tuple[str, str]):
 
 @pytest.mark.parametrize("test_input, expected", TEST_TRANSPORT_STRINGS)
 def test_image_uri_constructor(test_input: str, expected: tuple[str, str]):
-    """Tests tha parsing works for common sample transport strings."""
+    """Tests that creating an ImageURI object, which itself parses a transport string, sets up its attributes properly."""
 
     uri = ImageURI(test_input)
 
