@@ -27,29 +27,38 @@
 
 import pytest
 
-from vessel.utils.uri import parse_container_transport
+from vessel.utils.uri import ImageURI, parse_container_transport
+
+TEST_TRANSPORT_STRINGS = [
+    ("docker://user/image", ("image", "latest")),
+    ("docker://user/image:1.0", ("image", "1.0")),
+    ("docker://image", ("image", "latest")),
+    ("docker://image:1.0", ("image", "1.0")),
+    ("docker-daemon:user/image", ("image", "latest")),
+    ("docker-daemon:user/image:1.0", ("image", "1.0")),
+    ("docker-archive:user/image", ("image", "latest")),
+    ("docker-archive:user/image:1.0", ("image", "1.0")),
+    ("oci:/users/images/image", ("image", "latest")),
+    ("oci:/users/images/image:1.0", ("image", "1.0")),
+    ("oci-archive:/users/images/image.tar", ("image.tar", "latest")),
+    ("oci-archive:/users/images/image.tar:1.0", ("image.tar", "1.0")),
+]
 
 
-@pytest.mark.parametrize(
-    "test_input, expected",
-    [
-        ("docker://user/image", ("image, latest")),
-        ("docker://user/image:1.0", ("image, 1.0")),
-        ("docker://image", ("image, latest")),
-        ("docker://image:1.0", ("image, 1.0")),
-        ("docker-daemon:user/image", ("image, latest")),
-        ("docker-daemon:user/image:1.0", ("image, 1.0")),
-        ("docker-archive:user/image", ("image, latest")),
-        ("docker-archive:user/image:1.0", ("image, 1.0")),
-        ("oci:/users/images/image", ("image, latest")),
-        ("oci:/users/images/image:1.0", ("image, 1.0")),
-        ("oci-archive:/users/images/image.tar", ("image.tar, latest")),
-        ("oci-archive:/users/images/image.tar:1.0", ("image.tar, 1.0")),
-    ],
-)
+@pytest.mark.parametrize("test_input, expected", TEST_TRANSPORT_STRINGS)
 def test_parse_container_transport(test_input: str, expected: tuple[str, str]):
     """Tests tha parsing works for common sample transport strings."""
 
     image_name, tag = parse_container_transport(test_input)
 
-    assert image_name, tag == expected
+    assert (image_name, tag) == expected
+
+
+@pytest.mark.parametrize("test_input, expected", TEST_TRANSPORT_STRINGS)
+def test_image_uri_constructor(test_input: str, expected: tuple[str, str]):
+    """Tests tha parsing works for common sample transport strings."""
+
+    uri = ImageURI(test_input)
+
+    assert (uri.image_name, uri.tag) == expected
+    assert uri.output_identifier == f"{expected[0]}.{expected[1]}"
