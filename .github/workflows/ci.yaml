@@ -1,0 +1,38 @@
+name: Vessel Linting, Tests and Docker Image Creation
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  lint_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install poetry
+        run: curl -sSL https://install.python-poetry.org | python -
+      - name: Install dependencies
+        run: poetry install --with qa,extra_dependencies
+      - name: Check import sorting
+        run: make check-isort
+      - name: Check format
+        run: make check-format
+      - name: Lint code
+        run: make check-lint
+      - name: Check types
+        run: make check-typecheck  
+     # - name: Execute unit tests
+     #   run: make test
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Docker Build Action
+        run: docker build -t vessel .

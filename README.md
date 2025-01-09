@@ -2,7 +2,9 @@
 
 Vessel is a project with the goal of promoting reproducible container builds. The first version of the Vessel tool has one command, `diff`, that compares two built container images and reports on differences between them, flagging as many known issues as possible. The goal of this command is to allow the detection of reproducibility issues when building container images, so that developers can take the appropriate measures to increase reproducibility.
 
-## Dependencies
+## Setup
+
+### Local Environment Setup
 
 Pre-requisites:
 * Linux OS - tested on Ubuntu 22.04
@@ -12,7 +14,7 @@ Pre-requisites:
 
 To set up the Python environment and the required packages:
 1. `poetry shell`
-2. `poetry install`
+2. `poetry install --with extra_dependencies`
 
 To set up additional external tools that are used:
 * Install the skopeo package (e.g., `apt-get install skopeo`)
@@ -24,10 +26,17 @@ To set up additional external tools that are used:
       * Run `diffoscope --list-tools` for a full list. Also, the Dockerfile
       should install all of them.
 
-Note that it is much simpler to run Vessel in a Docker container, which already contains all these dependencies. See [Docker](#docker).
+Note that it is much simpler to run Vessel in a Docker container, which already contains all these dependencies. See [Docker Setup](#docker-setup).
+
+### Docker Setup
+
+Assuming you have Docker installed, run the following to build the vessel docker image.
+
+* `docker build -t vessel .`
 
 ## Running
 
+### In Local Environment
 The tool can be run locally like this:
 
 1. Make sure the environment is active: `poetry shell`
@@ -35,14 +44,6 @@ The tool can be run locally like this:
    * This way of calling it avoids permission issues
 
 Run `vessel --help` for full list of commands and options.
-
-## Docker
-
-### Building the Docker image
-
-Assuming you have Docker installed, run:
-
-* `docker build -t vessel .`
 
 ### Running the Docker container
 
@@ -64,14 +65,22 @@ Example running on two images from a private Docker registry:
 
 ## Development
 
-To lint the code, execute:
-* `ruff check`
+Follow the instructions at [Local Environment Setup](#local-environment-setup) first to set up your local environment.
 
-To apply the safe lint fixes, execute:
-* `ruff check --fix`
+To install the dev dependencies, run:
+* `poetry install --with qa`
 
-To format the code, execute:
-* `ruff format`
+To lint the code, and check for format and type issues, execute:
+* `make check`
+
+To apply the safe lint fixes, and format fixes, execute:
+* `make qa`
+
+To run unit tests, execute:
+* `make test`
+
+To run all checks and tests in a clean environment, similar to the Ci workflow, execute:
+* `make ci`
 
 ### Building
 

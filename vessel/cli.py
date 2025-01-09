@@ -79,8 +79,8 @@ def vessel(logging_level: str) -> None:
         resolve_path=True,
     ),
     help=(
-        "Specify a data directory for unpacking the images. Default: Create a temporary directory that is "
-        "auto-deleted."
+        "Specify a data directory for unpacking the images. Default: Create a "
+        "temporary directory that is auto-deleted."
     ),
 )
 @click.option(
@@ -93,7 +93,8 @@ def vessel(logging_level: str) -> None:
         resolve_path=True,
     ),
     help=(
-        "Specify a output directory for diffoscope output. Default: Stores in current directory."
+        "Specify a output directory for diffoscope output. Default: Stores "
+        "in current directory."
     ),
 )
 def diff(

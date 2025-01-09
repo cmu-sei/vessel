@@ -25,6 +25,8 @@
 
 """Utility class for flags."""
 
+from re import Pattern
+
 
 class Flag:
     """Class to hold represent a flag for a known issue."""
@@ -42,9 +44,12 @@ class Flag:
         """Initializer for Flag class."""
         self.flag_id = flag_id
         self.description = description
-        self.regex = {}
-        self.regex["filepath"] = filepath
-        self.regex["filetype"] = filetype
-        self.regex["command"] = command
-        self.regex["comment"] = comment
-        self.regex["indiff"] = indiff
+
+        self.regex_str: dict[str, str] = {}
+        self.regex_str["filepath"] = filepath
+        self.regex_str["filetype"] = filetype
+        self.regex_str["command"] = command
+        self.regex_str["comment"] = comment
+        self.regex_str["indiff"] = indiff
+
+        self.regex: dict[str, Pattern] = {}

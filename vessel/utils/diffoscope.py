@@ -137,7 +137,7 @@ def parse_diffoscope_output(
             diff.plus_aligned_lines,
             strict=False,
         ):
-            is_binary = current_detail.get("has_internal_linenos")
+            is_binary = bool(current_detail.get("has_internal_linenos"))
             for flag in flags:
                 flag_matches = True
                 file_type_1 = ""
@@ -186,7 +186,8 @@ def parse_diffoscope_output(
                     (
                         diff.comments != []
                         and not any(
-                            flag.regex["comment"].search(comment) for comment in diff.comments
+                            flag.regex["comment"].search(comment) 
+                            for comment in diff.comments
                         )
                     )
                     or (

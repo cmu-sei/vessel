@@ -68,8 +68,8 @@ class DiffCommand:
         self.output_dir: str = output_dir
         self.temp_dir: tempfile.TemporaryDirectory[str] | None = None
         self.image_uris: list[ImageURI] = []
-        self.unpacked_image_paths = []
-        self.umoci_image_paths = []
+        self.unpacked_image_paths: list[str] = []
+        self.umoci_image_paths: list[str] = []
         self.diffoscope_output_file_name = "diffoscope_output.json"
         self.summary_output_file_name = "summary.json"
         self.unified_diff_output_file_name = "unified_diffs.json"
@@ -155,10 +155,10 @@ class DiffCommand:
                         flag["comment"],
                         flag["indiff"],
                     )
-                    for key in temp_flag.regex:
+                    for key in temp_flag.regex_str:
                         try:
                             temp_flag.regex[key] = re.compile(
-                                temp_flag.regex[key],
+                                temp_flag.regex_str[key],
                             )
                         except re.error:
                             logger.exception(
