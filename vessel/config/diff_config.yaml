@@ -72,6 +72,70 @@ flags:
     comment: '.'
     indiff: '1719\d*'
 
+  - id: 'RI-2-11'
+    description: "Time difference in unpaceked db"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{4}'
+
+  - id: 'RI-2-12'
+    description: "Modified time diff (Unix timestamp)"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: 'Modify:\s.*'
+
+  - id: 'RI-2-13'
+    description: "Modified time diff (ISO 8601 Datetime)"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: 'Modify:\s\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+
+  - id: 'RI-2-14'
+    description: "Keybox created time diff"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '(?i)created-at:\s(\d+)'
+
+  - id: 'RI-2-15'
+    description: "Keybox last maintained time diff"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: 'last-maint:\s(\d+)'
+
+  - id: 'Transaction ID Diff'
+    description: "Difference in transaction id"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '\b\d,\d+,\d+\b'
+
+  - id: 'Debug Timer Diff'
+    description: "Timer setup time differences"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '\d+\sms'
+
+  - id: 'Checksum Diff'
+    description: "Keybox Checksum difference"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: 'Checksum:\s([a-zA-Z0-9]+)'
+
   - id: 'Inode_diff'
     description: 'Inode diff when we are installing tars in Dockerfile.'
     filepath: '.'
