@@ -80,7 +80,7 @@ ENV PATH="${VENV_PATH}/bin:$PATH"
 
 # Install poetry and set up venv. 
 RUN python -m venv ${VENV_PATH} \
-  && python -m pip install poetry==1.8.2
+  && python -m pip install poetry==2.0.1
 
 COPY ./pyproject.toml ./poetry.lock ./README.md ${WORKDIR}
 
