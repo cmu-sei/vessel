@@ -54,7 +54,18 @@ RUN apt-get update && \
     xxd=2:9.0.1378-2 \
     xmlbeans=4.0.0-2 \
     xxd=2:9.0.1378-2 \
-    python3-guestfs=1:1.48.6-2 
+    python3-guestfs=1:1.48.6-2  \
+    ca-certificates
+
+# Set up certificates for any proxies that can get in the middle of curl/wget commands during the build
+# NOTE: put any CA certificates needed for a proxy in the ./certs folder in the root of this repo, in PEM format
+# but with a .crt extensions, so they can be loaded into the container and used for SSL connections properly.
+RUN mkdir /certs
+COPY ./certs/ /certs/
+RUN if [ -n "$(ls -A /certs/*.crt)" ]; then \
+      cp -rf /certs/*.crt /usr/local/share/ca-certificates/; \
+      update-ca-certificates; \
+    fi
 
 RUN git clone https://github.com/radareorg/radare2.git \
   && cd radare2 \
@@ -80,7 +91,7 @@ RUN poetry install -vv --no-cache --no-root --no-interaction --with extra_depend
 # Copy our app.
 COPY ./vessel ${WORKDIR}/vessel  
 
-# Install Python dependencies.
+# Install Vessel itself.
 RUN poetry install -vv --no-cache --only-root --no-interaction \
     && rm -rf /root/.cache/pypoetry/*
 
