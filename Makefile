@@ -60,6 +60,20 @@ test:
 	poetry run pytest test
 
 # -----------------------------------------------------------------------------
+# Container actions.
+# -----------------------------------------------------------------------------
+
+# Build all containers.
+.PHONY: build-container
+build-container:
+	bash build_containers.sh
+
+# Run unit tests inside container
+.PHONY: test-container
+test-container:
+	docker run --rm vessel-test	
+
+# -----------------------------------------------------------------------------
 # All actions and checks equivalent to what the CI does.
 # -----------------------------------------------------------------------------
 .PHONY: ci

@@ -1,5 +1,7 @@
 FROM python:3.11-bookworm
 
+# General dependencies, as well as diffoscope-specific sub-dependencies for
+# its specific diff plugins.
 RUN apt-get update && \
   apt-get install -y \
     skopeo=1.9.3+ds1-1+b9 \
@@ -59,7 +61,7 @@ RUN apt-get update && \
 
 # Set up certificates for any proxies that can get in the middle of curl/wget commands during the build
 # NOTE: put any CA certificates needed for a proxy in the ./certs folder in the root of this repo, in PEM format
-# but with a .crt extensions, so they can be loaded into the container and used for SSL connections properly.
+# but with a .crt extension, so they can be loaded into the container and used for SSL connections properly.
 RUN mkdir /certs
 COPY ./certs/ /certs/
 RUN if [ -n "$(ls -A /certs/*.crt)" ]; then \
@@ -67,14 +69,15 @@ RUN if [ -n "$(ls -A /certs/*.crt)" ]; then \
       update-ca-certificates; \
     fi
 
+# Get another sub-dependency for diffoscope.
 RUN git clone https://github.com/radareorg/radare2.git \
   && cd radare2 \
   && ./sys/install.sh \
   && rm -rf /radare2
 
+# Set up workdir and env vars.
 ENV WORKDIR=/opt/project
 WORKDIR ${WORKDIR}
-
 ENV VENV_PATH="${WORKDIR}/.venv"
 ENV PATH="${VENV_PATH}/bin:$PATH"
 
@@ -82,9 +85,8 @@ ENV PATH="${VENV_PATH}/bin:$PATH"
 RUN python -m venv ${VENV_PATH} \
   && python -m pip install poetry==2.0.1
 
-COPY ./pyproject.toml ./poetry.lock ./README.md ${WORKDIR}
-
 # Install Python dependencies.
+COPY ./pyproject.toml ./poetry.lock ./README.md ${WORKDIR}
 RUN poetry install -vv --no-cache --no-root --no-interaction --with extra_dependencies \
     && rm -rf /root/.cache/pypoetry/*
 

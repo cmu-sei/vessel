@@ -1,0 +1,13 @@
+FROM vessel
+
+# Install test deps.
+RUN poetry install -vv --no-cache --no-root --no-interaction --with qa \
+    && rm -rf /root/.cache/pypoetry/*
+
+# Copy tests.
+ENV WORKDIR=/opt/project
+WORKDIR ${WORKDIR}
+COPY ./test ${WORKDIR}/test  
+
+# Change the entry point so all tests are run instead of vessel.
+ENTRYPOINT ["poetry", "run", "pytest", "test"]
