@@ -54,18 +54,13 @@ qa: isort format lint typecheck
 .PHONY: check
 check: check-isort check-format check-lint check-typecheck
 
-# Run unit tests with pytest
-.PHONY: test
-test:
-	poetry run pytest test
-
 # -----------------------------------------------------------------------------
 # Container actions.
 # -----------------------------------------------------------------------------
 
 # Build all containers.
-.PHONY: containers
-containers:
+.PHONY: build-containers
+build-containers:
 	bash build_containers.sh
 
 # Run unit tests inside container
@@ -75,10 +70,10 @@ test-container:
 
 # Build and run unit tests inside container
 .PHONY: build-test-container
-build-test-container: containers test-container
+build-test-container: build-containers test-container
 
 # -----------------------------------------------------------------------------
 # All actions and checks equivalent to what the CI does.
 # -----------------------------------------------------------------------------
 .PHONY: ci
-ci: clean check test
+ci: clean check build-test-container

@@ -26,7 +26,7 @@ jobs:
         run: make check-lint
       - name: Check types
         run: make check-typecheck  
-      - name: Docker Build Action
-        run: make build-container
-      - name: Execute unit tests
+      - name: Build main and test containers
+        run: make build-containers
+      - name: Execute unit tests inside test container
         run: make test-container
