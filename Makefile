@@ -64,14 +64,18 @@ test:
 # -----------------------------------------------------------------------------
 
 # Build all containers.
-.PHONY: build-container
-build-container:
+.PHONY: containers
+containers:
 	bash build_containers.sh
 
 # Run unit tests inside container
 .PHONY: test-container
 test-container:
-	docker run --rm vessel-test	
+	docker run --rm vessel-test
+
+# Build and run unit tests inside container
+.PHONY: build-test-container
+build-test-container: containers test-container
 
 # -----------------------------------------------------------------------------
 # All actions and checks equivalent to what the CI does.
