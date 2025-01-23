@@ -23,43 +23,20 @@
 #
 # DM24-1321
 
-"""Utility skopeo funcitons."""
 
-import subprocess
-import sys
-from logging import getLogger
+from pathlib import Path
 
+from vessel.utils.skopeo import skopeo_copy
 from vessel.utils.uri import ImageURI
 
-logger = getLogger(__name__)
 
+def test_skopeo_copy(tmp_path: Path):
+    """Tests that method to copy image through skopeo works."""
 
-def skopeo_copy(image_uri: ImageURI, output_path: str) -> str:
-    """Skopeo copies image to specific directory.
+    # Sample image in Docker hub
+    test_image_name = "hello-world:latest"
+    test_image_uri = ImageURI(f"docker://{test_image_name}")
 
-    Uses skopeo copy to take images from image path and then
-    copies it into the output path in the oci format.
+    dest_path = skopeo_copy(test_image_uri, str(tmp_path))
 
-    Args:
-        image_uri: Path of the image
-        output_path: Path to copy the image to
-
-    Returns:
-        Path to the directory containing the oci image
-    """
-    dest_path = f"{output_path}/{image_uri.output_identifier}"
-
-    try:
-        subprocess.run(
-            [
-                "/usr/bin/skopeo",
-                "copy",
-                image_uri.container_transport,
-                f"oci:{dest_path}:{image_uri.tag}",
-            ],
-            check=True,
-        )
-    except subprocess.CalledProcessError:
-        sys.exit(1)
-
-    return dest_path
+    assert dest_path == f"{tmp_path}/{test_image_name.replace(':', '.')}"

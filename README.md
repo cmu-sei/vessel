@@ -13,7 +13,7 @@ Pre-requisites:
     * Add to `~/.bashrc` (or equivalent profile): `export PATH=~/.local/bin:$PATH`
 
 To set up the Python environment and the required packages:
-1. `poetry shell`
+1. `python -m venv .venv`
 2. `poetry install --with extra_dependencies`
 
 To set up additional external tools that are used:
@@ -39,7 +39,7 @@ Assuming you have Docker installed, run the following to build the vessel docker
 ### In Local Environment
 The tool can be run locally like this:
 
-1. Make sure the environment is active: `poetry shell`
+1. Make sure the environment is active: `source .venv/bin/activate`
 2. Run `sudo env "PATH=$PATH" vessel diff`, with the proper arguments
    * This way of calling it avoids permission issues
 
@@ -47,7 +47,7 @@ Run `vessel --help` for full list of commands and options.
 
 ### Running the Docker container
 
-* Note: Running within Docker avoids permission issues during the unpacking of the images
+* Note: Running within Docker avoids permission issues during the unpacking of the images.
 
 To see commands and options:
 * `docker run --rm vessel --help`

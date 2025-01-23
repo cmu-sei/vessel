@@ -26,13 +26,7 @@ jobs:
         run: make check-lint
       - name: Check types
         run: make check-typecheck  
-      - name: Execute unit tests
-        run: make test
-
-  docker:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-      - name: Docker Build Action
-        run: docker build -t vessel .
+      - name: Build main and test containers
+        run: make build-containers
+      - name: Execute unit tests inside test container
+        run: make test-container
