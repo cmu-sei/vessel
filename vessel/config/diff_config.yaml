@@ -65,12 +65,100 @@ flags:
     indiff: '(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s([0-2]?[0-9]|3[01])\s([01][0-9]|2[0-3]):([0-5][0-9])'
 
   - id: 'RI-2-11'
-    description: "Modified and build time in different format"
+     description: "Modified and build time in different format"
+     filepath: '.'
+     filetype: '.'
+     command: '.'
+     comment: '.'
+     indiff: '1719\d*'
+
+  - id: 'RI-2-12'
+    description: "Modified time diff (Unix timestamp)"
     filepath: '.'
     filetype: '.'
     command: '.'
     comment: '.'
-    indiff: '1719\d*'
+    indiff: 'Modify:\s.*'
+
+  - id: 'RI-2-13'
+    description: "Modified time diff (ISO 8601 Datetime)"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: 'Modify:\s\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+
+  - id: 'RI-2-14'
+    description: "Keybox created time diff"
+    filepath: '.'
+    filetype: '.'
+    command: 'kbxutil'
+    comment: '.'
+    indiff: '(?i)created-at:\s(\d+)'
+
+  - id: 'RI-2-15'
+    description: "Keybox last maintained time diff"
+    filepath: '.'
+    filetype: '.'
+    command: 'kbxutil'
+    comment: '.'
+    indiff: 'last-maint:\s(\d+)'
+
+  - id: 'RI-2-16'
+    description: "Moddate differences "
+    filepath: '.'
+    filetype: '.'
+    command: 'Python bytecode'
+    comment: '.'
+    indiff: 'x[0-9a-fA-F]+'
+
+  - id: 'RI-2-17'
+    description: "Mod date differences related to cache file list difference"
+    filepath: '.'
+    filetype: '.'
+    command: 'file list'
+    comment: '.'
+    indiff: '([0-9a-fA-F\-]+)-le64\.cache-7'
+
+  - id: 'RI-2-18'
+    description: "Python last check time difference"
+    filepath: '.'
+    filetype: '.'
+    command: 'Pretty-printed'
+    comment: '.'
+    indiff: '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?[+-]\d{2}:\d{2}'
+
+  - id: 'RI-2-19'
+    description: "Time difference in unpaceked db"
+    filepath: '.*\.log'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{4}'
+
+  - id: 'Transaction ID Diff'
+    description: "Difference in transaction id"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '\b\d,\d+,\d+\b'
+
+  - id: 'Debug Timer Diff'
+    description: "Timer setup time differences"
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '\d+\sms'
+
+  - id: 'Checksum Diff'
+    description: "Keybox Checksum difference"
+    filepath: '.*\.kbx'
+    filetype: '.'
+    command: 'kbxutil'
+    comment: '.'
+    indiff: 'Checksum:\s([a-zA-Z0-9]+)'
 
   - id: 'Inode_diff'
     description: 'Inode diff when we are installing tars in Dockerfile.'
@@ -112,11 +200,115 @@ flags:
     comment: '.'
     indiff: '\tBlocks:\s*\d+'
 
+  - id: 'Created git index'
+    description: 'Created git index'
+    filepath: '.*/\.git/index'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: 'Created:\s*\d+[.]\d+'
 
+  - id: 'Git Index: Modified date/time'
+    description: 'Modified git index'
+    filepath: '.*/\.git/index'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: 'Modified:\s*\d+[.]\d+'
 
+  - id: 'Git Index: Device ID'
+    description: 'Device ID field in git index'
+    filepath: '.*/\.git\/index'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: 'Device ID:\s*\(\d, \d+\)'
+
+  - id: 'Generated certificate differences'
+    description: 'Generated certificate differences'
+    filepath: '.*\.pem'
+    filetype: ''
+    command: '.'
+    comment: '.'
+    indiff: '.'
+
+  - id: 'Generated certificate differences'
+    description: 'Generated certificate differences'
+    filepath: '.*\.crt'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '.'
+
+  - id: 'go-build-cache'
+    description: 'Go-build cache'
+    filepath: '\.cache/go-build/'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '.'
+
+  - id: 'go-mod-cache'
+    description: 'Go Module Download Cache'
+    filepath: '/go/pkg/mod/cache/download/'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '.'
+
+  - id: 'pip-cache'
+    description: 'Pip cache files'
+    filepath: '\.cache/pip/'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '.'
+
+  - id: 'elf-gopclntab'
+    description: 'Golang binary Program Counter Line Table differences'
+    filepath: '.'
+    filetype: '.'
+    command: 'readelf --wide --decompress --hex-dump=.gopclntab {}'
+    comment: '.'
+    indiff: '.'
+
+  - id: 'pyc-format-diff'
+    description: 'Compiled Python (.pyc) format differences'
+    filepath: '\.pyc$'
+    filetype: '.'
+    command: '.'
+    comment: 'but no file-specific differences were detected'
+    indiff: '.'
+
+  - id: 'pyc-diff'
+    description: 'Compiled Python (.pyc) differences'
+    filepath: '\.pyc$'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '.'
+
+  - id: 'ldconfig-aux-cache'
+    description: 'ldconfig aux-cache'
+    filepath: 'rootfs/var/cache/ldconfig/aux-cache'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '.'
+
+  - id: 'UUID Difference'
+    description: 'uuid differences when listing cache file.'
+    filepath: '.'
+    filetype: '.'
+    command: 'file list'
+    comment: '.'
+    indiff: '[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}'
   
-
-
-
-
-  
+  - id: 'Stat Filesystem Difference'
+    description: 'stat{} command returns results that usually differ by 1 in digit.'
+    filepath: '.'
+    filetype: '.'
+    command: '.'
+    comment: '.'
+    indiff: '^[a-zA-Z0-9_-]+:[!]+:[0-9]+:(?:[0-9]*:)*$'
+    
