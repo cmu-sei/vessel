@@ -157,14 +157,6 @@ def test_parse_diffoscope_output_debug():
         comment=".",
         indiff=r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{9}",
     )
-    # Compile the regex dictionary to avoid KeyError when matching
-    test_flag.regex = {
-        "filepath": re.compile(test_flag.regex_str["filepath"]),
-        "filetype": re.compile(test_flag.regex_str["filetype"]),
-        "command": re.compile(test_flag.regex_str["command"]),
-        "comment": re.compile(test_flag.regex_str["comment"]),
-        "indiff": re.compile(test_flag.regex_str["indiff"]),
-    }
 
     unknown_issues, flagged_issues, diff_list = parse_diffoscope_output(
         test_diff, [test_flag]
