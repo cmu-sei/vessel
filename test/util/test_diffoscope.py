@@ -25,8 +25,8 @@
 
 """Unit test for diffoscope util functions"""
 
-import pytest
 import re
+import pytest
 
 from vessel.utils.diffoscope import (
     build_diffoscope_command,
@@ -152,7 +152,7 @@ def test_parse_diffoscope_output_debug():
         filetype='.',
         command='.',
         comment='.',
-        indiff='.'
+        indiff=r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{9}'
     )
     # Compile the regex dictionary to avoid KeyError when matching
     test_flag.regex = {
