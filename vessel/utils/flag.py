@@ -51,10 +51,13 @@ class Flag:
         self.regex_str["command"] = command
         self.regex_str["comment"] = comment
         self.regex_str["indiff"] = indiff
+        self.regex: dict[str, Pattern] = {}
         self.compile()
 
     def compile(self) -> None:
-        """Compile regex strings and store them in self.regex."""
-        self.regex = {
-            key: re.compile(pattern) for key, pattern in self.regex_str.items()
-        }
+        """Compile regex strings and store them in self.regex, handle errors."""
+        for key, pattern in self.regex_str.items():
+            try:
+                self.regex[key] = re.compile(pattern)
+            except re.error as e:
+                print(f"Regex compilation error for '{key}': {e}")

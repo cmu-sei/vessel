@@ -173,7 +173,10 @@ def parse_diffoscope_output(
                         diff.command != ""
                         and not flag.regex["command"].search(diff.command)
                     )
-                    or (diff.command == "")
+                    or (
+                        diff.command == ""
+                        and flag.regex["command"] != re.compile(".")
+                    )
                 ):
                     flag_matches = False
 
