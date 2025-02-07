@@ -1,4 +1,7 @@
-FROM python:3.11-bookworm
+############################################################################
+# Release/base docker image defined here.
+
+FROM python:3.11-bookworm AS release
 
 # General dependencies, as well as diffoscope-specific sub-dependencies for
 # its specific diff plugins.
@@ -99,3 +102,26 @@ RUN poetry install -vv --no-cache --only-root --no-interaction \
 
 ENTRYPOINT ["poetry", "run", "vessel"]
 CMD ["--help"]
+
+
+############################################################################
+# Test docker image defined here.
+
+FROM release AS test
+
+# Install test deps.
+RUN poetry install -vv --no-cache --no-root --no-interaction --with qa \
+    && rm -rf /root/.cache/pypoetry/*
+
+# Copy tests.
+ENV WORKDIR=/opt/project
+WORKDIR ${WORKDIR}
+COPY ./test ${WORKDIR}/test  
+
+# Change the entry point so all tests are run instead of vessel.
+ENTRYPOINT ["poetry", "run", "pytest", "test"]
+
+############################################################################
+# Set release image as default target.
+
+FROM release
