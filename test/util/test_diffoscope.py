@@ -26,6 +26,7 @@
 """Unit test for diffoscope util functions"""
 
 import re
+
 import pytest
 
 from vessel.utils.diffoscope import (
@@ -33,6 +34,7 @@ from vessel.utils.diffoscope import (
     parse_diffoscope_output,
 )
 from vessel.utils.flag import Flag
+
 
 def test_build_diffoscope_command():
     output_dir = "/tmp"
