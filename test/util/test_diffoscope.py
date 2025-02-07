@@ -25,8 +25,6 @@
 
 """Unit test for diffoscope util functions"""
 
-
-
 from vessel.utils.diffoscope import (
     build_diffoscope_command,
     parse_diffoscope_output,
