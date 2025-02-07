@@ -25,7 +25,6 @@
 
 """Utility Diffoscope functions."""
 
-import re
 from pathlib import Path
 
 import magic

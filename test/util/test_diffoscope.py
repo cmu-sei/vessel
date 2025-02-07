@@ -25,9 +25,7 @@
 
 """Unit test for diffoscope util functions"""
 
-import re
 
-import pytest
 
 from vessel.utils.diffoscope import (
     build_diffoscope_command,
