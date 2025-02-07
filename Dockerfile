@@ -82,6 +82,7 @@ RUN git clone https://github.com/radareorg/radare2.git \
 # Finish installing pipx and install poetry.
 RUN pipx ensurepath
 RUN pipx install poetry==2.0.1
+ENV PATH="/root/.local/bin:$PATH"
 
 # Set up workdir and env vars.
 ENV WORKDIR=/opt/project
