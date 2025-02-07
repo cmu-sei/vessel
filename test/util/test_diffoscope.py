@@ -166,7 +166,3 @@ def test_parse_diffoscope_output_debug():
     assert len(diff_list) > 0
     assert "flagged_issues" in diff_list[0]
     assert diff_list[0]["flagged_issues"][0]["id"] == "test_flag"
-
-
-if __name__ == "__main__":
-    pytest.main()
