@@ -28,7 +28,7 @@
 from pathlib import Path
 
 import magic
-
+import re
 from vessel.utils.flag import Flag
 from vessel.utils.unified_diff import (
     Diff,

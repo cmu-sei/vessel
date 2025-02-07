@@ -26,6 +26,7 @@
 """Utility class for flags."""
 
 import re
+from re import Pattern
 
 
 class Flag:
