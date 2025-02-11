@@ -26,7 +26,6 @@
 """Contain the main functionality for diff."""
 
 import json
-import re
 import subprocess
 import sys
 import tempfile
