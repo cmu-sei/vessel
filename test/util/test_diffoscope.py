@@ -54,9 +54,9 @@ def test_build_diffoscope_command():
     expected_cmd_image = [
         "diffoscope",
         "--json",
-        output_dir+"/"+output_file,
-        "/test_path/file1",
-        "/test_path/file2",
+        output_dir + "/" + output_file,
+        path1,
+        path2,
     ]
     assert (
         build_diffoscope_command(
