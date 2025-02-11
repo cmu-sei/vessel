@@ -182,15 +182,27 @@ def parse_diffoscope_output(
                     flag_matches = False
 
                 # Check if comment matches flag
-                if flag_matches and diff.comments:
-                    if not any(
-                        flag.regex["comment"].search(comment)
-                        for comment in diff.comments
-                    ):
-                        flag_matches = False
+                if flag_matches and (
+                    (
+                        diff.comments != []
+                        and not any(
+                            flag.regex["comment"].search(comment) 
+                            for comment in diff.comments
+                        )
+                    )
+                    or (
+                        diff.comments == []
+                        and flag.regex["comment"] != re.compile(".")
+                    )
+                ):  # fmt: skip
+                    flag_matches = False
 
                 # Handle a binary line that matches the flag
-                if flag_matches and is_binary:
+                if (
+                    flag_matches
+                    and is_binary
+                    and flag.regex["indiff"] == re.compile(".")
+                ):
                     flagged_issues_count += 1
                     diff.flagged_issues.append(
                         {

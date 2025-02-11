@@ -61,4 +61,6 @@ class Flag:
             try:
                 self.regex[key] = re.compile(pattern)
             except re.error as e:
-                print(f"Regex compilation error for '{key}': {e}")
+                raise ValueError(
+                    f"Error compiling regex for '{key}' in flag '{self.flag_id}': {e}"
+                )

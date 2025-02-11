@@ -35,7 +35,7 @@ from vessel.utils.flag import Flag
 def test_build_diffoscope_command():
     output_dir = "/tmp"
     output_file = "diff.json"
-    path1 = "/test_path//file1"
+    path1 = "/test_path/file1"
     path2 = "/test_path/file2"
 
     expected_cmd_file = [
@@ -43,8 +43,8 @@ def test_build_diffoscope_command():
         "--json",
         "/tmp/diff.json",
         "--new-file",
-        "/test_path//file1",
-        "/test_path/file2",
+        path1,
+        path2,
     ]
     assert (
         build_diffoscope_command(output_dir, output_file, path1, path2, "file")
@@ -54,8 +54,8 @@ def test_build_diffoscope_command():
     expected_cmd_image = [
         "diffoscope",
         "--json",
-        "/tmp/diff.json",
-        "/test_path//file1",
+        output_dir+"/"+output_file,
+        "/test_path/file1",
         "/test_path/file2",
     ]
     assert (
