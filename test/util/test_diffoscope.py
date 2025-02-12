@@ -25,11 +25,11 @@
 
 """Unit test for diffoscope util functions"""
 
+from test.fixture import get_test_diffoscope_output, get_test_flag
 from vessel.utils.diffoscope import (
     build_diffoscope_command,
     parse_diffoscope_output,
 )
-from vessel.utils.flag import Flag
 
 
 def test_build_diffoscope_command():
@@ -67,97 +67,14 @@ def test_build_diffoscope_command():
 
 
 def test_parse_diffoscope_output_debug():
-    test_diff = {
-        "diffoscope-json-version": 1,
-        "source1": "/tmp/tmp902i7bz7/umoci-unpack-cert-manager-acmesolver.2024-12-03_15-53-00/rootfs",
-        "source2": "/tmp/tmp902i7bz7/umoci-unpack-cert-manager-acmesolver.2024-12-03_16-13-42/rootfs",
-        "unified_diff": None,
-        "details": [
-            {
-                "source1": "/tmp/tmp902i7bz7/umoci-unpack-cert-manager-acmesolver.2024-12-03_15-53-00/rootfs/app",
-                "source2": "/tmp/tmp902i7bz7/umoci-unpack-cert-manager-acmesolver.2024-12-03_16-13-42/rootfs/app",
-                "unified_diff": None,
-                "details": [
-                    {
-                        "source1": "stat {}",
-                        "source2": "stat {}",
-                        "unified_diff": "@@ -1,8 +1,8 @@\n \n   Size: 4096      \tBlocks: 8          IO Block: 4096   directory\n Device: 0,72\tLinks: 3\n Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)\n \n+Modify: 2024-12-03 21:14:59.000000000 +0000\n-Modify: 2024-12-03 20:54:07.000000000 +0000\n \n \n",
-                    },
-                    {
-                        "source1": "/tmp/tmp902i7bz7/umoci-unpack-cert-manager-acmesolver.2024-12-03_15-53-00/rootfs/app/cmd",
-                        "source2": "/tmp/tmp902i7bz7/umoci-unpack-cert-manager-acmesolver.2024-12-03_16-13-42/rootfs/app/cmd",
-                        "unified_diff": None,
-                        "details": [
-                            {
-                                "source1": "stat {}",
-                                "source2": "stat {}",
-                                "unified_diff": "@@ -1,8 +1,8 @@\n \n   Size: 4096      \tBlocks: 8          IO Block: 4096   directory\n Device: 0,72\tLinks: 3\n Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)\n \n-Modify: 2024-12-03 20:54:07.000000000 +0000\n+Modify: 2024-12-03 21:14:59.000000000 +0000\n \n \n",
-                            },
-                            {
-                                "source1": "/tmp/tmp902i7bz7/umoci-unpack-cert-manager-acmesolver.2024-12-03_15-53-00/rootfs/app/cmd/acmesolver",
-                                "source2": "/tmp/tmp902i7bz7/umoci-unpack-cert-manager-acmesolver.2024-12-03_16-13-42/rootfs/app/cmd/acmesolver",
-                                "unified_diff": None,
-                                "details": [
-                                    {
-                                        "source1": "stat {}",
-                                        "source2": "stat {}",
-                                        "unified_diff": "@@ -1,8 +1,8 @@\n \n   Size: 4096      \tBlocks: 8          IO Block: 4096   directory\n Device: 0,72\tLinks: 2\n Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)\n \n+Modify: 2024-12-03 21:14:59.000000000 +0000\n-Modify: 2024-12-03 20:54:07.000000000 +0000\n \n \n",
-                                    },
-                                    {
-                                        "source1": "stat {}",
-                                        "source2": "stat {}",
-                                        "unified_diff": "@@ -1,8 +1,8 @@\n \n   Size: 4096      \tBlocks: 8          IO Block: 4096   directory\n Device: 0,72\tLinks: 2\n Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)\n \n-Modify: 2024-12-03 20:54:07.000000000 +0000\n+Modify: 2024-12-03 21:14:59.000000000 +0000\n \n \n",
-                                    },
-                                ],
-                            },
-                            {
-                                "source1": "stat {}",
-                                "source2": "stat {}",
-                                "unified_diff": "@@ -1,8 +1,8 @@\n \n   Size: 4096      \tBlocks: 8          IO Block: 4096   directory\n Device: 0,72\tLinks: 3\n Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)\n \n+Modify: 2024-12-03 21:14:59.000000000 +0000\n-Modify: 2024-12-03 20:54:07.000000000 +0000\n \n \n",
-                            },
-                        ],
-                    },
-                    {
-                        "source1": "stat {}",
-                        "source2": "stat {}",
-                        "unified_diff": "@@ -1,8 +1,8 @@\n \n   Size: 4096      \tBlocks: 8          IO Block: 4096   directory\n Device: 0,72\tLinks: 3\n Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)\n \n-Modify: 2024-12-03 20:54:07.000000000 +0000\n+Modify: 2024-12-03 21:14:59.000000000 +0000\n \n \n",
-                    },
-                ],
-            },
-            {
-                "source1": "/tmp/tmp902i7bz7/umoci-unpack-cert-manager-acmesolver.2024-12-03_15-53-00/rootfs/licenses",
-                "source2": "/tmp/tmp902i7bz7/umoci-unpack-cert-manager-acmesolver.2024-12-03_16-13-42/rootfs/licenses",
-                "unified_diff": None,
-                "details": [
-                    {
-                        "source1": "stat {}",
-                        "source2": "stat {}",
-                        "unified_diff": "@@ -1,8 +1,8 @@\n \n   Size: 4096      \tBlocks: 8          IO Block: 4096   directory\n Device: 0,72\tLinks: 2\n Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)\n \n+Modify: 2024-12-03 21:15:00.000000000 +0000\n-Modify: 2024-12-03 20:54:07.000000000 +0000\n \n \n",
-                    },
-                    {
-                        "source1": "stat {}",
-                        "source2": "stat {}",
-                        "unified_diff": "@@ -1,8 +1,8 @@\n \n   Size: 4096      \tBlocks: 8          IO Block: 4096   directory\n Device: 0,72\tLinks: 2\n Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)\n \n-Modify: 2024-12-03 20:54:07.000000000 +0000\n+Modify: 2024-12-03 21:15:00.000000000 +0000\n \n \n",
-                    },
-                ],
-            },
-        ],
-    }
-
-    test_flag = Flag(
-        flag_id="test_flag",
-        description="test flag",
-        filepath=".",
-        filetype=".",
-        command=".",
-        comment=".",
-        indiff=r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{9}",
-    )
+    test_diff = get_test_diffoscope_output()
+    test_flag = get_test_flag()
 
     unknown_issues, flagged_issues, diff_list = parse_diffoscope_output(
         test_diff, [test_flag]
     )
 
+    assert unknown_issues == 0
     assert flagged_issues > 0
     assert len(diff_list) > 0
     assert "flagged_issues" in diff_list[0]
