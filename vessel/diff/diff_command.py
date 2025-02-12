@@ -26,7 +26,6 @@
 """Contain the main functionality for diff."""
 
 import json
-import re
 import subprocess
 import sys
 import tempfile
@@ -146,27 +145,19 @@ class DiffCommand:
             try:
                 config = yaml.safe_load(config_file)
                 for flag in config["flags"]:
-                    temp_flag = Flag(
-                        flag["id"],
-                        flag["description"],
-                        flag["filepath"],
-                        flag["filetype"],
-                        flag["command"],
-                        flag["comment"],
-                        flag["indiff"],
-                    )
-                    for key in temp_flag.regex_str:
-                        try:
-                            temp_flag.regex[key] = re.compile(
-                                temp_flag.regex_str[key],
-                            )
-                        except re.error:
-                            logger.exception(
-                                "Error with %s regex on flag %s",
-                                key,
-                                temp_flag.flag_id,
-                            )
-                            return False
+                    try:
+                        temp_flag = Flag(
+                            flag["id"],
+                            flag["description"],
+                            flag["filepath"],
+                            flag["filetype"],
+                            flag["command"],
+                            flag["comment"],
+                            flag["indiff"],
+                        )
+                    except ValueError as e:
+                        logger.exception("Error with flag: %s", e)
+                        return False
                     self.flags.append(temp_flag)
             except yaml.YAMLError:
                 logger.exception("Error reading the yaml config file.")

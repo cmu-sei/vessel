@@ -25,6 +25,7 @@
 
 """Utility class for flags."""
 
+import re
 from re import Pattern
 
 
@@ -51,5 +52,15 @@ class Flag:
         self.regex_str["command"] = command
         self.regex_str["comment"] = comment
         self.regex_str["indiff"] = indiff
-
         self.regex: dict[str, Pattern] = {}
+        self.compile()
+
+    def compile(self) -> None:
+        """Compile regex strings and store them in self.regex, handle errors."""
+        for key, pattern in self.regex_str.items():
+            try:
+                self.regex[key] = re.compile(pattern)
+            except re.error as e:
+                raise ValueError(
+                    f"Error compiling regex for '{key}' in flag '{self.flag_id}': {e}"
+                )
