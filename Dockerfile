@@ -1,4 +1,7 @@
-FROM python:3.11-bookworm
+############################################################################
+# Release/base docker image defined here.
+
+FROM python:3.11-bookworm AS release
 
 # General dependencies, as well as diffoscope-specific sub-dependencies for
 # its specific diff plugins.
@@ -57,7 +60,8 @@ RUN apt-get update && \
     xmlbeans=4.0.0-2 \
     xxd=2:9.0.1378-2 \
     python3-guestfs=1:1.48.6-2  \
-    ca-certificates
+    ca-certificates \
+    pipx
 
 # Set up certificates for any proxies that can get in the middle of curl/wget commands during the build
 # NOTE: put any CA certificates needed for a proxy in the ./certs folder in the root of this repo, in PEM format
@@ -75,15 +79,19 @@ RUN git clone https://github.com/radareorg/radare2.git \
   && ./sys/install.sh \
   && rm -rf /radare2
 
+# Finish installing pipx and install poetry.
+RUN pipx ensurepath
+RUN pipx install poetry==2.0.1
+ENV PATH="/root/.local/bin:$PATH"
+
 # Set up workdir and env vars.
 ENV WORKDIR=/opt/project
-WORKDIR ${WORKDIR}
 ENV VENV_PATH="${WORKDIR}/.venv"
 ENV PATH="${VENV_PATH}/bin:$PATH"
 
-# Install poetry and set up venv. 
-RUN python -m venv ${VENV_PATH} \
-  && python -m pip install poetry==2.0.1
+# Set up venv. 
+WORKDIR ${WORKDIR}
+RUN python -m venv ${VENV_PATH}
 
 # Install Python dependencies.
 COPY ./pyproject.toml ./poetry.lock ./README.md ${WORKDIR}
@@ -99,3 +107,26 @@ RUN poetry install -vv --no-cache --only-root --no-interaction \
 
 ENTRYPOINT ["poetry", "run", "vessel"]
 CMD ["--help"]
+
+
+############################################################################
+# Test docker image defined here.
+
+FROM release AS test
+
+# Install test deps.
+RUN poetry install -vv --no-cache --no-root --no-interaction --with qa \
+    && rm -rf /root/.cache/pypoetry/*
+
+# Copy tests.
+ENV WORKDIR=/opt/project
+WORKDIR ${WORKDIR}
+COPY ./test ${WORKDIR}/test  
+
+# Change the entry point so all tests are run instead of vessel.
+ENTRYPOINT ["poetry", "run", "pytest", "test"]
+
+############################################################################
+# Set release image as default target.
+
+FROM release
