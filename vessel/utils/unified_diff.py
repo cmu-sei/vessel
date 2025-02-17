@@ -27,7 +27,7 @@
 
 import typing
 from logging import getLogger
-from typing import Any
+from typing import Any, Optional
 
 import portion  # type: ignore
 
@@ -92,8 +92,8 @@ class DiffLine:
     def __init__(
         self: "DiffLine",
         text: str,
-        diff_line_number: int | None,
-        file_line_number: int | None,
+        diff_line_number: Optional[int] = None,
+        file_line_number: Optional[int] = None,
     ) -> None:
         """Initializer for DiffLine class."""
         self.text = text
@@ -105,9 +105,9 @@ class DiffLine:
 
 
 def equal_entry_list(
-    list1: list,
-    list2: list,
-    fillvalue: Any | None = None,
+    list1: list[Any],
+    list2: list[Any],
+    fillvalue: Optional[Any] = None,
 ) -> tuple[list, list]:
     """Return two lists of even length with from two lists.
 
@@ -212,7 +212,7 @@ def align_diff_lines(
             minus_aligned_lines, plus_aligned_lines = equal_entry_list(
                 minus_aligned_lines,
                 plus_aligned_lines,
-                DiffLine("", None, None),
+                DiffLine(""),
             )
         else:
             minus_file_line_index += 1
