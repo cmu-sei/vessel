@@ -23,7 +23,11 @@
 #
 # DM24-1321
 
-from vessel.utils.unified_diff import equal_entry_list, parse_unified_diff_header, DiffLine, align_diff_lines
+from vessel.utils.unified_diff import equal_entry_list, parse_unified_diff_header, DiffLine, align_diff_lines, Flag, make_issue_dict, issues_from_difflines
+
+from test.fixture import get_test_flag
+
+import portion
 
 import pytest
 
@@ -141,7 +145,45 @@ TEST_UNIFIED_DIFFS = [
 ]
 
 TEST_DIFFLINES = [
-    ()
+    (
+        {
+            "minus_line": DiffLine("example 123"),
+            "plus_line": DiffLine("example 456"),
+            "flag": get_test_flag()
+        },
+        {
+            "flagged": [make_issue_dict(minus_str="123", plus_str="456", flag=get_test_flag())],
+            "unknown": [],
+            "minus_unmatched": portion.closedopen(0, 8),
+            "plus_unmatched": portion.closedopen(0, 8)
+        }
+    ),
+    (
+        {
+            "minus_line": DiffLine("123 example"),
+            "plus_line": DiffLine("456 example"),
+            "flag": get_test_flag()
+        },
+        {
+            "flagged": [make_issue_dict(minus_str="123", plus_str="456", flag=get_test_flag())],
+            "unknown": [],
+            "minus_unmatched": portion.openclosed(2, 10),
+            "plus_unmatched": portion.openclosed(2, 10)
+        }
+    ),
+    (
+        {
+            "minus_line": DiffLine("123 example 321"),
+            "plus_line": DiffLine("456 example 654"),
+            "flag": get_test_flag()
+        },
+        {
+            "flagged": [make_issue_dict(minus_str="123", plus_str="456", flag=get_test_flag()), make_issue_dict(minus_str="321", plus_str="654", flag=get_test_flag())],
+            "unknown": [],
+            "minus_unmatched": portion.open(2, 12),
+            "plus_unmatched": portion.open(2, 12)
+        }
+    ),
 ]
 
 """Tests for Unified Diff functions."""
@@ -188,6 +230,13 @@ def test_align_diff_lines(test_input, expected):
         assert line.diff_line_number == expected_line.diff_line_number
         assert line.file_line_number == expected_line.file_line_number
 
-# @pytest.mark.paramtrise("test_input, expected", )
-# def test_issues_from_difflines(test_input, expected):
-#     """Tests that issues are correctly flagged, and intervals are updated correctly"""
+@pytest.mark.parametrize("test_input, expected", TEST_DIFFLINES)
+def test_issues_from_difflines(test_input, expected):
+    """Tests that issues are correctly flagged, and intervals are updated correctly"""
+
+    flagged, unknown, minus_unmatched, plus_unmatched = issues_from_difflines(test_input["minus_line"], test_input["plus_line"], test_input["flag"])
+
+    assert flagged == expected["flagged"]
+    assert unknown == expected["unknown"]
+    assert minus_unmatched == expected["minus_unmatched"]
+    assert plus_unmatched == expected["plus_unmatched"]

@@ -100,7 +100,7 @@ class DiffLine:
         self.diff_line_number = diff_line_number
         self.file_line_number = file_line_number
         # Interval object containing the range of self.text that
-        # have not been matched by any of the flag['indiff'] regex
+        #   have not been matched by any of the flag['indiff'] regex
         self.unmatched_intervals = portion.closed(0, len(self.text) - 1)
 
 
@@ -287,9 +287,10 @@ def issues_from_difflines(
                 minus_line.text,
                 portion.closed(
                     minus_match_interval[0],
-                    minus_match_interval[1],
+                    minus_match_interval[1] - 1,
                 ),
             )
+
         plus_match_str = ""
         if plus_match_interval is not None:
             plus_line.unmatched_intervals = (
@@ -301,7 +302,7 @@ def issues_from_difflines(
             )
             plus_match_str = intervals_to_str(
                 plus_line.text,
-                portion.closed(plus_match_interval[0], plus_match_interval[1]),
+                portion.closed(plus_match_interval[0], plus_match_interval[1] - 1),
             )
 
         if minus_match_interval is None:
@@ -342,16 +343,18 @@ def issues_from_difflines(
 
 
 def make_issue_dict(
-    minus_line: DiffLine | None,
-    plus_line: DiffLine | None,
-    minus_str: str | None,
-    plus_str: str | None,
-    flag: Flag | None = None,
+    minus_line: Optional[DiffLine] = None,
+    plus_line: Optional[DiffLine] = None,
+    minus_str: Optional[str] = None,
+    plus_str: Optional[str] = None,
+    flag: Optional[Flag] = None,
 ) -> dict[str, Any]:
     """Create issue dict object.
 
     Used to ensure consistency in all issue objects that
-    will be written to final output file.
+    will be written to final output file. A flag being passed
+    implies that it was a flagged issue and the flag information
+    will be embedded in the dict.
 
     Args:
         minus_line: Diff line object containing the minus line
