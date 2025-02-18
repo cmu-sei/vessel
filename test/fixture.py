@@ -35,7 +35,7 @@ def get_test_flag():
         filetype=".",
         command=".",
         comment=".",
-        indiff=r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{9}",
+        indiff=r"\d+",
     )
 
 
