@@ -81,63 +81,67 @@ TEST_UNIFIED_DIFFS = [
     # 1 block. 1 minus line, 2 plus line
     (
         "@@ -1,2 +1,3 @@\n 1\n-2\n+2!\n+3!\n",
-        ([DiffLine("2", 2, 2), DiffLine("")], [DiffLine("2!", 3, 2), DiffLine("3!", 4, 3)])
+        { "list1": [DiffLine("2", 2, 2), DiffLine("")], "list2": [DiffLine("2!", 3, 2), DiffLine("3!", 4, 3)]}
     ),
     # 1 block. 1 minus line, 4 plus line
     (
         "@@ -1,2 +1,5 @@\n 1\n-2\n+2!\n+3!\n+4!\n+5!\n",
-        ([DiffLine("2", 2, 2), DiffLine(""), DiffLine(""), DiffLine("")], [DiffLine("2!", 3, 2), DiffLine("3!", 4, 3), DiffLine("4!", 5, 4), DiffLine("5!", 6, 5)])
+        { "list1": [DiffLine("2", 2, 2), DiffLine(""), DiffLine(""), DiffLine("")], "list2": [DiffLine("2!", 3, 2), DiffLine("3!", 4, 3), DiffLine("4!", 5, 4), DiffLine("5!", 6, 5)]}
     ),
     # 2 blocks. Block 1: 1 minus line, 2 plus line. Block 2: 1 minus line, 2 plus line.
     (
         "@@ -1,4 +1,6 @@\n 1\n-2\n+2!\n+3!\n \n-4\n+4!\n+5!\n",
-        ([DiffLine("2", 2, 2), DiffLine(""), DiffLine("4", 6, 4), DiffLine("")], [DiffLine("2!", 3, 2), DiffLine("3!", 4, 3), DiffLine("4!", 7, 5), DiffLine("5!", 8, 6)])
+        { "list1": [DiffLine("2", 2, 2), DiffLine(""), DiffLine("4", 6, 4), DiffLine("")], "list2": [DiffLine("2!", 3, 2), DiffLine("3!", 4, 3), DiffLine("4!", 7, 5), DiffLine("5!", 8, 6)]}
     ),
     # 2 blocks. Block 1: 1 minus line, 4 plus line. Block 2: 1 minus line, 4 plus line.
     (
         "@@ -1,4 +1,10 @@\n 1\n-2\n+2!\n+3!\n+4!\n+5!\n \n-6\n+6!\n+7!\n+8!\n+9!\n",
-        ([DiffLine("2", 2, 2), DiffLine(""), DiffLine(""), DiffLine(""), DiffLine("6", 8, 4), DiffLine(""), DiffLine(""), DiffLine("")], [DiffLine("2!", 3, 2), DiffLine("3!", 4, 3), DiffLine("4!", 5, 4), DiffLine("5!", 6, 5), DiffLine("6!", 9, 7), DiffLine("7!", 10, 8), DiffLine("8!", 11, 9), DiffLine("9!", 12, 10)])
+        { "list1": [DiffLine("2", 2, 2), DiffLine(""), DiffLine(""), DiffLine(""), DiffLine("6", 8, 4), DiffLine(""), DiffLine(""), DiffLine("")], "list2": [DiffLine("2!", 3, 2), DiffLine("3!", 4, 3), DiffLine("4!", 5, 4), DiffLine("5!", 6, 5), DiffLine("6!", 9, 7), DiffLine("7!", 10, 8), DiffLine("8!", 11, 9), DiffLine("9!", 12, 10)]}
     ),
     # 2 blocks. Block 1: 2 minus line, 2 plus line. Block 2: 1 minus line, 2 plus line.
     (
         "@@ -1,5 +1,6 @@\n 1\n-2\n-3\n+2!\n+3!\n \n-4\n+4!\n+5!\n",
-        ([DiffLine("2", 2, 2), DiffLine("3", 3, 3), DiffLine("4", 7, 5), DiffLine("")], [DiffLine("2!", 4, 2), DiffLine("3!", 5, 3), DiffLine("4!", 8, 5), DiffLine("5!", 9, 6)])
+        { "list1": [DiffLine("2", 2, 2), DiffLine("3", 3, 3), DiffLine("4", 7, 5), DiffLine("")], "list2": [DiffLine("2!", 4, 2), DiffLine("3!", 5, 3), DiffLine("4!", 8, 5), DiffLine("5!", 9, 6)]}
     ),
     # 2 blocks. Block 1: 2 minus line, 2 plus line. Block 2: 1 minus line, 4 plus line.
     (
         "@@ -1,5 +1,8 @@\n 1\n-2\n-3\n+2!\n+3!\n \n-4\n+4!\n+5!\n+6!\n+7!\n",
-        ([DiffLine("2", 2, 2), DiffLine("3", 3, 3), DiffLine("4", 7, 5), DiffLine(""), DiffLine(""), DiffLine("")], [DiffLine("2!", 4, 2), DiffLine("3!", 5, 3), DiffLine("4!", 8, 5), DiffLine("5!", 9, 6), DiffLine("6!", 10, 7), DiffLine("7!", 11, 8)])
+        { "list1": [DiffLine("2", 2, 2), DiffLine("3", 3, 3), DiffLine("4", 7, 5), DiffLine(""), DiffLine(""), DiffLine("")], "list2": [DiffLine("2!", 4, 2), DiffLine("3!", 5, 3), DiffLine("4!", 8, 5), DiffLine("5!", 9, 6), DiffLine("6!", 10, 7), DiffLine("7!", 11, 8)]}
     ),
     # 1 block. 2 minus line, 1 plus line
     (
         "@@ -1,3 +1,2 @@\n 1\n-2!\n-3!\n+2\n",
-        ([DiffLine("2!", 2, 2), DiffLine("3!", 3, 3)], [DiffLine("2", 4, 2), DiffLine("")])
+        { "list1": [DiffLine("2!", 2, 2), DiffLine("3!", 3, 3)], "list2": [DiffLine("2", 4, 2), DiffLine("")]}
     ),
     # 1 block. 4 minus line, 1 plus line
     (
         "@@ -1,5 +1,2 @@\n 1\n-2!\n-3!\n-4!\n-5!\n+2\n",
-        ([DiffLine("2!", 2, 2), DiffLine("3!", 3, 3), DiffLine("4!", 4, 4), DiffLine("5!", 5, 5)], [DiffLine("2", 6, 2), DiffLine(""), DiffLine(""), DiffLine("")])
+        { "list1": [DiffLine("2!", 2, 2), DiffLine("3!", 3, 3), DiffLine("4!", 4, 4), DiffLine("5!", 5, 5)], "list2": [DiffLine("2", 6, 2), DiffLine(""), DiffLine(""), DiffLine("")]}
     ),
     # 2 blocks. Block 1: 2 minus line, 1 plus line. Block 2: 2 minus line, 1 plus line.
     (
         "@@ -1,6 +1,4 @@\n 1\n-2!\n-3!\n+2\n \n-4!\n-5!\n+4\n",
-        ([DiffLine("2!", 2, 2), DiffLine("3!", 3, 3), DiffLine("4!", 6, 5), DiffLine("5!", 7, 6)], [DiffLine("2", 4, 2), DiffLine(""), DiffLine("4", 8, 4), DiffLine("")])
+        { "list1": [DiffLine("2!", 2, 2), DiffLine("3!", 3, 3), DiffLine("4!", 6, 5), DiffLine("5!", 7, 6)], "list2": [DiffLine("2", 4, 2), DiffLine(""), DiffLine("4", 8, 4), DiffLine("")]}
     ),
     # 2 blocks. Block 1: 4 minus line, 1 plus line. Block 2: 4 minus line, 1 plus line.
     (
         "@@ -1,10 +1,4 @@\n 1\n-2!\n-3!\n-4!\n-5!\n+2\n \n-6!\n-7!\n-8!\n-9!\n+6\n",
-        ([DiffLine("2!", 2, 2), DiffLine("3!", 3, 3), DiffLine("4!", 4, 4), DiffLine("5!", 5, 5), DiffLine("6!", 8, 7), DiffLine("7!", 9, 8), DiffLine("8!", 10, 9), DiffLine("9!", 11, 10)], [DiffLine("2", 6, 2), DiffLine(""), DiffLine(""), DiffLine(""), DiffLine("6", 12, 4), DiffLine(""), DiffLine(""), DiffLine("")])
+        { "list1": [DiffLine("2!", 2, 2), DiffLine("3!", 3, 3), DiffLine("4!", 4, 4), DiffLine("5!", 5, 5), DiffLine("6!", 8, 7), DiffLine("7!", 9, 8), DiffLine("8!", 10, 9), DiffLine("9!", 11, 10)], "list2": [DiffLine("2", 6, 2), DiffLine(""), DiffLine(""), DiffLine(""), DiffLine("6", 12, 4), DiffLine(""), DiffLine(""), DiffLine("")]}
     ),
     # 2 blocks. Block 1: 2 minus line, 2 plus line. Block 2: 2 minus line, 1 plus line.
     (
         "@@ -1,6 +1,5 @@\n 1\n-2!\n-3!\n+2\n+3\n \n-4!\n-5!\n+4\n",
-        ([DiffLine("2!", 2, 2), DiffLine("3!", 3, 3), DiffLine("4!", 7, 5), DiffLine("5!", 8, 6)], [DiffLine("2", 4, 2), DiffLine("3", 5, 3), DiffLine("4", 9, 5), DiffLine("")])
+        { "list1": [DiffLine("2!", 2, 2), DiffLine("3!", 3, 3), DiffLine("4!", 7, 5), DiffLine("5!", 8, 6)], "list2": [DiffLine("2", 4, 2), DiffLine("3", 5, 3), DiffLine("4", 9, 5), DiffLine("")]}
     ),
     # 2 blocks. Block 1: 2 minus line, 2 plus line. Block 2: 4 minus line, 1 plus line.
     (
         "@@ -1,8 +1,5 @@\n 1\n-2!\n-3!\n+2\n+3\n \n-4!\n-5!\n-6!\n-7!\n+4\n",
-        ([DiffLine("2!", 2, 2), DiffLine("3!", 3, 3), DiffLine("4!", 7, 5), DiffLine("5!", 8, 6), DiffLine("6!", 9, 7), DiffLine("7!", 10, 8)], [DiffLine("2", 4, 2), DiffLine("3", 5, 3), DiffLine("4", 11, 5), DiffLine(""), DiffLine(""), DiffLine("")])
+        { "list1": [DiffLine("2!", 2, 2), DiffLine("3!", 3, 3), DiffLine("4!", 7, 5), DiffLine("5!", 8, 6), DiffLine("6!", 9, 7), DiffLine("7!", 10, 8)], "list2": [DiffLine("2", 4, 2), DiffLine("3", 5, 3), DiffLine("4", 11, 5), DiffLine(""), DiffLine(""), DiffLine("")]}
     ),
+]
+
+TEST_DIFFLINES = [
+    ()
 ]
 
 """Tests for Unified Diff functions."""
@@ -172,14 +176,18 @@ def test_align_diff_lines(test_input, expected):
     # TODO : Is it wrong to do splitlines here? Nice to save space in the test list
     line_list1, line_list2 = align_diff_lines(test_input.splitlines())
 
-    assert len(line_list1) == len(expected[0])
-    assert len(line_list2) == len(expected[1])
+    assert len(line_list1) == len(expected["list1"])
+    assert len(line_list2) == len(expected["list2"])
 
-    for line, expected_line in zip(line_list1, expected[0]):
+    for line, expected_line in zip(line_list1, expected["list1"]):
         assert line.text == expected_line.text
         assert line.diff_line_number == expected_line.diff_line_number
         assert line.file_line_number == expected_line.file_line_number
 
-    for line, expected_line in zip(line_list2, expected[1]):
+    for line, expected_line in zip(line_list2, expected["list2"]):
         assert line.diff_line_number == expected_line.diff_line_number
         assert line.file_line_number == expected_line.file_line_number
+
+# @pytest.mark.paramtrise("test_input, expected", )
+# def test_issues_from_difflines(test_input, expected):
+#     """Tests that issues are correctly flagged, and intervals are updated correctly"""
