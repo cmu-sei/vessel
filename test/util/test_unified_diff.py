@@ -23,7 +23,7 @@
 #
 # DM24-1321
 
-from vessel.utils.unified_diff import equal_entry_list, parse_unified_diff_header, DiffLine, align_diff_lines, Flag, make_issue_dict, issues_from_difflines
+from vessel.utils.unified_diff import equal_entry_list, parse_unified_diff_header, DiffLine, align_diff_lines, make_issue_dict, issues_from_difflines, intervals_to_str, Diff
 
 from test.fixture import get_test_flag
 
@@ -31,7 +31,22 @@ import portion
 
 import pytest
 
-# TODO : Does this need to handle DiffLine objects? the object compare breaks on hashes of the obj
+TEST_DIFF_CLASS_OBJECTS = [
+    (
+        Diff("src1", "src2", "par src1", "par src2", ["com1", "com2"], "@@ -1,2 +1,3 @@\n 1\n-2\n+2!\n+3!\n"),
+        {
+            "source1": "src1",
+            "source2": "src2",
+            "unified_diff_id": "ID not yet assigned",
+            "comments": ["com1", "com2"],
+            "unified_diff": "@@ -1,2 +1,3 @@\n 1\n-2\n+2!\n+3!\n".splitlines(),
+        }
+    )
+]
+
+# TODO : Does this need to handle DiffLine objects? The object compare flags the objects as different
+#           event when all contents are the same due to comparing hashes. However accounting for this
+#           would make the test very complicated to account for obj and int
 # (
 #     { "list1": [DiffLine("line1", None, None), DiffLine("line2", None, None)], "list2": [DiffLine("line3", None, None)], "fillValue": DiffLine("", None, None)},
 #     { "list1": [DiffLine("line1", None, None), DiffLine("line2", None, None)], "list2": [DiffLine("line3", None, None), DiffLine("", None, None)]}
@@ -225,13 +240,28 @@ TEST_ISSUE_DICT_INPUT = [
     )
 ]
 
+TEST_INTERVALS = [
+    ({"str": "0123456789", "interval": portion.closed(3,6)}, "3456"),
+    ({"str": "0123456789", "interval": portion.open(3,6)}, "45"),
+    ({"str": "0123456789", "interval": portion.openclosed(3,6)}, "456"),
+    ({"str": "0123456789", "interval": portion.closedopen(3,6)}, "345"),
+    ({"str": "0123456789", "interval": portion.closed(1,3) | portion.closed(5,7)}, "123567"),
+    ({"str": "0123456789", "interval": portion.open(1,3) | portion.open(5,7)}, "26")
+    
+]
+
 """Tests for Unified Diff functions."""
 
-# def test_Diff():
-#     assert False
+@pytest.mark.parametrize("test_input, expected", TEST_DIFF_CLASS_OBJECTS)
+def test_Diff_to_dict(test_input, expected):
+    """Ensures Diff properly converts to a dict"""
+    
+    dict = test_input.to_dict()
+    print("asdf")
+    print(dict)
+    print(expected)
 
-# def test_DiffLine():
-#     assert False
+    assert dict == expected
 
 @pytest.mark.parametrize("test_input, expected", TEST_LISTS)
 def test_equal_entry_list(test_input: dict, expected: dict):
@@ -293,3 +323,11 @@ def test_make_issue_dict(test_input, expected):
     )
 
     assert dict == expected
+
+@pytest.mark.parametrize("test_input, expected", TEST_INTERVALS)
+def test_intervals_to_str(test_input, expected):
+    """Tests that the correct substrings are returned with defined intervals."""
+
+    str = intervals_to_str(test_input["str"], test_input["interval"])
+
+    assert str == expected

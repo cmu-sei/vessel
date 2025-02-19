@@ -413,7 +413,7 @@ def intervals_to_str(
     Returns string containing the characters in the input string
     that are in the ranges specifiec by the interval parameter.
     Appriately handles open and closed ends of the intervals used
-    by the Portion library.
+    by the Portion library. Does not handle singleton.
 
     Args:
         input_string: String to take sections out of
