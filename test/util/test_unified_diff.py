@@ -466,9 +466,6 @@ def test_Diff_to_dict(test_input, expected):
     """Ensures Diff properly converts to a dict"""
 
     dict = test_input.to_dict()
-    print("asdf")
-    print(dict)
-    print(expected)
 
     assert dict == expected
 
