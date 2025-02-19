@@ -302,7 +302,9 @@ def issues_from_difflines(
             )
             plus_match_str = intervals_to_str(
                 plus_line.text,
-                portion.closed(plus_match_interval[0], plus_match_interval[1] - 1),
+                portion.closed(
+                    plus_match_interval[0], plus_match_interval[1] - 1
+                ),
             )
 
         if minus_match_interval is None:
