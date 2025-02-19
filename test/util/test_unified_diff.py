@@ -186,6 +186,45 @@ TEST_DIFFLINES = [
     ),
 ]
 
+TEST_ISSUE_DICT_INPUT = [
+    (
+        {
+            "minus_line": DiffLine("example 123", 1, 2),
+            "plus_line": DiffLine("example 456", 3, 4),
+            "minus_str": "123",
+            "plus_str": "456",
+            "flag": None 
+        },
+        {
+            "minus_file_line_number": 2,
+            "plus_file_line_number": 4,
+            "minus_diff_line_number": 1,
+            "plus_diff_line_number": 3,
+            "minus_unmatched_str": "123",
+            "plus_unmatched_str": "456",
+        }
+    ),
+    (
+        {
+            "minus_line": DiffLine("example 123", 1, 2),
+            "plus_line": DiffLine("example 456", 3, 4),
+            "minus_str": "123",
+            "plus_str": "456",
+            "flag": get_test_flag()
+        },
+        {
+            "id": "test_flag",
+            "description": "test flag",
+            "minus_file_line_number": 2,
+            "plus_file_line_number": 4,
+            "minus_diff_line_number": 1,
+            "plus_diff_line_number": 3,
+            "minus_matched_str": "123",
+            "plus_matched_str": "456",
+        }
+    )
+]
+
 """Tests for Unified Diff functions."""
 
 # def test_Diff():
@@ -240,3 +279,17 @@ def test_issues_from_difflines(test_input, expected):
     assert unknown == expected["unknown"]
     assert minus_unmatched == expected["minus_unmatched"]
     assert plus_unmatched == expected["plus_unmatched"]
+
+@pytest.mark.parametrize("test_input, expected", TEST_ISSUE_DICT_INPUT)
+def test_make_issue_dict(test_input, expected):
+    """Tests that the dict is created properly."""
+
+    dict = make_issue_dict(
+        test_input["minus_line"],
+        test_input["plus_line"],
+        test_input["minus_str"],
+        test_input["plus_str"],
+        test_input["flag"],
+    )
+
+    assert dict == expected
