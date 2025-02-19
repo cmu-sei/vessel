@@ -389,6 +389,17 @@ TEST_DIFFLINES = [
 
 TEST_ISSUE_DICT_INPUT = [
     (
+        {},
+        {
+            "minus_file_line_number": None,
+            "plus_file_line_number": None,
+            "minus_diff_line_number": None,
+            "plus_diff_line_number": None,
+            "minus_unmatched_str": None,
+            "plus_unmatched_str": None,
+        },
+    ),
+    (
         {
             "minus_line": DiffLine("example 123", 1, 2),
             "plus_line": DiffLine("example 456", 3, 4),
@@ -521,13 +532,7 @@ def test_issues_from_difflines(test_input, expected):
 def test_make_issue_dict(test_input, expected):
     """Tests that the dict is created properly."""
 
-    dict = make_issue_dict(
-        test_input["minus_line"],
-        test_input["plus_line"],
-        test_input["minus_str"],
-        test_input["plus_str"],
-        test_input["flag"],
-    )
+    dict = make_issue_dict(**test_input)
 
     assert dict == expected
 
