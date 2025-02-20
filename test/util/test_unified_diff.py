@@ -22,6 +22,7 @@
 # each subject to its own license.
 #
 # DM24-1321
+"""Tests for Unified Diff functions."""
 
 import portion
 import pytest
@@ -37,6 +38,10 @@ from vessel.utils.unified_diff import (
     make_issue_dict,
     parse_unified_diff_header,
 )
+
+# -----------------------------------------------------------------------------
+# Tests for Diff.to_dict()
+# -----------------------------------------------------------------------------
 
 TEST_DIFF_CLASS_OBJECTS = [
     (
@@ -58,13 +63,20 @@ TEST_DIFF_CLASS_OBJECTS = [
     )
 ]
 
-# TODO : Does this need to handle DiffLine objects? The object compare flags the objects as different
-#           event when all contents are the same due to comparing hashes. However accounting for this
-#           would make the test very complicated to account for obj and int
-# (
-#     { "list1": [DiffLine("line1", None, None), DiffLine("line2", None, None)], "list2": [DiffLine("line3", None, None)], "fillValue": DiffLine("", None, None)},
-#     { "list1": [DiffLine("line1", None, None), DiffLine("line2", None, None)], "list2": [DiffLine("line3", None, None), DiffLine("", None, None)]}
-# ),
+
+@pytest.mark.parametrize("test_input, expected", TEST_DIFF_CLASS_OBJECTS)
+def test_Diff_to_dict(test_input, expected):
+    """Ensures Diff properly converts to a dict"""
+
+    dict = test_input.to_dict()
+
+    assert dict == expected
+
+
+# -----------------------------------------------------------------------------
+# Tests for equal_entry_list()
+# -----------------------------------------------------------------------------
+
 TEST_LISTS = [
     (
         {"list1": [1, 2], "list2": [1, 2, 3], "fillValue": -1},
@@ -101,11 +113,42 @@ TEST_LISTS = [
     ),
 ]
 
+
+@pytest.mark.parametrize("test_input, expected", TEST_LISTS)
+def test_equal_entry_list(test_input: dict, expected: dict):
+    """Tests that inputted lists are returned equal length with the correct fill value."""
+
+    equal_list1, equal_list2 = equal_entry_list(
+        test_input["list1"], test_input["list2"], test_input["fillValue"]
+    )
+
+    assert equal_list1 == expected["list1"]
+    assert equal_list2 == expected["list2"]
+
+
+# -----------------------------------------------------------------------------
+# Tests for parse_unified_diff_header()
+# -----------------------------------------------------------------------------
+
 TEST_UNIFIED_DIFF_HEADERS = [
     ("@@ -8,13 +15,13 @@", (8, 15)),
     ("@@ -0,0 +1 @@", (0, 1)),
     ("@@ -1 +0,0 @@", (1, 0)),
 ]
+
+
+@pytest.mark.parametrize("test_input, expected", TEST_UNIFIED_DIFF_HEADERS)
+def test_parse_unified_diff_header(test_input: str, expected: tuple[int, int]):
+    """Tests that the unified diff header is parsed correctly to return start lines of the diffs."""
+
+    line_num1, line_num2 = parse_unified_diff_header(test_input)
+
+    assert (line_num1, line_num2) == expected
+
+
+# -----------------------------------------------------------------------------
+# Tests for align_diff_lines()
+# -----------------------------------------------------------------------------
 
 TEST_UNIFIED_DIFFS = [
     # 1 block. 1 minus line, 2 plus line
@@ -330,6 +373,31 @@ TEST_UNIFIED_DIFFS = [
     ),
 ]
 
+
+@pytest.mark.parametrize("test_input, expected", TEST_UNIFIED_DIFFS)
+def test_align_diff_lines(test_input, expected):
+    """Tests that lines in unified diff get aligned as expected."""
+
+    # TODO : Is it wrong to do splitlines here? Nice to save space in the test list
+    line_list1, line_list2 = align_diff_lines(test_input.splitlines())
+
+    assert len(line_list1) == len(expected["list1"])
+    assert len(line_list2) == len(expected["list2"])
+
+    for line, expected_line in zip(line_list1, expected["list1"]):
+        assert line.text == expected_line.text
+        assert line.diff_line_number == expected_line.diff_line_number
+        assert line.file_line_number == expected_line.file_line_number
+
+    for line, expected_line in zip(line_list2, expected["list2"]):
+        assert line.diff_line_number == expected_line.diff_line_number
+        assert line.file_line_number == expected_line.file_line_number
+
+
+# -----------------------------------------------------------------------------
+# Tests for issues_from_difflines()
+# -----------------------------------------------------------------------------
+
 TEST_DIFFLINES = [
     (
         {
@@ -387,6 +455,25 @@ TEST_DIFFLINES = [
     ),
 ]
 
+
+@pytest.mark.parametrize("test_input, expected", TEST_DIFFLINES)
+def test_issues_from_difflines(test_input, expected):
+    """Tests that issues are correctly flagged, and intervals are updated correctly"""
+
+    flagged, unknown, minus_unmatched, plus_unmatched = issues_from_difflines(
+        test_input["minus_line"], test_input["plus_line"], test_input["flag"]
+    )
+
+    assert flagged == expected["flagged"]
+    assert unknown == expected["unknown"]
+    assert minus_unmatched == expected["minus_unmatched"]
+    assert plus_unmatched == expected["plus_unmatched"]
+
+
+# -----------------------------------------------------------------------------
+# Tests for make_issue_dict()
+# -----------------------------------------------------------------------------
+
 TEST_ISSUE_DICT_INPUT = [
     (
         {},
@@ -437,6 +524,20 @@ TEST_ISSUE_DICT_INPUT = [
     ),
 ]
 
+
+@pytest.mark.parametrize("test_input, expected", TEST_ISSUE_DICT_INPUT)
+def test_make_issue_dict(test_input, expected):
+    """Tests that the dict is created properly."""
+
+    dict = make_issue_dict(**test_input)
+
+    assert dict == expected
+
+
+# -----------------------------------------------------------------------------
+# Tests for intervals_to_str()
+# -----------------------------------------------------------------------------
+
 TEST_INTERVALS = [
     ({"str": "0123456789", "interval": portion.closed(3, 6)}, "3456"),
     ({"str": "0123456789", "interval": portion.open(3, 6)}, "45"),
@@ -457,81 +558,6 @@ TEST_INTERVALS = [
         "26",
     ),
 ]
-
-"""Tests for Unified Diff functions."""
-
-
-@pytest.mark.parametrize("test_input, expected", TEST_DIFF_CLASS_OBJECTS)
-def test_Diff_to_dict(test_input, expected):
-    """Ensures Diff properly converts to a dict"""
-
-    dict = test_input.to_dict()
-
-    assert dict == expected
-
-
-@pytest.mark.parametrize("test_input, expected", TEST_LISTS)
-def test_equal_entry_list(test_input: dict, expected: dict):
-    """Tests that inputted lists are returned equal length with the correct fill value."""
-
-    equal_list1, equal_list2 = equal_entry_list(
-        test_input["list1"], test_input["list2"], test_input["fillValue"]
-    )
-
-    assert equal_list1 == expected["list1"]
-    assert equal_list2 == expected["list2"]
-
-
-@pytest.mark.parametrize("test_input, expected", TEST_UNIFIED_DIFF_HEADERS)
-def test_parse_unified_diff_header(test_input: str, expected: tuple[int, int]):
-    """Tests that the unified diff header is parsed correctly to return start lines of the diffs."""
-
-    line_num1, line_num2 = parse_unified_diff_header(test_input)
-
-    assert (line_num1, line_num2) == expected
-
-
-@pytest.mark.parametrize("test_input, expected", TEST_UNIFIED_DIFFS)
-def test_align_diff_lines(test_input, expected):
-    """Tests that lines in unified diff get aligned as expected."""
-
-    # TODO : Is it wrong to do splitlines here? Nice to save space in the test list
-    line_list1, line_list2 = align_diff_lines(test_input.splitlines())
-
-    assert len(line_list1) == len(expected["list1"])
-    assert len(line_list2) == len(expected["list2"])
-
-    for line, expected_line in zip(line_list1, expected["list1"]):
-        assert line.text == expected_line.text
-        assert line.diff_line_number == expected_line.diff_line_number
-        assert line.file_line_number == expected_line.file_line_number
-
-    for line, expected_line in zip(line_list2, expected["list2"]):
-        assert line.diff_line_number == expected_line.diff_line_number
-        assert line.file_line_number == expected_line.file_line_number
-
-
-@pytest.mark.parametrize("test_input, expected", TEST_DIFFLINES)
-def test_issues_from_difflines(test_input, expected):
-    """Tests that issues are correctly flagged, and intervals are updated correctly"""
-
-    flagged, unknown, minus_unmatched, plus_unmatched = issues_from_difflines(
-        test_input["minus_line"], test_input["plus_line"], test_input["flag"]
-    )
-
-    assert flagged == expected["flagged"]
-    assert unknown == expected["unknown"]
-    assert minus_unmatched == expected["minus_unmatched"]
-    assert plus_unmatched == expected["plus_unmatched"]
-
-
-@pytest.mark.parametrize("test_input, expected", TEST_ISSUE_DICT_INPUT)
-def test_make_issue_dict(test_input, expected):
-    """Tests that the dict is created properly."""
-
-    dict = make_issue_dict(**test_input)
-
-    assert dict == expected
 
 
 @pytest.mark.parametrize("test_input, expected", TEST_INTERVALS)
