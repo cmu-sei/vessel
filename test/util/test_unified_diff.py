@@ -80,9 +80,10 @@ def test_Diff_to_dict(test_input, expected):
 TEST_DIFFLINE_DATA = [
     (
         {"text": "012345", "diff_line_number": 7, "file_line_number": 8},
-        {"text": "012345", "diff_line_number": 7, "file_line_number": 8}
+        {"text": "012345", "diff_line_number": 7, "file_line_number": 8},
     )
 ]
+
 
 @pytest.mark.parametrize("test_input, expected", TEST_DIFFLINE_DATA)
 def test_DiffLine(test_input, expected):
@@ -92,7 +93,10 @@ def test_DiffLine(test_input, expected):
 
     assert diffline.diff_line_number == expected["diff_line_number"]
     assert diffline.file_line_number == expected["file_line_number"]
-    assert intervals_to_str(diffline.text, diffline.unmatched_intervals) == expected["text"]
+    assert (
+        intervals_to_str(diffline.text, diffline.unmatched_intervals)
+        == expected["text"]
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -477,7 +481,9 @@ TEST_DIFFLINES = [
 def test_issues_from_difflines(test_input, expected):
     """Tests that issues are correctly flagged, and intervals are updated correctly"""
 
-    flagged, unknown, minus_unmatched, plus_unmatched = issues_from_difflines(**test_input)
+    flagged, unknown, minus_unmatched, plus_unmatched = issues_from_difflines(
+        **test_input
+    )
 
     assert flagged == expected["flagged"]
     assert unknown == expected["unknown"]
@@ -554,10 +560,19 @@ def test_make_issue_dict(test_input, expected):
 # -----------------------------------------------------------------------------
 
 TEST_INTERVALS = [
-    ({"input_string": "0123456789", "intervals": portion.closed(3, 6)}, "3456"),
+    (
+        {"input_string": "0123456789", "intervals": portion.closed(3, 6)},
+        "3456",
+    ),
     ({"input_string": "0123456789", "intervals": portion.open(3, 6)}, "45"),
-    ({"input_string": "0123456789", "intervals": portion.openclosed(3, 6)}, "456"),
-    ({"input_string": "0123456789", "intervals": portion.closedopen(3, 6)}, "345"),
+    (
+        {"input_string": "0123456789", "intervals": portion.openclosed(3, 6)},
+        "456",
+    ),
+    (
+        {"input_string": "0123456789", "intervals": portion.closedopen(3, 6)},
+        "345",
+    ),
     (
         {
             "input_string": "0123456789",
