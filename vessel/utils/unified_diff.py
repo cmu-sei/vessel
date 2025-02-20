@@ -117,7 +117,7 @@ class DiffLine:
 def equal_entry_list(
     list1: list[Any],
     list2: list[Any],
-    fillvalue: Optional[Any] = None,
+    fill_value: Optional[Any] = None,
 ) -> tuple[list, list]:
     """Return two lists of even length with from two lists.
 
@@ -138,9 +138,9 @@ def equal_entry_list(
     #           give better unified diffs. Very hard to line up lines without
     #           context
     while len(list1) < len(list2):
-        list1.append(fillvalue)
+        list1.append(fill_value)
     while len(list2) < len(list1):
-        list2.append(fillvalue)
+        list2.append(fill_value)
 
     return list1, list2
 

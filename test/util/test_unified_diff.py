@@ -40,7 +40,7 @@ from vessel.utils.unified_diff import (
 )
 
 # -----------------------------------------------------------------------------
-# Tests for Diff.to_dict()
+# Tests for Diff.to_dict
 # -----------------------------------------------------------------------------
 
 TEST_DIFF_CLASS_OBJECTS = [
@@ -74,41 +74,63 @@ def test_Diff_to_dict(test_input, expected):
 
 
 # -----------------------------------------------------------------------------
-# Tests for equal_entry_list()
+# Tests for DiffLine
+# -----------------------------------------------------------------------------
+
+TEST_DIFFLINE_DATA = [
+    (
+        {"text": "012345", "diff_line_number": 7, "file_line_number": 8},
+        {"text": "012345", "diff_line_number": 7, "file_line_number": 8}
+    )
+]
+
+@pytest.mark.parametrize("test_input, expected", TEST_DIFFLINE_DATA)
+def test_DiffLine(test_input, expected):
+    """Tests for DiffLine class."""
+
+    diffline = DiffLine(**test_input)
+
+    assert diffline.diff_line_number == expected["diff_line_number"]
+    assert diffline.file_line_number == expected["file_line_number"]
+    assert intervals_to_str(diffline.text, diffline.unmatched_intervals) == expected["text"]
+
+
+# -----------------------------------------------------------------------------
+# Tests for equal_entry_list
 # -----------------------------------------------------------------------------
 
 TEST_LISTS = [
     (
-        {"list1": [1, 2], "list2": [1, 2, 3], "fillValue": -1},
+        {"list1": [1, 2], "list2": [1, 2, 3], "fill_value": -1},
         {"list1": [1, 2, -1], "list2": [1, 2, 3]},
     ),
     (
-        {"list1": [1, 2], "list2": [1, 2, 3, 4, 5], "fillValue": -1},
+        {"list1": [1, 2], "list2": [1, 2, 3, 4, 5], "fill_value": -1},
         {"list1": [1, 2, -1, -1, -1], "list2": [1, 2, 3, 4, 5]},
     ),
     (
-        {"list1": [1, 2, 3], "list2": [1, 2], "fillValue": -1},
+        {"list1": [1, 2, 3], "list2": [1, 2], "fill_value": -1},
         {"list1": [1, 2, 3], "list2": [1, 2, -1]},
     ),
     (
-        {"list1": [1, 2, 3, 4, 5], "list2": [1, 2], "fillValue": -1},
+        {"list1": [1, 2, 3, 4, 5], "list2": [1, 2], "fill_value": -1},
         {"list1": [1, 2, 3, 4, 5], "list2": [1, 2, -1, -1, -1]},
     ),
-    ({"list1": [], "list2": [], "fillValue": -1}, {"list1": [], "list2": []}),
+    ({"list1": [], "list2": [], "fill_value": -1}, {"list1": [], "list2": []}),
     (
-        {"list1": [], "list2": [1], "fillValue": -1},
+        {"list1": [], "list2": [1], "fill_value": -1},
         {"list1": [-1], "list2": [1]},
     ),
     (
-        {"list1": [], "list2": [1, 2], "fillValue": -1},
+        {"list1": [], "list2": [1, 2], "fill_value": -1},
         {"list1": [-1, -1], "list2": [1, 2]},
     ),
     (
-        {"list1": [1], "list2": [], "fillValue": -1},
+        {"list1": [1], "list2": [], "fill_value": -1},
         {"list1": [1], "list2": [-1]},
     ),
     (
-        {"list1": [1, 2], "list2": [], "fillValue": -1},
+        {"list1": [1, 2], "list2": [], "fill_value": -1},
         {"list1": [1, 2], "list2": [-1, -1]},
     ),
 ]
@@ -118,16 +140,14 @@ TEST_LISTS = [
 def test_equal_entry_list(test_input: dict, expected: dict):
     """Tests that inputted lists are returned equal length with the correct fill value."""
 
-    equal_list1, equal_list2 = equal_entry_list(
-        test_input["list1"], test_input["list2"], test_input["fillValue"]
-    )
+    equal_list1, equal_list2 = equal_entry_list(**test_input)
 
     assert equal_list1 == expected["list1"]
     assert equal_list2 == expected["list2"]
 
 
 # -----------------------------------------------------------------------------
-# Tests for parse_unified_diff_header()
+# Tests for parse_unified_diff_header
 # -----------------------------------------------------------------------------
 
 TEST_UNIFIED_DIFF_HEADERS = [
@@ -147,7 +167,7 @@ def test_parse_unified_diff_header(test_input: str, expected: tuple[int, int]):
 
 
 # -----------------------------------------------------------------------------
-# Tests for align_diff_lines()
+# Tests for align_diff_lines
 # -----------------------------------------------------------------------------
 
 TEST_UNIFIED_DIFFS = [
@@ -392,7 +412,7 @@ def test_align_diff_lines(test_input, expected):
 
 
 # -----------------------------------------------------------------------------
-# Tests for issues_from_difflines()
+# Tests for issues_from_difflines
 # -----------------------------------------------------------------------------
 
 TEST_DIFFLINES = [
@@ -457,9 +477,7 @@ TEST_DIFFLINES = [
 def test_issues_from_difflines(test_input, expected):
     """Tests that issues are correctly flagged, and intervals are updated correctly"""
 
-    flagged, unknown, minus_unmatched, plus_unmatched = issues_from_difflines(
-        test_input["minus_line"], test_input["plus_line"], test_input["flag"]
-    )
+    flagged, unknown, minus_unmatched, plus_unmatched = issues_from_difflines(**test_input)
 
     assert flagged == expected["flagged"]
     assert unknown == expected["unknown"]
@@ -468,7 +486,7 @@ def test_issues_from_difflines(test_input, expected):
 
 
 # -----------------------------------------------------------------------------
-# Tests for make_issue_dict()
+# Tests for make_issue_dict
 # -----------------------------------------------------------------------------
 
 TEST_ISSUE_DICT_INPUT = [
@@ -532,25 +550,25 @@ def test_make_issue_dict(test_input, expected):
 
 
 # -----------------------------------------------------------------------------
-# Tests for intervals_to_str()
+# Tests for intervals_to_str
 # -----------------------------------------------------------------------------
 
 TEST_INTERVALS = [
-    ({"str": "0123456789", "interval": portion.closed(3, 6)}, "3456"),
-    ({"str": "0123456789", "interval": portion.open(3, 6)}, "45"),
-    ({"str": "0123456789", "interval": portion.openclosed(3, 6)}, "456"),
-    ({"str": "0123456789", "interval": portion.closedopen(3, 6)}, "345"),
+    ({"input_string": "0123456789", "intervals": portion.closed(3, 6)}, "3456"),
+    ({"input_string": "0123456789", "intervals": portion.open(3, 6)}, "45"),
+    ({"input_string": "0123456789", "intervals": portion.openclosed(3, 6)}, "456"),
+    ({"input_string": "0123456789", "intervals": portion.closedopen(3, 6)}, "345"),
     (
         {
-            "str": "0123456789",
-            "interval": portion.closed(1, 3) | portion.closed(5, 7),
+            "input_string": "0123456789",
+            "intervals": portion.closed(1, 3) | portion.closed(5, 7),
         },
         "123567",
     ),
     (
         {
-            "str": "0123456789",
-            "interval": portion.open(1, 3) | portion.open(5, 7),
+            "input_string": "0123456789",
+            "intervals": portion.open(1, 3) | portion.open(5, 7),
         },
         "26",
     ),
@@ -561,6 +579,6 @@ TEST_INTERVALS = [
 def test_intervals_to_str(test_input, expected):
     """Tests that the correct substrings are returned with defined intervals."""
 
-    str = intervals_to_str(test_input["str"], test_input["interval"])
+    str = intervals_to_str(**test_input)
 
     assert str == expected
