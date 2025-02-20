@@ -385,13 +385,10 @@ def test_align_diff_lines(test_input, expected):
     assert len(line_list2) == len(expected["list2"])
 
     for line, expected_line in zip(line_list1, expected["list1"]):
-        assert line.text == expected_line.text
-        assert line.diff_line_number == expected_line.diff_line_number
-        assert line.file_line_number == expected_line.file_line_number
+        assert line == expected_line
 
     for line, expected_line in zip(line_list2, expected["list2"]):
-        assert line.diff_line_number == expected_line.diff_line_number
-        assert line.file_line_number == expected_line.file_line_number
+        assert line == expected_line
 
 
 # -----------------------------------------------------------------------------

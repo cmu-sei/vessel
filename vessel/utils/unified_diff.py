@@ -103,6 +103,16 @@ class DiffLine:
         #   have not been matched by any of the flag['indiff'] regex
         self.unmatched_intervals = portion.closed(0, len(self.text) - 1)
 
+    def __eq__(self, other: object):
+        if isinstance(other, DiffLine):
+            return (
+                self.text == other.text
+                and self.diff_line_number == other.diff_line_number
+                and self.file_line_number == self.file_line_number
+                and self.unmatched_intervals == other.unmatched_intervals
+            )
+        return False
+
 
 def equal_entry_list(
     list1: list[Any],
