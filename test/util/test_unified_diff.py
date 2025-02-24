@@ -402,7 +402,6 @@ TEST_UNIFIED_DIFFS = [
 def test_align_diff_lines(test_input, expected):
     """Tests that lines in unified diff get aligned as expected."""
 
-    # TODO : Is it wrong to do splitlines here? Nice to save space in the test list
     line_list1, line_list2 = align_diff_lines(test_input.splitlines())
 
     assert len(line_list1) == len(expected["list1"])
@@ -410,7 +409,6 @@ def test_align_diff_lines(test_input, expected):
 
     for line, expected_line in zip(line_list1, expected["list1"]):
         assert line == expected_line
-
     for line, expected_line in zip(line_list2, expected["list2"]):
         assert line == expected_line
 

@@ -66,8 +66,12 @@ class Diff:
             self.unified_diff,
         )
 
-    def to_dict(self: "Diff") -> dict:
-        """Returns diff object as a dict."""
+    def to_slim_dict(self: "Diff") -> dict:
+        """Returns diff object as a dict.
+
+        Returns a dict object only containing parts of the diff that are
+        populated. This is done to reduce the size of the output file.
+        """
         dict_obj: dict[str, Any] = {
             "source1": self.source1,
             "source2": self.source2,
