@@ -40,7 +40,7 @@ from vessel.utils.unified_diff import (
 )
 
 # -----------------------------------------------------------------------------
-# Tests for Diff.to_dict
+# Tests for Diff.to_slim_dict
 # -----------------------------------------------------------------------------
 
 TEST_DIFF_CLASS_OBJECTS = [
@@ -65,10 +65,10 @@ TEST_DIFF_CLASS_OBJECTS = [
 
 
 @pytest.mark.parametrize("test_input, expected", TEST_DIFF_CLASS_OBJECTS)
-def test_Diff_to_dict(test_input, expected):
+def test_Diff_to_sim_dict(test_input, expected):
     """Ensures Diff properly converts to a dict"""
 
-    dict = test_input.to_dict()
+    dict = test_input.to_slim_dict()
 
     assert dict == expected
 

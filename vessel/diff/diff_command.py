@@ -327,7 +327,7 @@ class DiffCommand:
             unknown_issue_count: Count of unknown issues
             flagged_issue_count: Count of flagged issues
             diffs: List of diffs, each being a dict item returned
-                    from Diff.to_dict()
+                    from Diff.to_slim_dict()
 
         Returns:
             None
