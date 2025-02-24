@@ -27,7 +27,7 @@
 
 import typing
 from logging import getLogger
-from typing import Any
+from typing import Any, Optional
 
 import portion  # type: ignore
 
@@ -66,8 +66,12 @@ class Diff:
             self.unified_diff,
         )
 
-    def to_dict(self: "Diff") -> dict:
-        """Returns diff object as a dict."""
+    def to_slim_dict(self: "Diff") -> dict:
+        """Returns diff object as a dict.
+
+        Returns a dict object only containing parts of the diff that are
+        populated. This is done to reduce the size of the output file.
+        """
         dict_obj: dict[str, Any] = {
             "source1": self.source1,
             "source2": self.source2,
@@ -92,22 +96,32 @@ class DiffLine:
     def __init__(
         self: "DiffLine",
         text: str,
-        diff_line_number: int | None,
-        file_line_number: int | None,
+        diff_line_number: Optional[int] = None,
+        file_line_number: Optional[int] = None,
     ) -> None:
         """Initializer for DiffLine class."""
         self.text = text
         self.diff_line_number = diff_line_number
         self.file_line_number = file_line_number
         # Interval object containing the range of self.text that
-        # have not been matched by any of the flag['indiff'] regex
+        #   have not been matched by any of the flag['indiff'] regex
         self.unmatched_intervals = portion.closed(0, len(self.text) - 1)
+
+    def __eq__(self, other: object):
+        if isinstance(other, DiffLine):
+            return (
+                self.text == other.text
+                and self.diff_line_number == other.diff_line_number
+                and self.file_line_number == self.file_line_number
+                and self.unmatched_intervals == other.unmatched_intervals
+            )
+        return False
 
 
 def equal_entry_list(
-    list1: list,
-    list2: list,
-    fillvalue: Any | None = None,
+    list1: list[Any],
+    list2: list[Any],
+    fill_value: Optional[Any] = None,
 ) -> tuple[list, list]:
     """Return two lists of even length with from two lists.
 
@@ -128,9 +142,9 @@ def equal_entry_list(
     #           give better unified diffs. Very hard to line up lines without
     #           context
     while len(list1) < len(list2):
-        list1.append(fillvalue)
+        list1.append(fill_value)
     while len(list2) < len(list1):
-        list2.append(fillvalue)
+        list2.append(fill_value)
 
     return list1, list2
 
@@ -212,7 +226,7 @@ def align_diff_lines(
             minus_aligned_lines, plus_aligned_lines = equal_entry_list(
                 minus_aligned_lines,
                 plus_aligned_lines,
-                DiffLine("", None, None),
+                DiffLine(""),
             )
         else:
             minus_file_line_index += 1
@@ -287,9 +301,10 @@ def issues_from_difflines(
                 minus_line.text,
                 portion.closed(
                     minus_match_interval[0],
-                    minus_match_interval[1],
+                    minus_match_interval[1] - 1,
                 ),
             )
+
         plus_match_str = ""
         if plus_match_interval is not None:
             plus_line.unmatched_intervals = (
@@ -301,7 +316,9 @@ def issues_from_difflines(
             )
             plus_match_str = intervals_to_str(
                 plus_line.text,
-                portion.closed(plus_match_interval[0], plus_match_interval[1]),
+                portion.closed(
+                    plus_match_interval[0], plus_match_interval[1] - 1
+                ),
             )
 
         if minus_match_interval is None:
@@ -342,16 +359,18 @@ def issues_from_difflines(
 
 
 def make_issue_dict(
-    minus_line: DiffLine | None,
-    plus_line: DiffLine | None,
-    minus_str: str | None,
-    plus_str: str | None,
-    flag: Flag | None = None,
+    minus_line: Optional[DiffLine] = None,
+    plus_line: Optional[DiffLine] = None,
+    minus_str: Optional[str] = None,
+    plus_str: Optional[str] = None,
+    flag: Optional[Flag] = None,
 ) -> dict[str, Any]:
     """Create issue dict object.
 
     Used to ensure consistency in all issue objects that
-    will be written to final output file.
+    will be written to final output file. A flag being passed
+    implies that it was a flagged issue and the flag information
+    will be embedded in the dict.
 
     Args:
         minus_line: Diff line object containing the minus line
@@ -410,7 +429,7 @@ def intervals_to_str(
     Returns string containing the characters in the input string
     that are in the ranges specifiec by the interval parameter.
     Appriately handles open and closed ends of the intervals used
-    by the Portion library.
+    by the Portion library. Does not handle singleton.
 
     Args:
         input_string: String to take sections out of

@@ -279,7 +279,7 @@ def parse_diffoscope_output(
                     ),
                 )
 
-        diff_list.append(diff.to_dict())
+        diff_list.append(diff.to_slim_dict())
 
     # Recurvisely navigating through the tree
     if "details" in current_detail:
