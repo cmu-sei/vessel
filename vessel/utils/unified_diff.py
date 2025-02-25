@@ -25,6 +25,7 @@
 
 """Utility Unified Diff functions."""
 
+import re
 import typing
 from logging import getLogger
 from typing import Any, Optional
@@ -190,15 +191,22 @@ def align_diff_lines(
     """
     minus_aligned_lines = []
     plus_aligned_lines = []
-    minus_file_line_start, plus_file_line_start = parse_unified_diff_header(
+    minus_file_line_index, plus_file_line_index = parse_unified_diff_header(
         unified_diff[0],
     )
-    minus_file_line_index = minus_file_line_start
-    plus_file_line_index = plus_file_line_start
+
+    unified_diff_header_regex = re.compile(
+        r"\@\@ -\d+(,\d+)? \+\d+(,\d+)? \@\@"
+    )
 
     index = 1
     while index < len(unified_diff):
-        if unified_diff[index][0] == "-" or unified_diff[index][0] == "+":
+        if unified_diff_header_regex.search(unified_diff[index]):
+            minus_file_line_index, plus_file_line_index = (
+                parse_unified_diff_header(unified_diff[index])
+            )
+            index += 1
+        elif unified_diff[index][0] == "-" or unified_diff[index][0] == "+":
             while index < len(unified_diff) and (
                 unified_diff[index][0] == "-" or unified_diff[index][0] == "+"
             ):

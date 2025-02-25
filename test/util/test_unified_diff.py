@@ -395,6 +395,22 @@ TEST_UNIFIED_DIFFS = [
             ],
         },
     ),
+    # Two separate unified diffs. Block 1: 1 minus line, 3 plus line. Block 2: 1 minus line 1 plus line.
+    (
+        "@@ -1,2 +1,2 @@\n 1\n-2\n+2!\n+3!\n@@ -10,2 +10,2 @@\n 10\n-11\n+11!",
+        {
+            "list1": [
+                DiffLine("2", 2, 2),
+                DiffLine(""),
+                DiffLine("11", 7, 11),
+            ],
+            "list2": [
+                DiffLine("2!", 3, 2),
+                DiffLine("3!", 4, 3),
+                DiffLine("11!", 8, 11),
+            ],
+        },
+    ),
 ]
 
 
