@@ -76,9 +76,6 @@ To lint the code, and check for format and type issues, execute:
 To apply the safe lint fixes, and format fixes, execute:
 * `make qa`
 
-To run unit tests, execute:
-* `make test`
-
 To run all checks and tests in a clean environment, similar to the Ci workflow, execute:
 * `make ci`
 
