@@ -56,9 +56,8 @@ RUN apt-get update && \
     u-boot-tools=2023.01+dfsg-2+deb12u1 \
     tcpdump=4.99.3-1 \
     wabt=1.0.32-1 \
-    xxd=2:9.0.1378-2 \
     xmlbeans=4.0.0-2 \
-    xxd=2:9.0.1378-2 \
+    xxd=2:9.0.1378-2+deb12u2 \
     python3-guestfs=1:1.48.6-2  \
     ca-certificates=20230311 \
     pipx=1.1.0-1 \
