@@ -6,7 +6,7 @@ FROM python:3.11-bookworm AS release
 # General dependencies, as well as diffoscope-specific sub-dependencies for
 # its specific diff plugins.
 RUN apt-get update && \
-  apt-get install -y \
+  apt-get install -y --no-install-recommends \
     skopeo=1.9.3+ds1-1+b9 \
     umoci=0.4.7+ds-3+b7 \
     libmagic-dev=1:5.44-3 \
@@ -57,9 +57,12 @@ RUN apt-get update && \
     tcpdump=4.99.3-1 \
     wabt=1.0.32-1 \
     xmlbeans=4.0.0-2 \
+    xxd=2:9.0.1378-2+deb12u2 \
     python3-guestfs=1:1.48.6-2  \
-    ca-certificates \
-    pipx
+    ca-certificates=20230311 \
+    pipx=1.1.0-1 \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 # Set up certificates for any proxies that can get in the middle of curl/wget commands during the build
 # NOTE: put any CA certificates needed for a proxy in the ./certs folder in the root of this repo, in PEM format
