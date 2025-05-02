@@ -6,16 +6,20 @@ Vessel is a project with the goal of promoting reproducible container builds. Th
 
 ### Local Environment Setup
 
-Pre-requisites:
+#### Pre-requisites
 * Linux OS - tested on Ubuntu 22.04
 * Poetry
     * `curl -sSL https://install.python-poetry.org | python3 -`
     * Add to `~/.bashrc` (or equivalent profile): `export PATH=~/.local/bin:$PATH`
 
+#### Python Environment Setup
 To set up the Python environment and the required packages:
 1. `python -m venv .venv`
 2. `poetry install --with extra_dependencies`
 
+Alternatively, you can run: `make venv`
+
+#### External Dependencies
 To set up additional external tools that are used:
 * Install the skopeo package (e.g., `apt-get install skopeo`)
 * Install the umoci package (e.g., `apt-get install umoci`)
@@ -34,6 +38,10 @@ Assuming you have Docker installed, run the following to build the vessel docker
 
 * `docker build -t vessel .`
 
+Or simply run the built-in command to create the production and test dockerfiles:
+
+* `make build`
+
 ## Running
 
 ### In Local Environment
@@ -45,7 +53,7 @@ The tool can be run locally like this:
 
 Run `vessel --help` for full list of commands and options.
 
-### Running the Docker container
+### In Docker container
 
 * Note: Running within Docker avoids permission issues during the unpacking of the images.
 
@@ -65,16 +73,23 @@ Example running on two images from a private Docker registry:
 
 ## Development
 
-Follow the instructions at [Local Environment Setup](#local-environment-setup) first to set up your local environment.
+Follow the instructions at [Python Environment Setup](#python-environment-setup) first to set up your local Python environment.
 
 To install the dev dependencies, run:
 * `poetry install --with qa`
+* Alternatively, you can run `make venv_qa`
 
 To lint the code, and check for format and type issues, execute:
 * `make check`
 
 To apply the safe lint fixes, and format fixes, execute:
 * `make qa`
+
+To build the docker containers, execute:
+* `make build`
+
+To apply run tests (inside a container), execute:
+* `make test`
 
 To run all checks and tests in a clean environment, similar to the Ci workflow, execute:
 * `make ci`
