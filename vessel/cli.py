@@ -34,6 +34,7 @@ from vessel.diff import DiffCommand
 
 
 @click.group()
+@click.version_option()
 @click.option(
     "-l",
     "--logging-level",

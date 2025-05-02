@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vessel"
-version = "0.1.0"
+version = "1.0.0"
 description = "Tool for reproducible container builds"
 authors = ["Kevin A. Pitstick <kapitstick@sei.cmu.edu>"]
 readme = "README.md"

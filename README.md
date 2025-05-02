@@ -2,6 +2,8 @@
 
 Vessel is a project with the goal of promoting reproducible container builds. The first version of the Vessel tool has one command, `diff`, that compares two built container images and reports on differences between them, flagging as many known issues as possible. The goal of this command is to allow the detection of reproducibility issues when building container images, so that developers can take the appropriate measures to increase reproducibility.
 
+![Version Badge](https://img.shields.io/badge/release-v1.0.0-e19b38)
+
 ## Setup
 
 ### Local Environment Setup
