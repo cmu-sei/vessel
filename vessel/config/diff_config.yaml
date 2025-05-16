@@ -136,7 +136,7 @@ flags:
     comment: '.'
     indiff: '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{4}'
 
-  - id: 'Transaction ID Diff'
+  - id: 'EXT-transaction-id'
     description: "Difference in transaction id"
     filepath: '.'
     filetype: '.'
@@ -144,7 +144,7 @@ flags:
     comment: '.'
     indiff: '\b\d,\d+,\d+\b'
 
-  - id: 'Debug Timer Diff'
+  - id: 'TIME-debug-timer'
     description: "Timer setup time differences"
     filepath: '.'
     filetype: '.'
@@ -152,7 +152,7 @@ flags:
     comment: '.'
     indiff: '\d+\sms'
 
-  - id: 'Checksum Diff'
+  - id: 'EXT-checksum'
     description: "Keybox Checksum difference"
     filepath: '.*\.kbx'
     filetype: '.'
@@ -160,7 +160,7 @@ flags:
     comment: '.'
     indiff: 'Checksum:\s([a-zA-Z0-9]+)'
 
-  - id: 'Inode_diff'
+  - id: 'PLAT-inode'
     description: 'Inode diff when we are installing tars in Dockerfile.'
     filepath: '.'
     filetype: '.'
@@ -168,7 +168,7 @@ flags:
     comment: '.'
     indiff: 'Inode:\s*\d+'
 
-  - id: 'Pack Hash Diff'
+  - id: 'EXT-packhash'
     description: '.Pack hash difference, cause is unknown'
     filepath: '.'
     filetype: '.'
@@ -176,7 +176,7 @@ flags:
     comment: '.'
     indiff: 'pack-[a-fA-F0-9]+\.pack'
 
-  - id: 'GNU Offset Difference'
+  - id: 'PLAT-gnu-offset'
     description: 'GNU related compilation difference'
     filepath: '.'
     filetype: '.'
@@ -184,7 +184,7 @@ flags:
     comment: '.'
     indiff: '\(strp\) \(offset: 0x[0-9a-fA-F]+\)'
 
-  - id: 'Size Difference'
+  - id: 'PLAT-size'
     description: 'Build size difference in multiple kinds of build'
     filepath: '.'
     filetype: '.'
@@ -192,7 +192,7 @@ flags:
     comment: '.'
     indiff: 'Size: \d+'
 
-  - id: 'Block Difference'
+  - id: 'PLAT-blocks'
     description: 'Block size difference in multiple kinds of build'
     filepath: '.'
     filetype: '.'
@@ -200,7 +200,7 @@ flags:
     comment: '.'
     indiff: '\tBlocks:\s*\d+'
 
-  - id: 'Created git index'
+  - id: 'EXT-git-index-created'
     description: 'Created git index'
     filepath: '.*/\.git/index'
     filetype: '.'
@@ -208,7 +208,7 @@ flags:
     comment: '.'
     indiff: 'Created:\s*\d+[.]\d+'
 
-  - id: 'Git Index: Modified date/time'
+  - id: 'EXT-git-index-modified'
     description: 'Modified git index'
     filepath: '.*/\.git/index'
     filetype: '.'
@@ -216,7 +216,7 @@ flags:
     comment: '.'
     indiff: 'Modified:\s*\d+[.]\d+'
 
-  - id: 'Git Index: Device ID'
+  - id: 'PLAT-git-index-device'
     description: 'Device ID field in git index'
     filepath: '.*/\.git\/index'
     filetype: '.'
@@ -224,7 +224,7 @@ flags:
     comment: '.'
     indiff: 'Device ID:\s*\(\d, \d+\)'
 
-  - id: 'Generated certificate differences'
+  - id: 'EXT-cert-pem'
     description: 'Generated certificate differences'
     filepath: '.*\.pem'
     filetype: ''
@@ -232,7 +232,7 @@ flags:
     comment: '.'
     indiff: '.'
 
-  - id: 'Generated certificate differences'
+  - id: 'EXT-cert-crt'
     description: 'Generated certificate differences'
     filepath: '.*\.crt'
     filetype: '.'
@@ -240,7 +240,7 @@ flags:
     comment: '.'
     indiff: '.'
 
-  - id: 'go-build-cache'
+  - id: 'CACHE-go-build'
     description: 'Go-build cache'
     filepath: '\.cache/go-build/'
     filetype: '.'
@@ -248,7 +248,7 @@ flags:
     comment: '.'
     indiff: '.'
 
-  - id: 'go-mod-cache'
+  - id: 'CACHE-go-mod'
     description: 'Go Module Download Cache'
     filepath: '/go/pkg/mod/cache/download/'
     filetype: '.'
@@ -256,7 +256,7 @@ flags:
     comment: '.'
     indiff: '.'
 
-  - id: 'pip-cache'
+  - id: 'CACHE-pip'
     description: 'Pip cache files'
     filepath: '\.cache/pip/'
     filetype: '.'
@@ -264,7 +264,7 @@ flags:
     comment: '.'
     indiff: '.'
 
-  - id: 'elf-gopclntab'
+  - id: 'EXT-elf-gopclntab'
     description: 'Golang binary Program Counter Line Table differences'
     filepath: '.'
     filetype: '.'
@@ -272,7 +272,7 @@ flags:
     comment: '.'
     indiff: '.'
 
-  - id: 'pyc-format-diff'
+  - id: 'EXT-pyc-format'
     description: 'Compiled Python (.pyc) format differences'
     filepath: '\.pyc$'
     filetype: '.'
@@ -280,7 +280,7 @@ flags:
     comment: 'but no file-specific differences were detected'
     indiff: '.'
 
-  - id: 'pyc-diff'
+  - id: 'EXT-pyc'
     description: 'Compiled Python (.pyc) differences'
     filepath: '\.pyc$'
     filetype: '.'
@@ -288,7 +288,7 @@ flags:
     comment: '.'
     indiff: '.'
 
-  - id: 'ldconfig-aux-cache'
+  - id: 'CACHE-cache'
     description: 'ldconfig aux-cache'
     filepath: 'rootfs/var/cache/ldconfig/aux-cache'
     filetype: '.'
@@ -296,7 +296,7 @@ flags:
     comment: '.'
     indiff: '.'
 
-  - id: 'UUID Difference'
+  - id: 'RNG-uuid'
     description: 'uuid differences when listing cache file.'
     filepath: '.'
     filetype: '.'
@@ -304,7 +304,7 @@ flags:
     comment: '.'
     indiff: '[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}'
   
-  - id: 'Stat Filesystem Difference'
+  - id: 'PLAT-stat'
     description: 'stat{} command returns results that usually differ by 1 in digit.'
     filepath: '.'
     filetype: '.'
