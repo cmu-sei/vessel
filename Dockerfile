@@ -7,7 +7,7 @@ FROM python:3.11-bookworm AS release
 # its specific diff plugins.
 RUN apt-get update && \
   apt-get install -y --no-install-recommends \
-    skopeo=1.9.3+ds1-1+b9 \
+    skopeo=1.9.3+ds1-1+b10 \
     umoci=0.4.7+ds-3+b7 \
     libmagic-dev=1:5.44-3 \
     libarchive-dev=3.6.2-1+deb12u2 \
@@ -48,7 +48,7 @@ RUN apt-get update && \
     odt2txt=0.5-7 \
     oggvideotools=0.9.1-6 \
     pgpdump=0.34-1 \
-    poppler-utils=22.12.0-2+b1 \
+    poppler-utils=22.12.0-2+deb12u1 \
     procyon-decompiler=0.6.0-1 \
     python3-pdfminer=20221105+dfsg-1 \
     sng=1.1.0-4 \

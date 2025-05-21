@@ -27,6 +27,6 @@ jobs:
       - name: Check types
         run: make check-typecheck  
       - name: Build main and test containers
-        run: make build-containers
+        run: make build
       - name: Execute unit tests inside test container
-        run: make test-container
+        run: make test
