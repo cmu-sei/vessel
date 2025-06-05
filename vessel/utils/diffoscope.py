@@ -30,6 +30,9 @@ from pathlib import Path
 
 import magic
 
+from logging import getLogger
+logger = getLogger(__name__)
+
 from vessel.utils.flag import Flag
 from vessel.utils.unified_diff import (
     Diff,
@@ -60,12 +63,25 @@ def build_diffoscope_command(
         Commands list to execute diffoscope.
     """
     cmd = ["diffoscope"]
-    cmd.extend(["--json", output_dir_path + "/" + output_file_name])
+    cmd.extend(["--json", f"{output_dir_path}/{output_file_name}"])
+    # cmd.extend(["--max-report-size", "52428800"])
 
     if compare_level == "file":
         cmd.append("--new-file")
+    logger.info("Hello starting to diff now")
 
     cmd.extend([path1, path2])
+    # cmd.extend(["--exclude-directory-metadata", "yes"])
+    exclude_patterns = [
+        r'^readelf.*',
+        r'^objdump.*',
+        r'^radare2.*',
+        r'^nm.*'
+    ]
+
+    for pattern in exclude_patterns:
+        cmd.extend(["--exclude-command", pattern])
+    print("cmd is:", cmd)
     return cmd
 
 
