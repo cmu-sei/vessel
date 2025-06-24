@@ -142,7 +142,7 @@ flags:
     filetype: '.'
     command: '.'
     comment: '.'
-    indiff: '.'
+    indiff: '.*'
 
   - id: 'CACHE008'
     description: 'Go-build cache'
@@ -150,7 +150,7 @@ flags:
     filetype: '.'
     command: '.'
     comment: '.'
-    indiff: '.'
+    indiff: '.*'
 
   - id: 'CACHE009'
     description: 'Go Module Download Cache'
@@ -158,7 +158,7 @@ flags:
     filetype: '.'
     command: '.'
     comment: '.'
-    indiff: '.'
+    indiff: '.*'
 
   - id: 'CACHE010'
     description: 'Pip cache files'
@@ -166,7 +166,7 @@ flags:
     filetype: '.'
     command: '.'
     comment: '.'
-    indiff: '.'
+    indiff: '.*'
 
   - id: 'CACHE011'
     description: 'Compiled Python (.pyc) differences'
@@ -174,7 +174,7 @@ flags:
     filetype: '.'
     command: '.'
     comment: '.'
-    indiff: '.'
+    indiff: '.*'
 
   - id: 'RNG002'
     description: 'Inode differences in Git index files'
@@ -214,4 +214,4 @@ flags:
     filetype: ''
     command: '.'
     comment: '.'
-    indiff: '.'
+    indiff: '.*'

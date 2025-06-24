@@ -264,13 +264,13 @@ def parse_diffoscope_output(
             temp_comments,
             current_detail["unified_diff"],
         )
+        # Handles case where diff is found with a command such as stat {}.
+        # Diffoscope lists the source of the diff as the command that it used to get
+        # the diff, so the file path must be grabbed from the parent.
         if (
             not Path(diff.source1).is_file()
             and not Path(diff.source2).is_file()
         ):
-        # Handles case where diff is found with a command such as stat {}.
-        # Diffoscope lists the source of the diff as the command that it used to get
-        # the diff, so the file path must be grabbed from the parent.
             diff.command = current_detail["source1"]
             diff.source1 = parent_source1
             diff.source2 = parent_source2
@@ -301,23 +301,23 @@ def parse_diffoscope_output(
                 file_type_2 = ""
                 # Check if filepath matches flag
                 if not flag.regex["filepath"].search(
-                    current_detail["source1"],
+                    diff.source1,
                 ) or not flag.regex["filepath"].search(
-                    current_detail["source2"],
+                    diff.source2,
                 ):
                     flag_matches = False
 
                 # Check if filetype matches flag
                 if (
                     flag_matches
-                    and Path(current_detail["source1"]).is_file()
-                    and Path(current_detail["source2"]).is_file()
+                    and Path(diff.source1).is_file()
+                    and Path(diff.source2).is_file()
                 ):
                     file_type_1 = magic.from_file(
-                        current_detail["source1"],
+                        diff.source1,
                     )
                     file_type_2 = magic.from_file(
-                        current_detail["source2"],
+                        diff.source2,
                     )
 
                     if not flag.regex["filetype"].search(
@@ -358,7 +358,7 @@ def parse_diffoscope_output(
                 if (
                     flag_matches
                     and is_binary
-                    and flag.regex["indiff"] == re.compile(".")
+                    and flag.regex["indiff"] == re.compile(".*")
                 ):
                     flagged_issues_count += 1
                     file_entry["flagged"] += 1
@@ -370,7 +370,7 @@ def parse_diffoscope_output(
                                 "Flag indiff regex are not ran on binary "
                                 "unified diff. However this matched all "
                                 "of the other criteria for this flag. and "
-                                "indiff was set to '.'",
+                                "indiff was set to '.*'",
                             ],
                         },
                     )
@@ -387,12 +387,15 @@ def parse_diffoscope_output(
                         plus_line,
                         flag,
                     )
-                    flagged_issues_count += len(flagged_issue_list)
-                    unknown_issues_count += len(unknown_issue_list)
-                    file_entry["flagged"] += len(flagged_issue_list)
-                    file_entry["unknown"] += len(unknown_issue_list)
-                    diff.flagged_issues.extend(flagged_issue_list)
-                    diff.unknown_issues.extend(unknown_issue_list)
+                    # Check to not create duplicate matches on flags that match based on filepath, filetype, command or comment 
+                    #     and have indiff set to ".*"
+                    if flag.regex["indiff"] != re.compile(".*") or flag.flag_id not in [flag["id"] for flag in diff.flagged_issues]:
+                        flagged_issues_count += len(flagged_issue_list)
+                        unknown_issues_count += len(unknown_issue_list)
+                        file_entry["flagged"] += len(flagged_issue_list)
+                        file_entry["unknown"] += len(unknown_issue_list)
+                        diff.flagged_issues.extend(flagged_issue_list)
+                        diff.unknown_issues.extend(unknown_issue_list)
 
             # Check so line by line comparison don't happen in binary diffs and
             # this is after all the flags have been checked so the diff is done
