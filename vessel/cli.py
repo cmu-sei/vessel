@@ -108,7 +108,8 @@ def vessel(logging_level: str) -> None:
         resolve_path=True,
     ),
     help=(
-        "Enable this option if you would like to record checksum of every file in the unpacked filesystem."
+        "Enable this option if you would like to record checksum matches "
+        "and mismatches of the unpacked filesystem."
     ),
 )
 def diff(
