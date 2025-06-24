@@ -44,16 +44,6 @@ from vessel.utils.unified_diff import (
 
 from typing import List, Dict, Any, Tuple
 
-def is_binary(file_path: Path) -> bool:
-    try:
-        result = subprocess.run(
-            ["file", str(file_path)],
-            capture_output=True, text=True
-        )
-        return "ELF" in result.stdout or "executable" in result.stdout or "shared object" in result.stdout
-    except Exception:
-        return False
-
 def build_diffoscope_command(
     output_dir_path: str,
     output_file_name: str,
@@ -79,7 +69,6 @@ def build_diffoscope_command(
 
     if compare_level == "file":
         cmd.append("--new-file")
-    logger.info("Hello starting to diff now")
 
     cmd.extend([path1, path2])
     cmd.extend(["--exclude-directory-metadata", "no"])
@@ -119,8 +108,8 @@ def summarize_checksums(file_records: dict[str, list[dict[str, str]]]) -> dict:
     files1 = {entry["path"]: entry["sha256"] for entry in file_records[path1]}
     files2 = {entry["path"]: entry["sha256"] for entry in file_records[path2]}
 
-    only_in_path1 = sorted(set(files1.keys()) - set(files2.keys()))
-    only_in_path2 = sorted(set(files2.keys()) - set(files1.keys()))
+    only_in_image1 = sorted(set(files1.keys()) - set(files2.keys()))
+    only_in_image2 = sorted(set(files2.keys()) - set(files1.keys()))
     common_files = sorted(set(files1.keys()) & set(files2.keys()))
 
     checksum_diff = []
@@ -141,13 +130,13 @@ def summarize_checksums(file_records: dict[str, list[dict[str, str]]]) -> dict:
             })
 
     return {
-        "path1": path1,
-        "path2": path2,
+        "image1": path1,
+        "image2": path2,
         "total_common_files": len(common_files),
         "checksum_mismatches": checksum_diff,
         "checksum_matches": checksum_matches,
-        "only_in_path1": only_in_path1,
-        "only_in_path2": only_in_path2
+        "only_in_image1": only_in_image1,
+        "only_in_image2": only_in_image2
     }
 
 def get_sha256(path: str) -> str:
@@ -175,26 +164,25 @@ def build_diff_lookup(diff_list: List[Dict[str, Any]]) -> Dict[Tuple[str, str], 
 def classify_checksum_mismatches(
     checksum_summary: Dict[str, Any],
     diff_lookup: Dict[Tuple[str, str], List[Dict[str, Any]]],
-    path1: str,
-    path2: str
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     trivial_diffs = []
     nontrivial_diffs = []
     for entry in checksum_summary.get("checksum_mismatches", []):
         rel = entry["path"]
-        file1_full = str(Path(path1) / rel)
-        file2_full = str(Path(path2) / rel)
         key = (rel, rel)
         diffs = diff_lookup.get(key, [])
         if not diffs:
             nontrivial_diffs.append({
-                "files1": file1_full,
-                "files2": file2_full
+                "files1": rel,
+                "files2": rel
             })
             continue
         all_flagged = []
         all_unknown = []
         for d in diffs:
+            # Ignore flagged issues if this is just stat {} output
+            if d.get("command", "") == "stat {}":
+                continue
             all_flagged.extend(d.get("flagged_issues", []))
             all_unknown.extend(d.get("unknown_issues", []))
         if all_flagged and not all_unknown:
@@ -206,14 +194,14 @@ def classify_checksum_mismatches(
                     types.append(key2)
                     seen_types.add(key2)
             trivial_diffs.append({
-                "files1": file1_full,
-                "files2": file2_full,
+                "files1": rel,
+                "files2": rel,
                 "flagged_issue_types": types
             })
         else:
             nontrivial_diffs.append({
-                "files1": file1_full,
-                "files2": file2_full
+                "files1": rel,
+                "files2": rel
             })
     return trivial_diffs, nontrivial_diffs
 
@@ -225,7 +213,7 @@ def parse_diffoscope_output(
     parent_comments: list[str] | None = None,
     files_summary: list[dict] | None = None,
     file_checksum: bool = False,
-) -> tuple[int, int, list, list[dict]]:
+) -> tuple[int, int, list, dict, dict]:
     """Recursively parses diffoscope json output.
 
     Recursively navigates through entirety of diffoscope json output
@@ -246,10 +234,13 @@ def parse_diffoscope_output(
         parent_comments: List of comments from the parent object in diffoscope
                         as sometimes the comments that relate to a child are in
                         the parent detail
+        files_summary: File analysis of trivial/nontrivial issue
+        file_checksum: Whether detail of checksum matches and mismatch
+                       should be included in the summary.json
 
     Returns:
         Count of unknown issues, count of flagged issues, diff list,
-        and overall file summary.
+        and overall file analysis summary and checksum comparison summary.
     """
     flagged_issues_count = 0
     unknown_issues_count = 0
@@ -468,6 +459,7 @@ def parse_diffoscope_output(
             flagged_issues_count += child_return[1]
             diff_list.extend(child_return[2])
 
+    checksum_summary = {}
     # Only generate the final summary when it's top-level call (end of recursion)
     if parent_source1 == "" and parent_source2 == "" and parent_comments is None:
         rootfs1 = Path(current_detail["source1"]).parent
@@ -483,27 +475,24 @@ def parse_diffoscope_output(
 
         checksum_summary = summarize_checksums(file_records)
         diff_lookup = build_diff_lookup(diff_list)
-        path1 = checksum_summary.get("path1")
-        path2 = checksum_summary.get("path2")
 
         trivial_diffs, nontrivial_diffs = classify_checksum_mismatches(
-            checksum_summary, diff_lookup, path1, path2
+            checksum_summary, diff_lookup
         )
 
         files_summary = {
-            "file_comparisons": checksum_summary,
-            str(rootfs1): {
-                "file_count": len(all_source1_files),
-                "files": all_source1_files,
-            },
-            str(rootfs2): {
-                "file_count": len(all_source2_files),
-                "files": all_source2_files,
-            },
+            "image1": checksum_summary["image1"],
+            "image2": checksum_summary["image2"],
+            "only_in_image1": checksum_summary["only_in_image1"],
+            "only_in_image2": checksum_summary["only_in_image2"],
+            "trivial_checksum_different_files": trivial_diffs,
+            "nontrivial_checksum_different_files": nontrivial_diffs,
         }
 
-        files_summary["file_comparisons"]["trivial_checksum_different_files"] = trivial_diffs
-        files_summary["file_comparisons"]["nontrivial_checksum_different_files"] = nontrivial_diffs
+        if file_checksum:
+            files_summary["checksum_mismatches"] = checksum_summary["checksum_mismatches"]
+            files_summary["checksum_matches"] = checksum_summary["checksum_matches"]
 
-        return unknown_issues_count, flagged_issues_count, diff_list, files_summary
-    return unknown_issues_count, flagged_issues_count, diff_list, files_summary
+        return unknown_issues_count, flagged_issues_count, diff_list, files_summary, checksum_summary
+
+    return unknown_issues_count, flagged_issues_count, diff_list, files_summary, checksum_summary

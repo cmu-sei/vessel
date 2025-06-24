@@ -223,6 +223,7 @@ class DiffCommand:
                 parsed_output[1],
                 parsed_output[2],
                 parsed_output[3],
+                parsed_output[4],
             )
 
         return True
@@ -292,6 +293,7 @@ class DiffCommand:
             parsed_output[1],
             parsed_output[2],
             parsed_output[3],
+            parsed_output[4],
         )
 
         return True
@@ -315,6 +317,7 @@ class DiffCommand:
             parsed_output[1],
             parsed_output[2],
             parsed_output[3],
+            parsed_output[4],
         )
 
         return True
@@ -325,6 +328,7 @@ class DiffCommand:
         flagged_issue_count: int,
         diffs: list,
         files_summary: dict[str, dict[str, int]] = None,
+        checksum_summary: dict = None,
     ) -> None:
         """Writes all diff output to files.
 
@@ -337,7 +341,8 @@ class DiffCommand:
             flagged_issue_count: Count of flagged issues
             diffs: List of diffs, each being a dict item returned
                     from Diff.to_slim_dict()
-
+            files_summary: file analysis of trivial/nontrivial issue
+            checksum_summary: file checksum comparison result summary
         Returns:
             None
         """
@@ -350,18 +355,26 @@ class DiffCommand:
             unified_diff_id += 1
             diff.pop("unified_diff")
 
-        file_comparisons = files_summary.get("file_comparisons", {})
         summary_json = {
             "summary": {
-                "unknown_issues": unknown_issue_count,
-                "flagged_issues": flagged_issue_count,
-                "total_issues": unknown_issue_count + flagged_issue_count,
-                "identical_file_count": len(file_comparisons.get("checksum_matches", [])),
-                "trivial_checksum_different_file_count": len(file_comparisons.get("trivial_checksum_different_files", [])),
-                "nontrivial_checksum_different_file_count": len(file_comparisons.get("nontrivial_checksum_different_files", [])),
+                "issue_summary": {
+                    "unknown_issues": unknown_issue_count,
+                    "flagged_issues": flagged_issue_count,
+                    "total_issues": unknown_issue_count + flagged_issue_count,
+                },
+                "checksum summary": {
+                    "total_image1_file_count": checksum_summary["total_common_files"] + len(checksum_summary["only_in_image1"]),
+                    "total_image2_file_count": checksum_summary["total_common_files"] + len(checksum_summary["only_in_image2"]),
+                    "total_common_files": checksum_summary["total_common_files"],
+                    "identical_file_count": len(checksum_summary["checksum_matches"]),
+                    "trivial_checksum_different_file_count": len(files_summary.get("trivial_checksum_different_files", [])),
+                    "nontrivial_checksum_different_file_count": len(files_summary.get("nontrivial_checksum_different_files", [])),
+                    "only_in_image1_file_count": len(checksum_summary["only_in_image1"]),
+                    "only_in_image2_file_count": len(checksum_summary["only_in_image2"]),
+                },
             },
-            "Files": files_summary,
-            "Diffs": diffs,
+            "files": files_summary,
+            "diffs": diffs,
         }
 
         output_dir = self.output_dir + "/"
