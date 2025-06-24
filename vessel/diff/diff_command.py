@@ -55,6 +55,7 @@ class DiffCommand:
         compare_level: str,
         data_dir: str,
         output_dir: str,
+        file_checksum: bool,
     ) -> None:
         """Initializer for a diff operation.
 
@@ -65,6 +66,7 @@ class DiffCommand:
         self.compare_level: str = compare_level
         self.data_dir: str = data_dir
         self.output_dir: str = output_dir
+        self.file_checksum: bool = file_checksum
         self.temp_dir: tempfile.TemporaryDirectory[str] | None = None
         self.image_uris: list[ImageURI] = []
         self.unpacked_image_paths: list[str] = []
@@ -214,11 +216,13 @@ class DiffCommand:
             parsed_output = parse_diffoscope_output(
                 diffoscope_json,
                 self.flags,
+                file_checksum=self.file_checksum,
             )
             self.write_to_files(
                 parsed_output[0],
                 parsed_output[1],
                 parsed_output[2],
+                parsed_output[3],
             )
 
         return True
@@ -281,11 +285,13 @@ class DiffCommand:
         parsed_output = parse_diffoscope_output(
             diffoscope_json,
             self.flags,
+            file_checksum=self.file_checksum,
         )
         self.write_to_files(
             parsed_output[0],
             parsed_output[1],
             parsed_output[2],
+            parsed_output[3],
         )
 
         return True
@@ -302,11 +308,13 @@ class DiffCommand:
         parsed_output = parse_diffoscope_output(
             diffoscope_json,
             self.flags,
+            file_checksum=self.file_checksum,
         )
         self.write_to_files(
             parsed_output[0],
             parsed_output[1],
             parsed_output[2],
+            parsed_output[3],
         )
 
         return True
@@ -316,6 +324,7 @@ class DiffCommand:
         unknown_issue_count: int,
         flagged_issue_count: int,
         diffs: list,
+        files_summary: dict[str, dict[str, int]] = None,
     ) -> None:
         """Writes all diff output to files.
 
@@ -341,11 +350,17 @@ class DiffCommand:
             unified_diff_id += 1
             diff.pop("unified_diff")
 
+        file_comparisons = files_summary.get("file_comparisons", {})
         summary_json = {
             "summary": {
                 "unknown_issues": unknown_issue_count,
                 "flagged_issues": flagged_issue_count,
+                "total_issues": unknown_issue_count + flagged_issue_count,
+                "identical_file_count": len(file_comparisons.get("checksum_matches", [])),
+                "trivial_checksum_different_file_count": len(file_comparisons.get("trivial_checksum_different_files", [])),
+                "nontrivial_checksum_different_file_count": len(file_comparisons.get("nontrivial_checksum_different_files", [])),
             },
+            "Files": files_summary,
             "Diffs": diffs,
         }
 

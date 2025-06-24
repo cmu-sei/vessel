@@ -29,7 +29,8 @@ import re
 from pathlib import Path
 
 import magic
-
+import subprocess
+import hashlib
 from logging import getLogger
 logger = getLogger(__name__)
 
@@ -41,6 +42,17 @@ from vessel.utils.unified_diff import (
     make_issue_dict,
 )
 
+from typing import List, Dict, Any, Tuple
+
+def is_binary(file_path: Path) -> bool:
+    try:
+        result = subprocess.run(
+            ["file", str(file_path)],
+            capture_output=True, text=True
+        )
+        return "ELF" in result.stdout or "executable" in result.stdout or "shared object" in result.stdout
+    except Exception:
+        return False
 
 def build_diffoscope_command(
     output_dir_path: str,
@@ -64,26 +76,146 @@ def build_diffoscope_command(
     """
     cmd = ["diffoscope"]
     cmd.extend(["--json", f"{output_dir_path}/{output_file_name}"])
-    # cmd.extend(["--max-report-size", "52428800"])
 
     if compare_level == "file":
         cmd.append("--new-file")
     logger.info("Hello starting to diff now")
 
     cmd.extend([path1, path2])
-    # cmd.extend(["--exclude-directory-metadata", "yes"])
+    cmd.extend(["--exclude-directory-metadata", "no"])
     exclude_patterns = [
         r'^readelf.*',
         r'^objdump.*',
-        r'^radare2.*',
-        r'^nm.*'
+        r'^strings.*',
+        r'^xxd.*',
     ]
 
     for pattern in exclude_patterns:
         cmd.extend(["--exclude-command", pattern])
-    print("cmd is:", cmd)
+    cmd.extend(["--profile", f"{output_dir_path}/profile.txt"])
     return cmd
 
+def get_all_files_with_sha256(root: Path) -> list[dict[str, str]]:
+    all_files = []
+    rootfs = root / "rootfs"
+
+    for path in rootfs.rglob("*"):
+        if not path.is_file():
+            continue
+
+        rel_path = path.relative_to(rootfs)
+        rel_parts = rel_path.parts
+
+        sha = hashlib.sha256(path.read_bytes()).hexdigest()
+        all_files.append({
+            "path": f"rootfs/{rel_path}",
+            "sha256": sha
+        })
+
+    return all_files
+
+def summarize_checksums(file_records: dict[str, list[dict[str, str]]]) -> dict:
+    [path1, path2] = list(file_records.keys())
+    files1 = {entry["path"]: entry["sha256"] for entry in file_records[path1]}
+    files2 = {entry["path"]: entry["sha256"] for entry in file_records[path2]}
+
+    only_in_path1 = sorted(set(files1.keys()) - set(files2.keys()))
+    only_in_path2 = sorted(set(files2.keys()) - set(files1.keys()))
+    common_files = sorted(set(files1.keys()) & set(files2.keys()))
+
+    checksum_diff = []
+    for f in common_files:
+        if files1[f] != files2[f]:
+            checksum_diff.append({
+                "path": f,
+                "path1_sha256": files1[f],
+                "path2_sha256": files2[f]
+            })
+    checksum_matches = []
+    for f in common_files:
+        if files1[f] == files2[f]:
+            checksum_matches.append({
+                "path": f,
+                "path1_sha256": files1[f],
+                "path2_sha256": files2[f]
+            })
+
+    return {
+        "path1": path1,
+        "path2": path2,
+        "total_common_files": len(common_files),
+        "checksum_mismatches": checksum_diff,
+        "checksum_matches": checksum_matches,
+        "only_in_path1": only_in_path1,
+        "only_in_path2": only_in_path2
+    }
+
+def get_sha256(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+def build_diff_lookup(diff_list: List[Dict[str, Any]]) -> Dict[Tuple[str, str], List[Dict[str, Any]]]:
+    lookup = {}
+    for d in diff_list:
+        def rel_after_rootfs(path):
+            idx = path.find("rootfs/")
+            return path[idx:] if idx != -1 else path
+
+        rel1 = rel_after_rootfs(d["source1"])
+        rel2 = rel_after_rootfs(d["source2"])
+        for key in [(rel1, rel2), (rel2, rel1)]:
+            if key not in lookup:
+                lookup[key] = []
+            lookup[key].append(d)
+    return lookup
+
+def classify_checksum_mismatches(
+    checksum_summary: Dict[str, Any],
+    diff_lookup: Dict[Tuple[str, str], List[Dict[str, Any]]],
+    path1: str,
+    path2: str
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    trivial_diffs = []
+    nontrivial_diffs = []
+    for entry in checksum_summary.get("checksum_mismatches", []):
+        rel = entry["path"]
+        file1_full = str(Path(path1) / rel)
+        file2_full = str(Path(path2) / rel)
+        key = (rel, rel)
+        diffs = diff_lookup.get(key, [])
+        if not diffs:
+            nontrivial_diffs.append({
+                "files1": file1_full,
+                "files2": file2_full
+            })
+            continue
+        all_flagged = []
+        all_unknown = []
+        for d in diffs:
+            all_flagged.extend(d.get("flagged_issues", []))
+            all_unknown.extend(d.get("unknown_issues", []))
+        if all_flagged and not all_unknown:
+            types = []
+            seen_types = set()
+            for f in all_flagged:
+                key2 = f"{f['id']}|{f['description']}"
+                if key2 not in seen_types:
+                    types.append(key2)
+                    seen_types.add(key2)
+            trivial_diffs.append({
+                "files1": file1_full,
+                "files2": file2_full,
+                "flagged_issue_types": types
+            })
+        else:
+            nontrivial_diffs.append({
+                "files1": file1_full,
+                "files2": file2_full
+            })
+    return trivial_diffs, nontrivial_diffs
 
 def parse_diffoscope_output(
     current_detail: dict,
@@ -91,7 +223,9 @@ def parse_diffoscope_output(
     parent_source1: str = "",
     parent_source2: str = "",
     parent_comments: list[str] | None = None,
-) -> tuple[int, int, list]:
+    files_summary: list[dict] | None = None,
+    file_checksum: bool = False,
+) -> tuple[int, int, list, list[dict]]:
     """Recursively parses diffoscope json output.
 
     Recursively navigates through entirety of diffoscope json output
@@ -114,12 +248,15 @@ def parse_diffoscope_output(
                         the parent detail
 
     Returns:
-        Count of unknown issues, count of flagged issues and diff list
-        containing specifics about each issue
+        Count of unknown issues, count of flagged issues, diff list,
+        and overall file summary.
     """
     flagged_issues_count = 0
     unknown_issues_count = 0
     diff_list = []
+
+    if files_summary is None:
+        files_summary = []
 
     if current_detail["unified_diff"] is not None:
         temp_comments = []
@@ -140,10 +277,23 @@ def parse_diffoscope_output(
             not Path(diff.source1).is_file()
             and not Path(diff.source2).is_file()
         ):
+        # Handles case where diff is found with a command such as stat {}.
+        # Diffoscope lists the source of the diff as the command that it used to get
+        # the diff, so the file path must be grabbed from the parent.
             diff.command = current_detail["source1"]
             diff.source1 = parent_source1
             diff.source2 = parent_source2
 
+        files_summary.append({
+            "source1": diff.source1,
+            "source2": diff.source2,
+            "sha256_source1": get_sha256(diff.source1) if Path(diff.source1).is_file() else None,
+            "sha256_source2": get_sha256(diff.source2) if Path(diff.source2).is_file() else None,
+            "flagged": 0,
+            "unknown": 0,
+        })
+
+        file_entry = files_summary[-1]
         # Initialize to False to ensure one iteration through the flags.
         # If it then is found to be binary, the rest of the lines
         # will not be evaluated to not check binary line by line.
@@ -220,6 +370,7 @@ def parse_diffoscope_output(
                     and flag.regex["indiff"] == re.compile(".")
                 ):
                     flagged_issues_count += 1
+                    file_entry["flagged"] += 1
                     diff.flagged_issues.append(
                         {
                             "id": flag.flag_id,
@@ -247,6 +398,8 @@ def parse_diffoscope_output(
                     )
                     flagged_issues_count += len(flagged_issue_list)
                     unknown_issues_count += len(unknown_issue_list)
+                    file_entry["flagged"] += len(flagged_issue_list)
+                    file_entry["unknown"] += len(unknown_issue_list)
                     diff.flagged_issues.extend(flagged_issue_list)
                     diff.unknown_issues.extend(unknown_issue_list)
 
@@ -256,6 +409,7 @@ def parse_diffoscope_output(
             if is_binary:
                 if len(diff.flagged_issues) == 0:
                     unknown_issues_count += 1
+                    file_entry["unknown"] += 1
                     diff.unknown_issues.append(
                         {
                             "comments": [
@@ -286,6 +440,7 @@ def parse_diffoscope_output(
             )
             if minus_unmatched_str != plus_unmatched_str:
                 unknown_issues_count += 1
+                file_entry["unknown"] += 1
                 diff.unknown_issues.append(
                     make_issue_dict(
                         minus_line if minus_line else None,
@@ -306,9 +461,49 @@ def parse_diffoscope_output(
                 current_detail["source1"],
                 current_detail["source2"],
                 current_detail.get("comments"),
+                files_summary,
+                file_checksum=file_checksum,
             )
             unknown_issues_count += child_return[0]
             flagged_issues_count += child_return[1]
             diff_list.extend(child_return[2])
 
-    return unknown_issues_count, flagged_issues_count, diff_list
+    # Only generate the final summary when it's top-level call (end of recursion)
+    if parent_source1 == "" and parent_source2 == "" and parent_comments is None:
+        rootfs1 = Path(current_detail["source1"]).parent
+        rootfs2 = Path(current_detail["source2"]).parent
+
+        all_source1_files = get_all_files_with_sha256(rootfs1)
+        all_source2_files = get_all_files_with_sha256(rootfs2)
+
+        file_records = {
+            str(rootfs1): all_source1_files,
+            str(rootfs2): all_source2_files,
+        }
+
+        checksum_summary = summarize_checksums(file_records)
+        diff_lookup = build_diff_lookup(diff_list)
+        path1 = checksum_summary.get("path1")
+        path2 = checksum_summary.get("path2")
+
+        trivial_diffs, nontrivial_diffs = classify_checksum_mismatches(
+            checksum_summary, diff_lookup, path1, path2
+        )
+
+        files_summary = {
+            "file_comparisons": checksum_summary,
+            str(rootfs1): {
+                "file_count": len(all_source1_files),
+                "files": all_source1_files,
+            },
+            str(rootfs2): {
+                "file_count": len(all_source2_files),
+                "files": all_source2_files,
+            },
+        }
+
+        files_summary["file_comparisons"]["trivial_checksum_different_files"] = trivial_diffs
+        files_summary["file_comparisons"]["nontrivial_checksum_different_files"] = nontrivial_diffs
+
+        return unknown_issues_count, flagged_issues_count, diff_list, files_summary
+    return unknown_issues_count, flagged_issues_count, diff_list, files_summary
