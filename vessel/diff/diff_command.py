@@ -31,6 +31,7 @@ import sys
 import tempfile
 from logging import getLogger
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -111,7 +112,7 @@ class DiffCommand:
             self.unpacked_image_paths[0],
         ) == get_manifest_digest(self.unpacked_image_paths[1]):
             logger.info("All layers are identical")
-            self.write_to_files(0, 0, [])
+            self.write_to_files(0, 0, [], [], {})
             return True
 
         if self.compare_level == "file":
@@ -327,8 +328,8 @@ class DiffCommand:
         unknown_issue_count: int,
         flagged_issue_count: int,
         diffs: list,
-        files_summary: dict[str, dict[str, int]] = None,
-        checksum_summary: dict = None,
+        files_summary: list[dict[str, Any]],
+        checksum_summary: dict[Any, Any],
     ) -> None:
         """Writes all diff output to files.
 
@@ -363,14 +364,38 @@ class DiffCommand:
                     "total_issues": unknown_issue_count + flagged_issue_count,
                 },
                 "checksum summary": {
-                    "total_image1_file_count": checksum_summary["total_common_files"] + len(checksum_summary["only_in_image1"]),
-                    "total_image2_file_count": checksum_summary["total_common_files"] + len(checksum_summary["only_in_image2"]),
-                    "total_common_files": checksum_summary["total_common_files"],
-                    "identical_file_count": len(checksum_summary["checksum_matches"]),
-                    "trivial_checksum_different_file_count": len(files_summary.get("trivial_checksum_different_files", [])),
-                    "nontrivial_checksum_different_file_count": len(files_summary.get("nontrivial_checksum_different_files", [])),
-                    "only_in_image1_file_count": len(checksum_summary["only_in_image1"]),
-                    "only_in_image2_file_count": len(checksum_summary["only_in_image2"]),
+                    "total_image1_file_count": checksum_summary[
+                        "total_common_files"
+                    ]
+                    + len(checksum_summary["only_in_image1"]),
+                    "total_image2_file_count": checksum_summary[
+                        "total_common_files"
+                    ]
+                    + len(checksum_summary["only_in_image2"]),
+                    "total_common_files": checksum_summary[
+                        "total_common_files"
+                    ],
+                    "identical_file_count": len(
+                        checksum_summary["checksum_matches"]
+                    ),
+                    "trivial_checksum_different_file_count": sum(
+                        len(entry.get("trivial_checksum_different_files", []))
+                        for entry in files_summary
+                    ),
+                    "nontrivial_checksum_different_file_count": sum(
+                        len(
+                            entry.get(
+                                "nontrivial_checksum_different_files", []
+                            )
+                        )
+                        for entry in files_summary
+                    ),
+                    "only_in_image1_file_count": len(
+                        checksum_summary["only_in_image1"]
+                    ),
+                    "only_in_image2_file_count": len(
+                        checksum_summary["only_in_image2"]
+                    ),
                 },
             },
             "files": files_summary,
