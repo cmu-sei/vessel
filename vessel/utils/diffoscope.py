@@ -69,16 +69,15 @@ def build_diffoscope_command(
 
     cmd.extend([path1, path2])
     cmd.extend(["--exclude-directory-metadata", "no"])
+    cmd.extend(["--profile", f"{output_dir_path}/profile.txt"])
     exclude_patterns = [
         r"^readelf.*",
         r"^objdump.*",
         r"^strings.*",
         r"^xxd.*",
     ]
-
     for pattern in exclude_patterns:
         cmd.extend(["--exclude-command", pattern])
-    cmd.extend(["--profile", f"{output_dir_path}/profile.txt"])
     return cmd
 
 
@@ -366,8 +365,7 @@ def parse_diffoscope_output(
                             "comments": [
                                 "Flag indiff regex are not ran on binary "
                                 "unified diff. However this matched all "
-                                "of the other criteria for this flag. and "
-                                "indiff was set to '.*'",
+                                "of the other criteria for this flag.",
                             ],
                         },
                     )
@@ -473,12 +471,12 @@ def parse_diffoscope_output(
         rootfs1 = Path(current_detail["source1"]).parent
         rootfs2 = Path(current_detail["source2"]).parent
 
-        all_source1_files = get_all_files_with_sha256(rootfs1)
-        all_source2_files = get_all_files_with_sha256(rootfs2)
+        all_source_files1 = get_all_files_with_sha256(rootfs1)
+        all_source_files2 = get_all_files_with_sha256(rootfs2)
 
         file_records = {
-            str(rootfs1): all_source1_files,
-            str(rootfs2): all_source2_files,
+            str(rootfs1): all_source_files1,
+            str(rootfs2): all_source_files2,
         }
 
         checksum_summary = summarize_checksums(file_records)
