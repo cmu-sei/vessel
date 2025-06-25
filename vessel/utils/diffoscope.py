@@ -346,7 +346,7 @@ def parse_diffoscope_output(
                     )
                     or (
                         diff.comments == []
-                        and flag.regex["comment"] != re.compile(".")
+                        and flag.regex["comment"] != re.compile(".*")
                     )
                 ):  # fmt: skip
                     flag_matches = False

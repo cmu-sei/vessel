@@ -31,10 +31,10 @@ def get_test_flag():
     return Flag(
         flag_id="test_flag",
         description="test flag",
-        filepath=".",
-        filetype=".",
-        command=".",
-        comment=".",
+        filepath=".*",
+        filetype=".*",
+        command=".*",
+        comment=".*",
         indiff=r"\d+",
     )
 
