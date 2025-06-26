@@ -37,6 +37,20 @@ def test_build_diffoscope_command():
     output_file = "diff.json"
     path1 = "/test_path/file1"
     path2 = "/test_path/file2"
+    exclude_params = [
+        "--exclude-directory-metadata",
+        "no",
+        "--profile",
+        f"{output_dir}/profile.txt",
+        "--exclude-command",
+        r"^readelf.*",
+        "--exclude-command",
+        r"^objdump.*",
+        "--exclude-command",
+        r"^strings.*",
+        "--exclude-command",
+        r"^xxd.*",
+    ]
 
     expected_cmd_file = [
         "diffoscope",
@@ -46,6 +60,7 @@ def test_build_diffoscope_command():
         path1,
         path2,
     ]
+    expected_cmd_file.extend(exclude_params)
     assert (
         build_diffoscope_command(output_dir, output_file, path1, path2, "file")
         == expected_cmd_file
@@ -54,10 +69,11 @@ def test_build_diffoscope_command():
     expected_cmd_image = [
         "diffoscope",
         "--json",
-        output_dir + "/" + output_file,
+        f"{output_dir}/{output_file}",
         path1,
         path2,
     ]
+    expected_cmd_image.extend(exclude_params)
     assert (
         build_diffoscope_command(
             output_dir, output_file, path1, path2, "image"
@@ -70,7 +86,7 @@ def test_parse_diffoscope_output_debug():
     test_diff = get_test_diffoscope_output()
     test_flag = get_test_flag()
 
-    unknown_issues, flagged_issues, diff_list = parse_diffoscope_output(
+    unknown_issues, flagged_issues, diff_list, files_summary, checksum_summary  = parse_diffoscope_output(
         test_diff, [test_flag]
     )
 
@@ -79,3 +95,5 @@ def test_parse_diffoscope_output_debug():
     assert len(diff_list) > 0
     assert "flagged_issues" in diff_list[0]
     assert diff_list[0]["flagged_issues"][0]["id"] == "test_flag"
+    assert len(files_summary) > 0
+    assert checksum_summary["total_common_files"] == 0
