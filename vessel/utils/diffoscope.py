@@ -25,7 +25,6 @@
 
 """Utility Diffoscope functions."""
 
-import hashlib
 import re
 from pathlib import Path
 from typing import Any, Optional
@@ -39,6 +38,7 @@ from vessel.utils.unified_diff import (
     issues_from_difflines,
     make_issue_dict,
 )
+from vessel.utils.checksum import get_all_files_with_sha256, summarize_checksums, get_sha256, classify_checksum_mismatches
 
 
 def build_diffoscope_command(
@@ -81,71 +81,6 @@ def build_diffoscope_command(
     return cmd
 
 
-def get_all_files_with_sha256(root: Path) -> list[dict[str, str]]:
-    all_files = []
-    rootfs = root / "rootfs"
-
-    for path in rootfs.rglob("*"):
-        if not path.is_file():
-            continue
-
-        rel_path = path.relative_to(rootfs)
-
-        sha = hashlib.sha256(path.read_bytes()).hexdigest()
-        all_files.append({"path": f"rootfs/{rel_path}", "sha256": sha})
-
-    return all_files
-
-
-def summarize_checksums(file_records: dict[str, list[dict[str, str]]]) -> dict:
-    [path1, path2] = list(file_records.keys())
-    files1 = {entry["path"]: entry["sha256"] for entry in file_records[path1]}
-    files2 = {entry["path"]: entry["sha256"] for entry in file_records[path2]}
-
-    only_in_image1 = sorted(set(files1.keys()) - set(files2.keys()))
-    only_in_image2 = sorted(set(files2.keys()) - set(files1.keys()))
-    common_files = sorted(set(files1.keys()) & set(files2.keys()))
-
-    checksum_diff = []
-    for f in common_files:
-        if files1[f] != files2[f]:
-            checksum_diff.append(
-                {
-                    "path": f,
-                    "path1_sha256": files1[f],
-                    "path2_sha256": files2[f],
-                }
-            )
-    checksum_matches = []
-    for f in common_files:
-        if files1[f] == files2[f]:
-            checksum_matches.append(
-                {
-                    "path": f,
-                    "path1_sha256": files1[f],
-                    "path2_sha256": files2[f],
-                }
-            )
-
-    return {
-        "image1": path1,
-        "image2": path2,
-        "total_common_files": len(common_files),
-        "checksum_mismatches": checksum_diff,
-        "checksum_matches": checksum_matches,
-        "only_in_image1": only_in_image1,
-        "only_in_image2": only_in_image2,
-    }
-
-
-def get_sha256(path: str) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(8192), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
 def build_diff_lookup(
     diff_list: list[dict[str, Any]],
 ) -> dict[tuple[str, str], list[dict[str, Any]]]:
@@ -163,43 +98,6 @@ def build_diff_lookup(
                 lookup[key] = []
             lookup[key].append(d)
     return lookup
-
-
-def classify_checksum_mismatches(
-    checksum_summary: dict[str, Any],
-    diff_lookup: dict[tuple[str, str], list[dict[str, Any]]],
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    trivial_diffs = []
-    nontrivial_diffs = []
-    for entry in checksum_summary.get("checksum_mismatches", []):
-        rel = entry["path"]
-        key = (rel, rel)
-        diffs = diff_lookup.get(key, [])
-        if not diffs:
-            nontrivial_diffs.append({"files1": rel, "files2": rel})
-            continue
-        all_flagged = []
-        all_unknown = []
-        for d in diffs:
-            # Ignore flagged issues if this is just stat {} output
-            if d.get("command", "") == "stat {}":
-                continue
-            all_flagged.extend(d.get("flagged_issues", []))
-            all_unknown.extend(d.get("unknown_issues", []))
-        if all_flagged and not all_unknown:
-            types = []
-            seen_types = set()
-            for f in all_flagged:
-                key2 = f"{f['id']}|{f['description']}"
-                if key2 not in seen_types:
-                    types.append(key2)
-                    seen_types.add(key2)
-            trivial_diffs.append(
-                {"files1": rel, "files2": rel, "flagged_issue_types": types}
-            )
-        else:
-            nontrivial_diffs.append({"files1": rel, "files2": rel})
-    return trivial_diffs, nontrivial_diffs
 
 
 def parse_diffoscope_output(
@@ -470,22 +368,17 @@ def parse_diffoscope_output(
     ):
         rootfs1 = Path(current_detail["source1"]).parent
         rootfs2 = Path(current_detail["source2"]).parent
-
         all_source_files1 = get_all_files_with_sha256(rootfs1)
         all_source_files2 = get_all_files_with_sha256(rootfs2)
-
         file_records = {
             str(rootfs1): all_source_files1,
             str(rootfs2): all_source_files2,
         }
-
         checksum_summary = summarize_checksums(file_records)
         diff_lookup = build_diff_lookup(diff_list)
-
         trivial_diffs, nontrivial_diffs = classify_checksum_mismatches(
             checksum_summary, diff_lookup
         )
-
         files_summary.append(
             {
                 "image1": checksum_summary["image1"],
@@ -496,7 +389,6 @@ def parse_diffoscope_output(
                 "nontrivial_checksum_different_files": nontrivial_diffs,
             }
         )
-
         if file_checksum:
             files_summary.append(
                 {
