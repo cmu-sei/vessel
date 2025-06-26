@@ -274,22 +274,6 @@ def parse_diffoscope_output(
             diff.source1 = parent_source1
             diff.source2 = parent_source2
 
-        files_summary.append(
-            {
-                "source1": diff.source1,
-                "source2": diff.source2,
-                "sha256_source1": get_sha256(diff.source1)
-                if Path(diff.source1).is_file()
-                else None,
-                "sha256_source2": get_sha256(diff.source2)
-                if Path(diff.source2).is_file()
-                else None,
-                "flagged": 0,
-                "unknown": 0,
-            }
-        )
-
-        file_entry = files_summary[-1]
         # Initialize to False to ensure one iteration through the flags.
         # If it then is found to be binary, the rest of the lines
         # will not be evaluated to not check binary line by line.
@@ -357,7 +341,6 @@ def parse_diffoscope_output(
                     and flag.regex["indiff"] == re.compile(".*")
                 ):
                     flagged_issues_count += 1
-                    file_entry["flagged"] += 1
                     diff.flagged_issues.append(
                         {
                             "id": flag.flag_id,
@@ -391,8 +374,6 @@ def parse_diffoscope_output(
                     ]:
                         flagged_issues_count += len(flagged_issue_list)
                         unknown_issues_count += len(unknown_issue_list)
-                        file_entry["flagged"] += len(flagged_issue_list)
-                        file_entry["unknown"] += len(unknown_issue_list)
                         diff.flagged_issues.extend(flagged_issue_list)
                         diff.unknown_issues.extend(unknown_issue_list)
 
@@ -402,7 +383,6 @@ def parse_diffoscope_output(
             if is_binary:
                 if len(diff.flagged_issues) == 0:
                     unknown_issues_count += 1
-                    file_entry["unknown"] += 1
                     diff.unknown_issues.append(
                         {
                             "comments": [
@@ -433,7 +413,6 @@ def parse_diffoscope_output(
             )
             if minus_unmatched_str != plus_unmatched_str:
                 unknown_issues_count += 1
-                file_entry["unknown"] += 1
                 diff.unknown_issues.append(
                     make_issue_dict(
                         minus_line if minus_line else None,

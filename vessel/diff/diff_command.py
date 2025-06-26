@@ -364,23 +364,23 @@ class DiffCommand:
                     "total_issues": unknown_issue_count + flagged_issue_count,
                 },
                 "checksum summary": {
-                    "total_image1_file_count": checksum_summary[
-                        "total_common_files"
-                    ]
-                    + len(checksum_summary["only_in_image1"]),
-                    "total_image2_file_count": checksum_summary[
-                        "total_common_files"
-                    ]
-                    + len(checksum_summary["only_in_image2"]),
-                    "total_common_files": checksum_summary[
-                        "total_common_files"
-                    ],
+                    "total_image1_file_count": checksum_summary.get(
+                        "total_common_files", 0
+                    )
+                    + len(checksum_summary.get("only_in_image1", [])),
+                    "total_image2_file_count": checksum_summary.get(
+                        "total_common_files", 0
+                    )
+                    + len(checksum_summary.get("only_in_image2", [])),
+                    "total_common_files": checksum_summary.get(
+                        "total_common_files", 0
+                    ),
                     "identical_file_count": len(
-                        checksum_summary["checksum_matches"]
+                        checksum_summary.get("checksum_matches", [])
                     ),
                     "trivial_checksum_different_file_count": sum(
                         len(entry.get("trivial_checksum_different_files", []))
-                        for entry in files_summary
+                        for entry in files_summary or []
                     ),
                     "nontrivial_checksum_different_file_count": sum(
                         len(
@@ -388,17 +388,17 @@ class DiffCommand:
                                 "nontrivial_checksum_different_files", []
                             )
                         )
-                        for entry in files_summary
+                        for entry in files_summary or []
                     ),
                     "only_in_image1_file_count": len(
-                        checksum_summary["only_in_image1"]
+                        checksum_summary.get("only_in_image1", [])
                     ),
                     "only_in_image2_file_count": len(
-                        checksum_summary["only_in_image2"]
+                        checksum_summary.get("only_in_image2", [])
                     ),
                 },
             },
-            "files": files_summary,
+            "files": files_summary or [],
             "diffs": diffs,
         }
 
