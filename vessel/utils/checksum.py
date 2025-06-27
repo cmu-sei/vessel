@@ -143,24 +143,24 @@ def classify_checksum_mismatches(
         if not diffs:
             nontrivial_diffs.append({"files1": relative_path, "files2": relative_path})
             continue
-        all_flagged = []
-        all_unknown = []
-        for d in diffs:
+        flagged_issues = []
+        unknown_issues = []
+        for diff in diffs:
             # Ignore flagged issues if this is just stat {} output
-            if d.get("command", "") == "stat {}":
+            if diff.get("command", "") == "stat {}":
                 continue
-            all_flagged.extend(d.get("flagged_issues", []))
-            all_unknown.extend(d.get("unknown_issues", []))
-        if all_flagged and not all_unknown:
-            types = []
-            seen_types = set()
-            for f in all_flagged:
-                key2 = f"{f['id']}|{f['description']}"
-                if key2 not in seen_types:
-                    types.append(key2)
-                    seen_types.add(key2)
+            flagged_issues.extend(diff.get("flagged_issues", []))
+            unknown_issues.extend(diff.get("unknown_issues", []))
+        if len(flagged_issues) > 0 and len(unknown_issues) == 0:
+            diff_types = []
+            seen_diff_types = set()
+            for flagged_issue in flagged_issues:
+                issue_descriptor = f"{flagged_issue['id']}|{flagged_issue['description']}"
+                if issue_descriptor not in seen_diff_types:
+                    diff_types.append(issue_descriptor)
+                    seen_diff_types.add(issue_descriptor)
             trivial_diffs.append(
-                {"files1": relative_path, "files2": relative_path, "flagged_issue_types": types}
+                {"files1": relative_path, "files2": relative_path, "flagged_issue_types": diff_types}
             )
         else:
             nontrivial_diffs.append({"files1": relative_path, "files2": relative_path})
