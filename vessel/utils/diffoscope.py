@@ -114,7 +114,7 @@ def parse_diffoscope_output(
     files_summary: Optional[list[dict[str, Any]]] = None,
     file_checksum: bool = False,
 ) -> tuple[
-    int, int, list[dict[Any, Any]], list[dict[str, Any]], dict[Any, Any]
+    int, int, int, list[dict[Any, Any]], list[dict[str, Any]], dict[Any, Any]
 ]:
     """Recursively parses diffoscope json output.
 
@@ -144,7 +144,8 @@ def parse_diffoscope_output(
         Count of unknown issues, count of flagged issues, diff list,
         and overall file analysis summary and checksum comparison summary.
     """
-    flagged_issues_count = 0
+    trivial_issues_count = 0
+    nontrivial_issues_count = 0
     unknown_issues_count = 0
     diff_list = []
 
@@ -250,6 +251,7 @@ def parse_diffoscope_output(
                         {
                             "id": flag.flag_id,
                             "description": flag.description,
+                            "metadata": getattr(flag, "metadata", False),
                             "comments": [
                                 "Flag indiff regex are not ran on binary "
                                 "unified diff. However this matched all "
@@ -277,7 +279,12 @@ def parse_diffoscope_output(
                     ) or flag.flag_id not in [
                         flag["id"] for flag in diff.flagged_issues
                     ]:
-                        flagged_issues_count += len(flagged_issue_list)
+                        for issue in flagged_issue_list:
+                            issue["metadata"] = getattr(flag, "metadata", False)
+                            if getattr(flag, "severity") == "Low":
+                                trivial_issues_count += 1
+                            else:
+                                nontrivial_issues_count += 1
                         unknown_issues_count += len(unknown_issue_list)
                         diff.flagged_issues.extend(flagged_issue_list)
                         diff.unknown_issues.extend(unknown_issue_list)
@@ -342,8 +349,9 @@ def parse_diffoscope_output(
                 file_checksum=file_checksum,
             )
             unknown_issues_count += child_return[0]
-            flagged_issues_count += child_return[1]
-            diff_list.extend(child_return[2])
+            trivial_issues_count += child_return[1]
+            nontrivial_issues_count += child_return[2]
+            diff_list.extend(child_return[3])
 
     checksum_summary = {}
     # Only generate the final summary when it's top-level call (end of recursion)
@@ -386,7 +394,8 @@ def parse_diffoscope_output(
 
         return (
             unknown_issues_count,
-            flagged_issues_count,
+            trivial_issues_count,
+            nontrivial_issues_count,
             diff_list,
             files_summary,
             checksum_summary,
@@ -394,7 +403,8 @@ def parse_diffoscope_output(
 
     return (
         unknown_issues_count,
-        flagged_issues_count,
+        trivial_issues_count,
+        nontrivial_issues_count,
         diff_list,
         files_summary,
         checksum_summary,

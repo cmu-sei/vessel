@@ -7,6 +7,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: '\d+ \+\d{4}\tclone:'
+    severity: 'Low'
+    metadata: True
 
   - id: 'TIME005'
     description: "Files in zip have different time stamp."
@@ -15,6 +17,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: 'bx stor \d{2}-[A-Za-z]{3}-\d{2} \d{2}:\d{2}'
+    severity: 'Low'
+    metadata: True
 
   - id: 'TIME006'
     description: "Time difference in different format that starts with 1714"
@@ -23,6 +27,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: '\b1714\d*\b'
+    severity: 'Low'
+    metadata: True
 
   - id: 'TIME007'
     description: "File listing time difference in different format."
@@ -31,6 +37,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: '\b\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}\b'
+    severity: 'Low'
+    metadata: True
 
   - id: 'TIME008'
     description: "Logging time difference."
@@ -39,6 +47,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: '\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}'
+    severity: 'Low'
+    metadata: True
 
   - id: 'TIME009'
     description: "Date and time difference for Go Build"
@@ -47,6 +57,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: '(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s([0-2]?[0-9]|3[01])\s([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])\sUTC\s[0-9]{4}'
+    severity: 'Low'
+    metadata: True
 
   - id: 'TIME010'
     description: "Date and time difference for Go binary output"
@@ -55,6 +67,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: '(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s([0-2]?[0-9]|3[01])\s([01][0-9]|2[0-3]):([0-5][0-9])'
+    severity: 'Low'
+    metadata: True
 
   - id: 'TIME011'
     description: 'Modified time in git index file'
@@ -63,6 +77,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: 'Modified:\s*\d+[.]\d+'
+    severity: 'Low'
+    metadata: True
 
   - id: 'TIME012'
     description: "Modified file time"
@@ -71,6 +87,8 @@ flags:
     command: 'stat {}'
     comment: '.*'
     indiff: 'Modify:\s.*'
+    severity: 'Low'
+    metadata: True
 
   - id: 'TIME013'
     description: 'Created time in git index file'
@@ -79,6 +97,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: 'Created:\s*\d+[.]\d+'
+    severity: 'Low'
+    metadata: True
 
   - id: 'TIME014'
     description: "Keybox created time diff"
@@ -87,6 +107,8 @@ flags:
     command: 'kbxutil'
     comment: '.*'
     indiff: '(?i)created-at:\s(\d+)'
+    severity: 'Low'
+    metadata: True
 
   - id: 'TIME015'
     description: "Keybox last maintained time diff"
@@ -95,6 +117,8 @@ flags:
     command: 'kbxutil'
     comment: '.*'
     indiff: 'last-maint:\s(\d+)'
+    severity: 'Low'
+    metadata: True
 
   - id: 'TIME016'
     description: "Python bytecode moddate differences "
@@ -103,30 +127,38 @@ flags:
     command: 'Python bytecode'
     comment: '.*'
     indiff: 'moddate:.*'
+    severity: 'Low'
+    metadata: True
 
-  - id: 'TIME018'
+  - id: 'TIME017'
     description: "Python last check time difference"
     filepath: '.*'
     filetype: '.*'
     command: 'Pretty-printed'
     comment: '.*'
     indiff: '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?[+-]\d{2}:\d{2}'
+    severity: 'Low'
+    metadata: True
 
-  - id: 'TIME019'
+  - id: 'TIME018'
     description: "Time difference in unpacked db"
     filepath: '.*\.log'
     filetype: '.*'
     command: '.*'
     comment: '.*'
     indiff: '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{4}'
+    severity: 'Low'
+    metadata: True
 
-  - id: 'TIME020'
+  - id: 'TIME019'
     description: "Timer setup time differences"
     filepath: '.*var/log/dnf.log'
     filetype: '.*'
     command: '.*'
     comment: '.*'
     indiff: '\d+\sms'
+    severity: 'Low'
+    metadata: True
 
   - id: 'PLAT004'
     description: 'Different device ID field in git index file'
@@ -135,6 +167,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: 'Device ID:\s*\(\d, \d+\)'
+    severity: 'Medium'
+    metadata: True
 
   - id: 'CACHE007'
     description: 'ldconfig aux-cache'
@@ -143,6 +177,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: '.*'
+    severity: 'Low'
+    metadata: False
 
   - id: 'CACHE008'
     description: 'Go-build cache'
@@ -151,6 +187,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: '.*'
+    severity: 'Low'
+    metadata: False
 
   - id: 'CACHE009'
     description: 'Go Module Download Cache'
@@ -159,6 +197,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: '.*'
+    severity: 'Low'
+    metadata: False
 
   - id: 'CACHE010'
     description: 'Pip cache files'
@@ -167,6 +207,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: '.*'
+    severity: 'Low'
+    metadata: True
 
   - id: 'CACHE011'
     description: 'Compiled Python (.pyc) differences'
@@ -175,6 +217,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: '.*'
+    severity: 'Low'
+    metadata: False
 
   - id: 'RNG002'
     description: 'Inode differences in Git index files'
@@ -183,6 +227,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: 'Inode:\s*\d+'
+    severity: 'Low'
+    metadata: False
 
   - id: 'RNG003'
     description: "Difference in sqlite3 transaction ids"
@@ -191,6 +237,8 @@ flags:
     command: 'sqlite3 {} .dump'
     comment: '.*'
     indiff: '\b\d,\d+,\d+\b'
+    severity: 'Medium'
+    metadata: False
 
   - id: 'RNG004'
     description: 'uuid differences in fontconfig cache filenames'
@@ -199,7 +247,9 @@ flags:
     command: 'file list'
     comment: '.*'
     indiff: '[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}'
-  
+    severity: 'Medium'
+    metadata: False
+
   - id: 'RNG005'
     description: '/etc/shadow last password change difference'
     filepath: '.*/etc/shadow'
@@ -207,6 +257,8 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: '^[a-zA-Z0-9_-]+:[!]+:[0-9]+:(?:[0-9]*:)*$'
+    severity: 'Medium'
+    metadata: False
 
   - id: 'RNG006'
     description: 'Generated certificate differences'
@@ -215,3 +267,5 @@ flags:
     command: '.*'
     comment: '.*'
     indiff: '.*'
+    severity: 'Medium'
+    metadata: False

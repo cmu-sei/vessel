@@ -88,8 +88,13 @@ def summarize_checksums(
         folder_path2: Path to second folder
         hashed_files2: List containing FileHash for each file in folder_path2
 
-    Returns:
-        Summary of the comparison in dict format.
+    Dict summarizing:
+            - image1, image2: the two image keys.
+            - total_common_files: count of files present in both images.
+            - checksum_mismatches: list of files present in both images but with different checksums.
+            - checksum_matches: list of files present in both images with matching checksums.
+            - only_in_image1: files only in image1.
+            - only_in_image2: files only in image2.
     """
     files1 = {str(filehash.path): filehash.hash for filehash in hashed_files1}
     files2 = {str(filehash.path): filehash.hash for filehash in hashed_files2}
@@ -133,35 +138,72 @@ def classify_checksum_mismatches(
     checksum_summary: dict[str, Any],
     diff_lookup: dict[tuple[str, str], list[dict[str, Any]]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """ """
+    """Classify each checksum mismatch as either trivial or nontrivial.
+
+    Args:
+        checksum_summary: Summary dict from summarize_checksums().
+        diff_lookup: Dict mapping file pairs to diff result dicts.
+
+    Returns:
+        A tuple (trivial_diffs, nontrivial_diffs):
+            - trivial_diffs: list of dicts for files with only trivial flagged issues.
+            - nontrivial_diffs: list of dicts for files with unknown issues, non-metadata stat{} flagged issues.
+    """
     trivial_diffs = []
     nontrivial_diffs = []
     for entry in checksum_summary.get("checksum_mismatches", []):
         relative_path = entry["path"]
         key = (relative_path, relative_path)
         diffs = diff_lookup.get(key, [])
-        if not diffs:
-            nontrivial_diffs.append({"files1": relative_path, "files2": relative_path})
-            continue
-        flagged_issues = []
-        unknown_issues = []
-        for diff in diffs:
-            # Ignore flagged issues if this is just stat {} output
-            if diff.get("command", "") == "stat {}":
-                continue
-            flagged_issues.extend(diff.get("flagged_issues", []))
-            unknown_issues.extend(diff.get("unknown_issues", []))
-        if len(flagged_issues) > 0 and len(unknown_issues) == 0:
-            diff_types = []
-            seen_diff_types = set()
-            for flagged_issue in flagged_issues:
-                issue_descriptor = f"{flagged_issue['id']}|{flagged_issue['description']}"
-                if issue_descriptor not in seen_diff_types:
-                    diff_types.append(issue_descriptor)
-                    seen_diff_types.add(issue_descriptor)
-            trivial_diffs.append(
-                {"files1": relative_path, "files2": relative_path, "flagged_issue_types": diff_types}
-            )
+        all_flagged = []
+        all_unknown = []
+        stat_has_nonmeta = False
+        for d in diffs:
+            flagged = d.get("flagged_issues", [])
+            unknowns = d.get("unknown_issues", [])
+            all_flagged.extend(flagged)
+            all_unknown.extend(unknowns)
+
+            # Only check stat {} flagged issues for non-metadata
+            if d.get("command", "") == "stat {}":
+                for issue in flagged:
+                    if not issue.get("metadata", False):
+                        stat_has_nonmeta = True
+
+        types = []
+        seen_types = set()
+        for f in all_flagged:
+            key2 = f"{f['id']}|{f['description']}"
+            if key2 not in seen_types:
+                types.append(key2)
+                seen_types.add(key2)
+
+        # If there are any unknown issues, classify as nontrivial
+        if all_unknown:
+            nontrivial_diffs.append({
+                "files1": rel,
+                "files2": rel,
+                "flagged_issue_types": types
+            })
+        # If any stat {} flagged issue has metadata == False, nontrivial
+        elif stat_has_nonmeta:
+            nontrivial_diffs.append({
+                "files1": rel,
+                "files2": rel,
+                "flagged_issue_types": types
+            })
+        # If there are flagged issues (and no unknowns), trivial
+        elif all_flagged:
+            trivial_diffs.append({
+                "files1": rel,
+                "files2": rel,
+                "flagged_issue_types": types
+            })
+        # Otherwise, nontrivial by default (For example: no flagged/unknown issues)
         else:
-            nontrivial_diffs.append({"files1": relative_path, "files2": relative_path})
+            nontrivial_diffs.append({
+                "files1": rel,
+                "files2": rel
+            })
+
     return trivial_diffs, nontrivial_diffs
