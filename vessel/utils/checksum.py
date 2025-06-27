@@ -26,6 +26,7 @@
 """Utility checksum functions."""
 
 import hashlib
+import magic
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +38,7 @@ class FileHash:
         self: "FileHash",
         path: str,
         hash: str,
+        filetype: str,
     ) -> None:
         """FileHash constructor.
 
@@ -46,6 +48,7 @@ class FileHash:
         """
         self.path = path
         self.hash = hash
+        self.filetype = filetype
 
 
 def hash_folder_contents(folder_path: Path) -> list[FileHash]:
@@ -65,7 +68,8 @@ def hash_folder_contents(folder_path: Path) -> list[FileHash]:
 
         relative_path = file_path.relative_to(folder_path)
         hash = hashlib.sha256(file_path.read_bytes()).hexdigest()
-        file_hashes.append(FileHash(str(relative_path), hash))
+        filetype = magic.from_file(str(file_path))
+        file_hashes.append(FileHash(str(relative_path), hash, filetype))
 
     return file_hashes
 
@@ -96,8 +100,8 @@ def summarize_checksums(
         - only_in_image1: files only in image1.
         - only_in_image2: files only in image2.
     """
-    files1 = {str(filehash.path): filehash.hash for filehash in hashed_files1}
-    files2 = {str(filehash.path): filehash.hash for filehash in hashed_files2}
+    files1 = {str(filehash.path): filehash for filehash in hashed_files1}
+    files2 = {str(filehash.path): filehash for filehash in hashed_files2}
 
     only_in_image1 = sorted(set(files1.keys()) - set(files2.keys()))
     only_in_image2 = sorted(set(files2.keys()) - set(files1.keys()))
@@ -106,20 +110,24 @@ def summarize_checksums(
     checksum_mismatches = []
     checksum_matches = []
     for f in common_files:
-        if files1[f] != files2[f]:
+        if files1[f].hash != files2[f].hash:
             checksum_mismatches.append(
                 {
                     "path": f,
-                    "path1_sha256": files1[f],
-                    "path2_sha256": files2[f],
+                    "path1_sha256": files1[f].hash,
+                    "path2_sha256": files2[f].hash,
+                    "filetype1": files1[f].filetype,
+                    "filetype2": files2[f].filetype,
                 }
             )
         else:
             checksum_matches.append(
                 {
                     "path": f,
-                    "path1_sha256": files1[f],
-                    "path2_sha256": files2[f],
+                    "path1_sha256": files1[f].hash,
+                    "path2_sha256": files2[f].hash,
+                    "filetype1": files1[f].filetype,
+                    "filetype2": files2[f].filetype,
                 }
             )
 
