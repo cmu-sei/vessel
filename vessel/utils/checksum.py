@@ -32,13 +32,14 @@ from typing import Any
 
 class FileHash:
     """Class to hold hash data for a file."""
+
     def __init__(
         self: "FileHash",
         path: str,
         hash: str,
     ) -> None:
         """FileHash constructor.
-        
+
         Args:
             path: Path to file
             hash: sha256 hash of file
@@ -49,7 +50,7 @@ class FileHash:
 
 def hash_folder_contents(folder_path: Path) -> list[FileHash]:
     """Calculate hash for each file within a path.
-    
+
     Args:
         folder_path: Path to folder to hash all contents of
 
@@ -69,7 +70,12 @@ def hash_folder_contents(folder_path: Path) -> list[FileHash]:
     return file_hashes
 
 
-def summarize_checksums(folder_path1: Path, hashed_files1: list[FileHash], folder_path2: Path, hashed_files2: list[FileHash]) -> dict:
+def summarize_checksums(
+    folder_path1: Path,
+    hashed_files1: list[FileHash],
+    folder_path2: Path,
+    hashed_files2: list[FileHash],
+) -> dict:
     """Compares checkums of all files in two folder paths.
 
     Compares checksums of all files in two folder paths. Returns summary of the comparison
@@ -81,7 +87,7 @@ def summarize_checksums(folder_path1: Path, hashed_files1: list[FileHash], folde
         hashed_files1: List containing FileHash for each file in folder_path1
         folder_path2: Path to second folder
         hashed_files2: List containing FileHash for each file in folder_path2
-    
+
     Returns:
         Summary of the comparison in dict format.
     """
@@ -125,9 +131,7 @@ def summarize_checksums(folder_path1: Path, hashed_files1: list[FileHash], folde
 
 
 def get_sha256(path: str) -> str:
-    """
-    
-    """
+    """ """
     h = hashlib.sha256()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
@@ -139,9 +143,7 @@ def classify_checksum_mismatches(
     checksum_summary: dict[str, Any],
     diff_lookup: dict[tuple[str, str], list[dict[str, Any]]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """
-    
-    """
+    """ """
     trivial_diffs = []
     nontrivial_diffs = []
     for entry in checksum_summary.get("checksum_mismatches", []):

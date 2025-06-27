@@ -31,6 +31,11 @@ from typing import Any, Optional
 
 import magic
 
+from vessel.utils.checksum import (
+    classify_checksum_mismatches,
+    hash_folder_contents,
+    summarize_checksums,
+)
 from vessel.utils.flag import Flag
 from vessel.utils.unified_diff import (
     Diff,
@@ -84,11 +89,10 @@ def build_diffoscope_command(
 def build_diff_lookup(
     diff_list: list[dict[str, Any]],
 ) -> dict[tuple[str, str], list[dict[str, Any]]]:
-    """
-    
-    """
+    """ """
     lookup: dict[Any, Any] = {}
     for d in diff_list:
+
         def rel_after_rootfs(path):
             idx = path.find("rootfs/")
             return path[idx:] if idx != -1 else path
@@ -215,7 +219,9 @@ def parse_diffoscope_output(
                         flag_matches = False
 
                 # Check if command matches flag
-                if flag_matches and not flag.regex["command"].search(diff.command):
+                if flag_matches and not flag.regex["command"].search(
+                    diff.command
+                ):
                     flag_matches = False
 
                 # Check if comment matches flag
@@ -352,7 +358,9 @@ def parse_diffoscope_output(
         rootfs_path2 = Path(current_detail["source2"])
         hashed_files1 = hash_folder_contents(rootfs_path1)
         hashed_files2 = hash_folder_contents(rootfs_path2)
-        checksum_summary = summarize_checksums(rootfs_path1, hashed_files1, rootfs_path2, hashed_files2)
+        checksum_summary = summarize_checksums(
+            rootfs_path1, hashed_files1, rootfs_path2, hashed_files2
+        )
         diff_lookup = build_diff_lookup(diff_list)
         trivial_diffs, nontrivial_diffs = classify_checksum_mismatches(
             checksum_summary, diff_lookup

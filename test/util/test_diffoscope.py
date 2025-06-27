@@ -86,9 +86,13 @@ def test_parse_diffoscope_output_debug():
     test_diff = get_test_diffoscope_output()
     test_flag = get_test_flag()
 
-    unknown_issues, flagged_issues, diff_list, files_summary, checksum_summary  = parse_diffoscope_output(
-        test_diff, [test_flag]
-    )
+    (
+        unknown_issues,
+        flagged_issues,
+        diff_list,
+        files_summary,
+        checksum_summary,
+    ) = parse_diffoscope_output(test_diff, [test_flag])
 
     assert unknown_issues == 0
     assert flagged_issues > 0
