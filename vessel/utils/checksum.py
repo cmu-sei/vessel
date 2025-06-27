@@ -29,20 +29,24 @@ import hashlib
 from pathlib import Path
 from typing import Any
 
-def get_all_files_with_sha256(unpacked_path: Path) -> list[dict[str, str]]:
-    """
+def hash_folder_contents(path: Path) -> list[dict[str, str]]:
+    """Calculate hash for each file within a path.
     
+    Args:
+        path: path to folder to hash all contents of
+
+    Returns:
+        Dict with key file name, value sha256 hash of file for each file in path. 
     """
     file_hashes = []
-    unpacked_rootfs_path = unpacked_path / "rootfs"
 
-    for path in unpacked_rootfs_path.rglob("*"):
+    for path in path.rglob("*"):
         if not path.is_file():
             continue
 
-        relative_path = path.relative_to(unpacked_rootfs_path)
+        relative_path = path.relative_to(path)
         sha = hashlib.sha256(path.read_bytes()).hexdigest()
-        file_hashes.append({"path": f"rootfs/{relative_path}", "sha256": sha})
+        file_hashes.append({"path": str(relative_path), "sha256": sha})
 
     return file_hashes
 

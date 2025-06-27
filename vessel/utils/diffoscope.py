@@ -84,9 +84,11 @@ def build_diffoscope_command(
 def build_diff_lookup(
     diff_list: list[dict[str, Any]],
 ) -> dict[tuple[str, str], list[dict[str, Any]]]:
+    """
+    
+    """
     lookup: dict[Any, Any] = {}
     for d in diff_list:
-
         def rel_after_rootfs(path):
             idx = path.find("rootfs/")
             return path[idx:] if idx != -1 else path
@@ -345,13 +347,14 @@ def parse_diffoscope_output(
         and parent_source2 == ""
         and parent_comments is None
     ):
-        rootfs1 = Path(current_detail["source1"]).parent
-        rootfs2 = Path(current_detail["source2"]).parent
-        all_source_files1 = get_all_files_with_sha256(rootfs1)
-        all_source_files2 = get_all_files_with_sha256(rootfs2)
+        # Path to rootfs of unpacked image, ex: image1/rootfs
+        rootfs_path1 = Path(current_detail["source1"])
+        rootfs_path2 = Path(current_detail["source2"])
+        all_source_files1 = hash_folder_contents(rootfs_path1)
+        all_source_files2 = hash_folder_contents(rootfs_path2)
         file_records = {
-            str(rootfs1): all_source_files1,
-            str(rootfs2): all_source_files2,
+            str(rootfs_path1): all_source_files1,
+            str(rootfs_path2): all_source_files2,
         }
         checksum_summary = summarize_checksums(file_records)
         diff_lookup = build_diff_lookup(diff_list)
