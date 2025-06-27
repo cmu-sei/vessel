@@ -246,7 +246,6 @@ def parse_diffoscope_output(
                     and is_binary
                     and flag.regex["indiff"] == re.compile(".*")
                 ):
-                    flagged_issues_count += 1
                     diff.flagged_issues.append(
                         {
                             "id": flag.flag_id,
@@ -280,7 +279,9 @@ def parse_diffoscope_output(
                         flag["id"] for flag in diff.flagged_issues
                     ]:
                         for issue in flagged_issue_list:
-                            issue["metadata"] = getattr(flag, "metadata", False)
+                            issue["metadata"] = getattr(
+                                flag, "metadata", False
+                            )
                             if getattr(flag, "severity") == "Low":
                                 trivial_issues_count += 1
                             else:

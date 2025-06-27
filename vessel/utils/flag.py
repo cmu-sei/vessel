@@ -43,7 +43,6 @@ class Flag:
         command: str,
         comment: str,
         indiff: str,
-
     ) -> None:
         """Initializer for Flag class."""
         self.flag_id = flag_id

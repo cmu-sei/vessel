@@ -216,7 +216,14 @@ class DiffCommand:
             ).open() as raw_diff_file:
                 diffoscope_json = json.load(raw_diff_file)
 
-        unknown_issues_count, trivial_issues_count, nontrivial_issues_count, diff_list, files_summary, checksum_summary = parse_diffoscope_output(
+        (
+            unknown_issues_count,
+            trivial_issues_count,
+            nontrivial_issues_count,
+            diff_list,
+            files_summary,
+            checksum_summary,
+        ) = parse_diffoscope_output(
             diffoscope_json,
             self.flags,
             file_checksum=self.file_checksum,
@@ -287,7 +294,14 @@ class DiffCommand:
         ).open() as raw_diff_file:
             diffoscope_json = json.load(raw_diff_file)
 
-        unknown_issues_count, trivial_issues_count, nontrivial_issues_count, diff_list, files_summary, checksum_summary = parse_diffoscope_output(
+        (
+            unknown_issues_count,
+            trivial_issues_count,
+            nontrivial_issues_count,
+            diff_list,
+            files_summary,
+            checksum_summary,
+        ) = parse_diffoscope_output(
             diffoscope_json,
             self.flags,
             file_checksum=self.file_checksum,
@@ -312,7 +326,14 @@ class DiffCommand:
         with Path(self.input_files[0]).open() as raw_diff_file:
             diffoscope_json = json.load(raw_diff_file)
 
-        unknown_issues_count, trivial_issues_count, nontrivial_issues_count, diff_list, files_summary, checksum_summary = parse_diffoscope_output(
+        (
+            unknown_issues_count,
+            trivial_issues_count,
+            nontrivial_issues_count,
+            diff_list,
+            files_summary,
+            checksum_summary,
+        ) = parse_diffoscope_output(
             diffoscope_json,
             self.flags,
             file_checksum=self.file_checksum,

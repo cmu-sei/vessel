@@ -26,9 +26,10 @@
 """Utility checksum functions."""
 
 import hashlib
-import magic
 from pathlib import Path
 from typing import Any
+
+import magic
 
 
 class FileHash:
@@ -190,30 +191,35 @@ def classify_checksum_mismatches(
 
         # If there are any unknown issues, classify as nontrivial
         if entry_unknown_issues:
-            nontrivial_diffs.append({
-                "files1": relative_path,
-                "files2": relative_path,
-                "flagged_issue_types": types
-            })
+            nontrivial_diffs.append(
+                {
+                    "files1": relative_path,
+                    "files2": relative_path,
+                    "flagged_issue_types": types,
+                }
+            )
         # If any stat {} flagged issue has metadata == False, nontrivial
         elif stat_has_nonmeta:
-            nontrivial_diffs.append({
-                "files1": relative_path,
-                "files2": relative_path,
-                "flagged_issue_types": types
-            })
+            nontrivial_diffs.append(
+                {
+                    "files1": relative_path,
+                    "files2": relative_path,
+                    "flagged_issue_types": types,
+                }
+            )
         # If there are flagged issues (and no unknowns), trivial
         elif entry_flagged_issues:
-            trivial_diffs.append({
-                "files1": relative_path,
-                "files2": relative_path,
-                "flagged_issue_types": types
-            })
+            trivial_diffs.append(
+                {
+                    "files1": relative_path,
+                    "files2": relative_path,
+                    "flagged_issue_types": types,
+                }
+            )
         # Otherwise, nontrivial by default (For example: no flagged/unknown issues)
         else:
-            nontrivial_diffs.append({
-                "files1": relative_path,
-                "files2": relative_path
-            })
+            nontrivial_diffs.append(
+                {"files1": relative_path, "files2": relative_path}
+            )
 
     return trivial_diffs, nontrivial_diffs
