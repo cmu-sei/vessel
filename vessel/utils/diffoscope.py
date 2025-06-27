@@ -38,7 +38,7 @@ from vessel.utils.unified_diff import (
     issues_from_difflines,
     make_issue_dict,
 )
-from vessel.utils.checksum import get_all_files_with_sha256, summarize_checksums, get_sha256, classify_checksum_mismatches
+from vessel.utils.checksum import hash_folder_contents, summarize_checksums, classify_checksum_mismatches
 
 
 def build_diffoscope_command(
@@ -350,13 +350,9 @@ def parse_diffoscope_output(
         # Path to rootfs of unpacked image, ex: image1/rootfs
         rootfs_path1 = Path(current_detail["source1"])
         rootfs_path2 = Path(current_detail["source2"])
-        all_source_files1 = hash_folder_contents(rootfs_path1)
-        all_source_files2 = hash_folder_contents(rootfs_path2)
-        file_records = {
-            str(rootfs_path1): all_source_files1,
-            str(rootfs_path2): all_source_files2,
-        }
-        checksum_summary = summarize_checksums(file_records)
+        hashed_files1 = hash_folder_contents(rootfs_path1)
+        hashed_files2 = hash_folder_contents(rootfs_path2)
+        checksum_summary = summarize_checksums(rootfs_path1, hashed_files1, rootfs_path2, hashed_files2)
         diff_lookup = build_diff_lookup(diff_list)
         trivial_diffs, nontrivial_diffs = classify_checksum_mismatches(
             checksum_summary, diff_lookup

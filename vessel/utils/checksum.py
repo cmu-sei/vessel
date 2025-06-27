@@ -29,35 +29,64 @@ import hashlib
 from pathlib import Path
 from typing import Any
 
-def hash_folder_contents(path: Path) -> list[dict[str, str]]:
+
+class FileHash:
+    """Class to hold hash data for a file."""
+    def __init__(
+        self: "FileHash",
+        path: str,
+        hash: str,
+    ) -> None:
+        """FileHash constructor.
+        
+        Args:
+            path: Path to file
+            hash: sha256 hash of file
+        """
+        self.path = path
+        self.hash = hash
+
+
+def hash_folder_contents(folder_path: Path) -> list[FileHash]:
     """Calculate hash for each file within a path.
     
     Args:
-        path: path to folder to hash all contents of
+        folder_path: Path to folder to hash all contents of
 
     Returns:
-        Dict with key file name, value sha256 hash of file for each file in path. 
+        List containing FileHash for each file in folder_path
     """
-    file_hashes = []
+    file_hashes: list[FileHash] = []
 
-    for path in path.rglob("*"):
-        if not path.is_file():
+    for file_path in folder_path.rglob("*"):
+        if not file_path.is_file():
             continue
 
-        relative_path = path.relative_to(path)
-        sha = hashlib.sha256(path.read_bytes()).hexdigest()
-        file_hashes.append({"path": str(relative_path), "sha256": sha})
+        relative_path = file_path.relative_to(folder_path)
+        hash = hashlib.sha256(file_path.read_bytes()).hexdigest()
+        file_hashes.append(FileHash(str(relative_path), hash))
 
     return file_hashes
 
 
-def summarize_checksums(file_records: dict[str, list[dict[str, str]]]) -> dict:
-    """
+def summarize_checksums(folder_path1: Path, hashed_files1: list[FileHash], folder_path2: Path, hashed_files2: list[FileHash]) -> dict:
+    """Compares checkums of all files in two folder paths.
+
+    Compares checksums of all files in two folder paths. Returns summary of the comparison
+    with information about checksum matches and mismatches between files in each path, and
+    files that are only in one of the two paths.
+
+    Args:
+        folder_path1: Path to first folder
+        hashed_files1: List containing FileHash for each file in folder_path1
+        folder_path2: Path to second folder
+        hashed_files2: List containing FileHash for each file in folder_path2
     
+    Returns:
+        Summary of the comparison in dict format.
     """
-    [path1, path2] = list(file_records.keys())
-    files1 = {entry["path"]: entry["sha256"] for entry in file_records[path1]}
-    files2 = {entry["path"]: entry["sha256"] for entry in file_records[path2]}
+    files1 = {str(filehash.path): filehash.hash for filehash in hashed_files1}
+    files2 = {str(filehash.path): filehash.hash for filehash in hashed_files2}
 
     only_in_image1 = sorted(set(files1.keys()) - set(files2.keys()))
     only_in_image2 = sorted(set(files2.keys()) - set(files1.keys()))
@@ -85,8 +114,8 @@ def summarize_checksums(file_records: dict[str, list[dict[str, str]]]) -> dict:
             )
 
     return {
-        "image1": path1,
-        "image2": path2,
+        "image1": str(folder_path1),
+        "image2": str(folder_path2),
         "total_common_files": len(common_files),
         "checksum_mismatches": checksum_diff,
         "checksum_matches": checksum_matches,

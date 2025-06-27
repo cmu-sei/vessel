@@ -342,8 +342,8 @@ class DiffCommand:
             flagged_issue_count: Count of flagged issues
             diffs: List of diffs, each being a dict item returned
                     from Diff.to_slim_dict()
-            files_summary: file analysis of trivial/nontrivial issue
-            checksum_summary: file checksum comparison result summary
+            files_summary: File analysis of trivial/nontrivial issue
+            checksum_summary: File checksum comparison result summary
         Returns:
             None
         """
