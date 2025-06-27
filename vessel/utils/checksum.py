@@ -137,11 +137,11 @@ def classify_checksum_mismatches(
     trivial_diffs = []
     nontrivial_diffs = []
     for entry in checksum_summary.get("checksum_mismatches", []):
-        rel = entry["path"]
-        key = (rel, rel)
+        relative_path = entry["path"]
+        key = (relative_path, relative_path)
         diffs = diff_lookup.get(key, [])
         if not diffs:
-            nontrivial_diffs.append({"files1": rel, "files2": rel})
+            nontrivial_diffs.append({"files1": relative_path, "files2": relative_path})
             continue
         all_flagged = []
         all_unknown = []
@@ -160,8 +160,8 @@ def classify_checksum_mismatches(
                     types.append(key2)
                     seen_types.add(key2)
             trivial_diffs.append(
-                {"files1": rel, "files2": rel, "flagged_issue_types": types}
+                {"files1": relative_path, "files2": relative_path, "flagged_issue_types": types}
             )
         else:
-            nontrivial_diffs.append({"files1": rel, "files2": rel})
+            nontrivial_diffs.append({"files1": relative_path, "files2": relative_path})
     return trivial_diffs, nontrivial_diffs
