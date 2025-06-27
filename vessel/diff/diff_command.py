@@ -112,7 +112,7 @@ class DiffCommand:
             self.unpacked_image_paths[0],
         ) == get_manifest_digest(self.unpacked_image_paths[1]):
             logger.info("All layers are identical")
-            self.write_to_files(0, 0, [], [], {})
+            self.write_to_files(0, 0, 0, [], [], {})
             return True
 
         if self.compare_level == "file":
@@ -157,6 +157,8 @@ class DiffCommand:
                             flag["command"],
                             flag["comment"],
                             flag["indiff"],
+                            flag["severity"],
+                            flag["metadata"],
                         )
                     except ValueError as e:
                         logger.exception("Error with flag: %s", e)
@@ -214,18 +216,19 @@ class DiffCommand:
             ).open() as raw_diff_file:
                 diffoscope_json = json.load(raw_diff_file)
 
-            unknown_issues_count, flagged_issues_count, diff_list, files_summary, checksum_summary = parse_diffoscope_output(
-                diffoscope_json,
-                self.flags,
-                file_checksum=self.file_checksum,
-            )
-            self.write_to_files(
-                unknown_issues_count,
-                flagged_issues_count,
-                diff_list,
-                files_summary,
-                checksum_summary,
-            )
+        unknown_issues_count, trivial_issues_count, nontrivial_issues_count, diff_list, files_summary, checksum_summary = parse_diffoscope_output(
+            diffoscope_json,
+            self.flags,
+            file_checksum=self.file_checksum,
+        )
+        self.write_to_files(
+            unknown_issues_count,
+            trivial_issues_count,
+            nontrivial_issues_count,
+            diff_list,
+            files_summary,
+            checksum_summary,
+        )
 
         return True
 
@@ -284,14 +287,15 @@ class DiffCommand:
         ).open() as raw_diff_file:
             diffoscope_json = json.load(raw_diff_file)
 
-        unknown_issues_count, flagged_issues_count, diff_list, files_summary, checksum_summary = parse_diffoscope_output(
+        unknown_issues_count, trivial_issues_count, nontrivial_issues_count, diff_list, files_summary, checksum_summary = parse_diffoscope_output(
             diffoscope_json,
             self.flags,
             file_checksum=self.file_checksum,
         )
         self.write_to_files(
             unknown_issues_count,
-            flagged_issues_count,
+            trivial_issues_count,
+            nontrivial_issues_count,
             diff_list,
             files_summary,
             checksum_summary,
@@ -308,14 +312,15 @@ class DiffCommand:
         with Path(self.input_files[0]).open() as raw_diff_file:
             diffoscope_json = json.load(raw_diff_file)
 
-        unknown_issues_count, flagged_issues_count, diff_list, files_summary, checksum_summary = parse_diffoscope_output(
+        unknown_issues_count, trivial_issues_count, nontrivial_issues_count, diff_list, files_summary, checksum_summary = parse_diffoscope_output(
             diffoscope_json,
             self.flags,
             file_checksum=self.file_checksum,
         )
         self.write_to_files(
             unknown_issues_count,
-            flagged_issues_count,
+            trivial_issues_count,
+            nontrivial_issues_count,
             diff_list,
             files_summary,
             checksum_summary,
@@ -326,7 +331,8 @@ class DiffCommand:
     def write_to_files(
         self: "DiffCommand",
         unknown_issue_count: int,
-        flagged_issue_count: int,
+        trivial_issue_count: int,
+        nontrivial_issue_count: int,
         diffs: list,
         files_summary: list[dict[str, Any]],
         checksum_summary: dict[Any, Any],
@@ -349,6 +355,7 @@ class DiffCommand:
         """
         unified_diff_id = 1
         unified_diff_dict = {}
+        flagged_issue_count = trivial_issue_count + nontrivial_issue_count
 
         for diff in diffs:
             unified_diff_dict[unified_diff_id] = diff["unified_diff"]
@@ -360,6 +367,8 @@ class DiffCommand:
             "summary": {
                 "issue_summary": {
                     "unknown_issues": unknown_issue_count,
+                    "trivial_issues": trivial_issue_count,
+                    "nontrivial_issues": nontrivial_issue_count,
                     "flagged_issues": flagged_issue_count,
                     "total_issues": unknown_issue_count + flagged_issue_count,
                 },

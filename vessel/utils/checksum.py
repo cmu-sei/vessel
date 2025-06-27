@@ -121,11 +121,22 @@ def classify_checksum_mismatches(
         all_flagged = []
         all_unknown = []
         for d in diffs:
-            # Ignore flagged issues if this is just stat {} output
-            if d.get("command", "") == "stat {}":
-                continue
-            all_flagged.extend(d.get("flagged_issues", []))
-            all_unknown.extend(d.get("unknown_issues", []))
+            command_is_stat = d.get("command", "") == "stat {}"
+            if command_is_stat:
+                flagged = []
+                for issue in d.get("flagged_issues", []):
+                    if issue.get("metadata") is True:
+                        flagged.append(issue)
+                if not flagged:
+                    continue
+                for issue in flagged:
+                    all_flagged.append(issue)
+            else:
+                for issue in d.get("flagged_issues", []):
+                    all_flagged.append(issue)
+            for issue in d.get("unknown_issues", []):
+                all_unknown.append(issue)
+
         if all_flagged and not all_unknown:
             types = []
             seen_types = set()
