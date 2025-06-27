@@ -98,19 +98,18 @@ def summarize_checksums(
     only_in_image2 = sorted(set(files2.keys()) - set(files1.keys()))
     common_files = sorted(set(files1.keys()) & set(files2.keys()))
 
-    checksum_diff = []
+    checksum_mismatches = []
+    checksum_matches = []
     for f in common_files:
         if files1[f] != files2[f]:
-            checksum_diff.append(
+            checksum_mismatches.append(
                 {
                     "path": f,
                     "path1_sha256": files1[f],
                     "path2_sha256": files2[f],
                 }
             )
-    checksum_matches = []
-    for f in common_files:
-        if files1[f] == files2[f]:
+        else:
             checksum_matches.append(
                 {
                     "path": f,
@@ -123,7 +122,7 @@ def summarize_checksums(
         "image1": str(folder_path1),
         "image2": str(folder_path2),
         "total_common_files": len(common_files),
-        "checksum_mismatches": checksum_diff,
+        "checksum_mismatches": checksum_mismatches,
         "checksum_matches": checksum_matches,
         "only_in_image1": only_in_image1,
         "only_in_image2": only_in_image2,
