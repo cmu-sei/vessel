@@ -152,13 +152,13 @@ class DiffCommand:
                         temp_flag = Flag(
                             flag["id"],
                             flag["description"],
+                            flag["severity"],
+                            flag["metadata"],
                             flag["filepath"],
                             flag["filetype"],
                             flag["command"],
                             flag["comment"],
                             flag["indiff"],
-                            flag["severity"],
-                            flag["metadata"],
                         )
                     except ValueError as e:
                         logger.exception("Error with flag: %s", e)

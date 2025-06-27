@@ -89,12 +89,12 @@ def summarize_checksums(
         hashed_files2: List containing FileHash for each file in folder_path2
 
     Dict summarizing:
-            - image1, image2: the two image keys.
-            - total_common_files: count of files present in both images.
-            - checksum_mismatches: list of files present in both images but with different checksums.
-            - checksum_matches: list of files present in both images with matching checksums.
-            - only_in_image1: files only in image1.
-            - only_in_image2: files only in image2.
+        - image1, image2: the two image keys.
+        - total_common_files: count of files present in both images.
+        - checksum_mismatches: list of files present in both images but with different checksums.
+        - checksum_matches: list of files present in both images with matching checksums.
+        - only_in_image1: files only in image1.
+        - only_in_image2: files only in image2.
     """
     files1 = {str(filehash.path): filehash.hash for filehash in hashed_files1}
     files2 = {str(filehash.path): filehash.hash for filehash in hashed_files2}
@@ -154,56 +154,56 @@ def classify_checksum_mismatches(
     for entry in checksum_summary.get("checksum_mismatches", []):
         relative_path = entry["path"]
         key = (relative_path, relative_path)
-        diffs = diff_lookup.get(key, [])
-        all_flagged = []
-        all_unknown = []
+        entry_diffs = diff_lookup.get(key, [])
+        entry_flagged_issues = []
+        entry_unknown_issues = []
         stat_has_nonmeta = False
-        for d in diffs:
-            flagged = d.get("flagged_issues", [])
-            unknowns = d.get("unknown_issues", [])
-            all_flagged.extend(flagged)
-            all_unknown.extend(unknowns)
+        for diff in entry_diffs:
+            flagged = diff.get("flagged_issues", [])
+            unknowns = diff.get("unknown_issues", [])
+            entry_flagged_issues.extend(flagged)
+            entry_unknown_issues.extend(unknowns)
 
             # Only check stat {} flagged issues for non-metadata
-            if d.get("command", "") == "stat {}":
+            if diff.get("command", "") == "stat {}":
                 for issue in flagged:
                     if not issue.get("metadata", False):
                         stat_has_nonmeta = True
 
         types = []
         seen_types = set()
-        for f in all_flagged:
+        for f in entry_flagged_issues:
             key2 = f"{f['id']}|{f['description']}"
             if key2 not in seen_types:
                 types.append(key2)
                 seen_types.add(key2)
 
         # If there are any unknown issues, classify as nontrivial
-        if all_unknown:
+        if entry_unknown_issues:
             nontrivial_diffs.append({
-                "files1": rel,
-                "files2": rel,
+                "files1": relative_path,
+                "files2": relative_path,
                 "flagged_issue_types": types
             })
         # If any stat {} flagged issue has metadata == False, nontrivial
         elif stat_has_nonmeta:
             nontrivial_diffs.append({
-                "files1": rel,
-                "files2": rel,
+                "files1": relative_path,
+                "files2": relative_path,
                 "flagged_issue_types": types
             })
         # If there are flagged issues (and no unknowns), trivial
-        elif all_flagged:
+        elif entry_flagged_issues:
             trivial_diffs.append({
-                "files1": rel,
-                "files2": rel,
+                "files1": relative_path,
+                "files2": relative_path,
                 "flagged_issue_types": types
             })
         # Otherwise, nontrivial by default (For example: no flagged/unknown issues)
         else:
             nontrivial_diffs.append({
-                "files1": rel,
-                "files2": rel
+                "files1": relative_path,
+                "files2": relative_path
             })
 
     return trivial_diffs, nontrivial_diffs
