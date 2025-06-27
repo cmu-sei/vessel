@@ -43,7 +43,6 @@ from vessel.utils.unified_diff import (
     issues_from_difflines,
     make_issue_dict,
 )
-from vessel.utils.checksum import hash_folder_contents, summarize_checksums, classify_checksum_mismatches
 
 
 def build_diffoscope_command(
