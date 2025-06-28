@@ -36,6 +36,8 @@ def get_test_flag():
         command=".*",
         comment=".*",
         indiff=r"\d+",
+        severity="Low",
+        metadata=False,
     )
 
 
