@@ -102,7 +102,8 @@ def build_diff_lookup(
         for key in [(rel1, rel2), (rel2, rel1)]:
             if key not in lookup:
                 lookup[key] = []
-            lookup[key].append(d)
+            if d not in lookup[key]:
+                lookup[key].append(d)
     return lookup
 
 

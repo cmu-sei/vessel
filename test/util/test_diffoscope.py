@@ -25,8 +25,11 @@
 
 """Unit test for diffoscope util functions"""
 
+import pytest
+
 from test.fixture import get_test_diffoscope_output, get_test_flag
 from vessel.utils.diffoscope import (
+    build_diff_lookup,
     build_diffoscope_command,
     parse_diffoscope_output,
 )
@@ -80,6 +83,95 @@ def test_build_diffoscope_command():
         )
         == expected_cmd_image
     )
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        # Two matching paths
+        (
+            [
+                {
+                    "source1": "source1/rootfs/path1",
+                    "source2": "source2/rootfs/path1",
+                    "unified_diff_id": "",
+                    "unified_diff": "",
+                },
+                {
+                    "source1": "source1/rootfs/path2",
+                    "source2": "source2/rootfs/path2",
+                    "unified_diff_id": "",
+                    "unified_diff": "",
+                },
+            ],
+            {
+                ("path1", "path1"): [
+                    {
+                        "source1": "source1/rootfs/path1",
+                        "source2": "source2/rootfs/path1",
+                        "unified_diff_id": "",
+                        "unified_diff": "",
+                    },
+                ],
+                ("path2", "path2"): [
+                    {
+                        "source1": "source1/rootfs/path2",
+                        "source2": "source2/rootfs/path2",
+                        "unified_diff_id": "",
+                        "unified_diff": "",
+                    },
+                ],
+            },
+        ),
+        # One matching path, one mismatched path
+        (
+            [
+                {
+                    "source1": "source1/rootfs/path1",
+                    "source2": "source2/rootfs/path1",
+                    "unified_diff_id": "",
+                    "unified_diff": "",
+                },
+                {
+                    "source1": "source1/rootfs/path2",
+                    "source2": "source2/rootfs/path3",
+                    "unified_diff_id": "",
+                    "unified_diff": "",
+                },
+            ],
+            {
+                ("path1", "path1"): [
+                    {
+                        "source1": "source1/rootfs/path1",
+                        "source2": "source2/rootfs/path1",
+                        "unified_diff_id": "",
+                        "unified_diff": "",
+                    },
+                ],
+                ("path2", "path3"): [
+                    {
+                        "source1": "source1/rootfs/path2",
+                        "source2": "source2/rootfs/path3",
+                        "unified_diff_id": "",
+                        "unified_diff": "",
+                    },
+                ],
+                ("path3", "path2"): [
+                    {
+                        "source1": "source1/rootfs/path2",
+                        "source2": "source2/rootfs/path3",
+                        "unified_diff_id": "",
+                        "unified_diff": "",
+                    },
+                ],
+            },
+        ),
+    ],
+)
+def test_build_diff_lookup(test_input, expected):
+    """Test build_diff_lookup."""
+    output = build_diff_lookup(test_input)
+    assert output == expected
 
 
 def test_parse_diffoscope_output_debug():
