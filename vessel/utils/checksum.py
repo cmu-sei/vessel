@@ -162,8 +162,6 @@ def classify_checksum_mismatches(
     nontrivial_diffs = []
     for entry in checksum_summary.get("checksum_mismatches", []):
         relative_path = entry["path"]
-        if not relative_path.startswith("rootfs/"):
-            relative_path = f"rootfs/{relative_path}"
         key = (relative_path, relative_path)
         entry_diffs = diff_lookup.get(key, [])
         entry_flagged_issues = []
