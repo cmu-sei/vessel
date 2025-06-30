@@ -35,18 +35,18 @@ from vessel.utils.checksum import FileHash, summarize_checksums
     [
         # Two files, two matches
         (
-            (
-                "folder_path1",
-                [
+            {
+                "folder_path1": "folder_path1",
+                "hashed_files1": [
                     FileHash("filepath1", "ASCII text", "filehash1"),
                     FileHash("filepath2", "ASCII text", "filehash2"),
                 ],
-                "folder_path2",
-                [
+                "folder_path2": "folder_path2",
+                "hashed_files2": [
                     FileHash("filepath1", "ASCII text", "filehash1"),
                     FileHash("filepath2", "ASCII text", "filehash2"),
                 ],
-            ),
+            },
             {
                 "image1": "folder_path1",
                 "image2": "folder_path2",
@@ -74,18 +74,18 @@ from vessel.utils.checksum import FileHash, summarize_checksums
         ),
         # Two paths, one match
         (
-            (
-                "folder_path1",
-                [
+            {
+                "folder_path1": "folder_path1",
+                "hashed_files1": [
                     FileHash("filepath1", "ASCII text", "filehash1"),
                     FileHash("filepath2", "ASCII text", "filehash2"),
                 ],
-                "folder_path2",
-                [
+                "folder_path2": "folder_path2",
+                "hashed_files2": [
                     FileHash("filepath1", "ASCII text", "filehash1"),
                     FileHash("filepath2", "ASCII text", "filehash3"),
                 ],
-            ),
+            },
             {
                 "image1": "folder_path1",
                 "image2": "folder_path2",
@@ -114,18 +114,18 @@ from vessel.utils.checksum import FileHash, summarize_checksums
         ),
         # Three paths, two only in
         (
-            (
-                "folder_path1",
-                [
+            {
+                "folder_path1": "folder_path1",
+                "hashed_files1": [
                     FileHash("filepath1", "ASCII text", "filehash1"),
                     FileHash("filepath2", "ASCII text", "filehash2"),
                 ],
-                "folder_path2",
-                [
+                "folder_path2": "folder_path2",
+                "hashed_files2": [
                     FileHash("filepath1", "ASCII text", "filehash1"),
                     FileHash("filepath3", "ASCII text", "filehash3"),
                 ],
-            ),
+            },
             {
                 "image1": "folder_path1",
                 "image2": "folder_path2",
@@ -148,7 +148,5 @@ from vessel.utils.checksum import FileHash, summarize_checksums
 )
 def test_summarize_checksums(test_input, expected):
     """Test summarize_checkums."""
-    output = summarize_checksums(
-        test_input[0], test_input[1], test_input[2], test_input[3]
-    )
+    output = summarize_checksums(**test_input)
     assert output == expected
