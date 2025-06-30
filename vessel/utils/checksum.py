@@ -38,18 +38,19 @@ class FileHash:
     def __init__(
         self: "FileHash",
         path: str,
-        hash: str,
         filetype: str,
+        hash: str,
     ) -> None:
         """FileHash constructor.
 
         Args:
             path: Path to file
+            filetype: Type of file
             hash: sha256 hash of file
         """
         self.path = path
-        self.hash = hash
         self.filetype = filetype
+        self.hash = hash
 
 
 def hash_folder_contents(folder_path: Path) -> list[FileHash]:
@@ -70,7 +71,7 @@ def hash_folder_contents(folder_path: Path) -> list[FileHash]:
         relative_path = file_path.relative_to(folder_path)
         hash = hashlib.sha256(file_path.read_bytes()).hexdigest()
         filetype = magic.from_file(str(file_path))
-        file_hashes.append(FileHash(str(relative_path), hash, filetype))
+        file_hashes.append(FileHash(str(relative_path), filetype, hash))
 
     return file_hashes
 
