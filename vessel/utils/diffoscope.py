@@ -88,15 +88,20 @@ def build_diffoscope_command(
 def build_diff_lookup(
     diff_list: list[dict[str, Any]],
 ) -> dict[tuple[str, str], list[dict[str, Any]]]:
-    """ """
+    """
+    Build a lookup dictionary for diff results, keyed by (rel1, rel2).
+
+    Each key is a tuple of paths relative to the 'rootfs/' directory,
+    with the 'rootfs/' prefix removed from both source paths.
+    """
+
+    def rel_after_rootfs(path):
+        """Return path relative to rootfs with rootfs stripped out."""
+        idx = path.find("rootfs/")
+        return path[idx:].removeprefix("rootfs/") if idx != -1 else path
+
     lookup: dict[Any, Any] = {}
     for d in diff_list:
-
-        def rel_after_rootfs(path):
-            """Return path relative to rootfs with rootfs stripped out."""
-            idx = path.find("rootfs/")
-            return path[idx:].removeprefix("rootfs/") if idx != -1 else path
-
         rel1 = rel_after_rootfs(d["source1"])
         rel2 = rel_after_rootfs(d["source2"])
         for key in [(rel1, rel2), (rel2, rel1)]:
@@ -368,12 +373,14 @@ def parse_diffoscope_output(
         rootfs_path2 = Path(current_detail["source2"])
         hashed_files1 = hash_folder_contents(rootfs_path1)
         hashed_files2 = hash_folder_contents(rootfs_path2)
+        files1 = {str(filehash.path): filehash for filehash in hashed_files1}
+        files2 = {str(filehash.path): filehash for filehash in hashed_files2}
         checksum_summary = summarize_checksums(
             rootfs_path1, hashed_files1, rootfs_path2, hashed_files2
         )
         diff_lookup = build_diff_lookup(diff_list)
         trivial_diffs, nontrivial_diffs = classify_checksum_mismatches(
-            checksum_summary, diff_lookup
+            checksum_summary, diff_lookup, files1, files2
         )
         files_summary.append(
             {

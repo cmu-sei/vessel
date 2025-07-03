@@ -147,6 +147,8 @@ def summarize_checksums(
 def classify_checksum_mismatches(
     checksum_summary: dict[str, Any],
     diff_lookup: dict[tuple[str, str], list[dict[str, Any]]],
+    files1: dict[str, Any],
+    files2: dict[str, Any],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Classify each checksum mismatch as either trivial or nontrivial.
 
@@ -187,6 +189,17 @@ def classify_checksum_mismatches(
             if key2 not in seen_types:
                 types.append(key2)
                 seen_types.add(key2)
+        filetype1 = (
+            files1[relative_path].filetype if relative_path in files1 else None
+        )
+        filetype2 = (
+            files2[relative_path].filetype if relative_path in files2 else None
+        )
+
+        all_trivial = True
+        for issue in entry_flagged_issues:
+            if "severity" in issue and issue["severity"] != "Low":
+                all_trivial = False
 
         # If there are any unknown issues, classify as nontrivial
         if entry_unknown_issues:
@@ -195,6 +208,8 @@ def classify_checksum_mismatches(
                     "files1": relative_path,
                     "files2": relative_path,
                     "flagged_issue_types": types,
+                    "filetype1": filetype1,
+                    "filetype2": filetype2,
                 }
             )
         # If any stat {} flagged issue has metadata == False, nontrivial
@@ -204,21 +219,41 @@ def classify_checksum_mismatches(
                     "files1": relative_path,
                     "files2": relative_path,
                     "flagged_issue_types": types,
+                    "filetype1": filetype1,
+                    "filetype2": filetype2,
                 }
             )
-        # If there are flagged issues (and no unknowns), trivial
+        # If there are flagged issues (and no unknowns), trivial only if all flagged issues are severity Low
         elif entry_flagged_issues:
-            trivial_diffs.append(
-                {
-                    "files1": relative_path,
-                    "files2": relative_path,
-                    "flagged_issue_types": types,
-                }
-            )
+            if all_trivial:
+                trivial_diffs.append(
+                    {
+                        "files1": relative_path,
+                        "files2": relative_path,
+                        "flagged_issue_types": types,
+                        "filetype1": filetype1,
+                        "filetype2": filetype2,
+                    }
+                )
+            else:
+                nontrivial_diffs.append(
+                    {
+                        "files1": relative_path,
+                        "files2": relative_path,
+                        "flagged_issue_types": types,
+                        "filetype1": filetype1,
+                        "filetype2": filetype2,
+                    }
+                )
         # Otherwise, nontrivial by default (For example: no flagged/unknown issues)
         else:
             nontrivial_diffs.append(
-                {"files1": relative_path, "files2": relative_path}
+                {
+                    "files1": relative_path,
+                    "files2": relative_path,
+                    "filetype1": filetype1,
+                    "filetype2": filetype2,
+                }
             )
 
     return trivial_diffs, nontrivial_diffs
