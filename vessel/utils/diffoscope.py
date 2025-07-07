@@ -97,8 +97,10 @@ def build_diff_lookup(
 
     def rel_after_rootfs(path):
         """Return path relative to rootfs with rootfs stripped out."""
-        idx = path.find("rootfs/")
-        return path[idx:].removeprefix("rootfs/") if idx != -1 else path
+        idx = path.rfind("rootfs/")
+        if idx != -1:
+            return path[idx + len("rooft/"):]
+        return path
 
     lookup: dict[Any, Any] = {}
     for d in diff_list:
