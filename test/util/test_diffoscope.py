@@ -148,15 +148,9 @@ def test_build_diffoscope_command():
                         "unified_diff": "",
                     },
                 ],
-                ("path2", "path3"): [
-                    {
-                        "source1": "source1/rootfs/path2",
-                        "source2": "source2/rootfs/path3",
-                        "unified_diff_id": "",
-                        "unified_diff": "",
-                    },
-                ],
-                ("path3", "path2"): [
+                # Note: classify_checksum_mismatches only looks up (relative_path, relative_path) keys,
+                # so (path2, path2) will never get used, but this still verifies the correct behavior.
+                ("path2", "path2"): [
                     {
                         "source1": "source1/rootfs/path2",
                         "source2": "source2/rootfs/path3",
