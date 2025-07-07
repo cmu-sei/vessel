@@ -89,28 +89,27 @@ def build_diff_lookup(
     diff_list: list[dict[str, Any]],
 ) -> dict[tuple[str, str], list[dict[str, Any]]]:
     """
-    Build a lookup dictionary for diff results, keyed by (rel1, rel2).
+    Build a lookup dictionary for diff results, keyed by (relative_path, relative_path).
 
     Each key is a tuple of paths relative to the 'rootfs/' directory,
     with the 'rootfs/' prefix removed from both source paths.
     """
 
-    def rel_after_rootfs(path):
+    def relative_path_after_rootfs(path):
         """Return path relative to rootfs with rootfs stripped out."""
         idx = path.rfind("rootfs/")
         if idx != -1:
-            return path[idx + len("rooft/"):]
+            return path[idx + len("rootfs/"):]
         return path
 
     lookup: dict[Any, Any] = {}
     for d in diff_list:
-        rel1 = rel_after_rootfs(d["source1"])
-        rel2 = rel_after_rootfs(d["source2"])
-        for key in [(rel1, rel2), (rel2, rel1)]:
-            if key not in lookup:
-                lookup[key] = []
-            if d not in lookup[key]:
-                lookup[key].append(d)
+        relative_path = relative_path_after_rootfs(d["source1"])
+        key = (relative_path, relative_path)
+        if key not in lookup:
+            lookup[key] = []
+        lookup[key].append(d)
+
     return lookup
 
 
