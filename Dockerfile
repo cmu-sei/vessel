@@ -6,7 +6,7 @@ FROM python:3.11-bookworm AS release
 # General dependencies, as well as diffoscope-specific sub-dependencies for
 # its specific diff plugins.
 RUN apt-get update && \
-  apt-get install -y --no-install-recommends \
+  apt-get install -y --allow-downgrades --no-install-recommends \
     skopeo=1.9.3+ds1-1+b10 \
     umoci=0.4.7+ds-3+b7 \
     libmagic-dev=1:5.44-3 \

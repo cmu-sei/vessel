@@ -36,6 +36,8 @@ class Flag:
         self: "Flag",
         flag_id: str,
         description: str,
+        severity: str,
+        metadata: bool,
         filepath: str,
         filetype: str,
         command: str,
@@ -45,6 +47,8 @@ class Flag:
         """Initializer for Flag class."""
         self.flag_id = flag_id
         self.description = description
+        self.severity = severity
+        self.metadata = metadata
 
         self.regex_str: dict[str, str] = {}
         self.regex_str["filepath"] = filepath

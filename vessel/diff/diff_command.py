@@ -31,6 +31,7 @@ import sys
 import tempfile
 from logging import getLogger
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -55,6 +56,7 @@ class DiffCommand:
         compare_level: str,
         data_dir: str,
         output_dir: str,
+        file_checksum: bool,
     ) -> None:
         """Initializer for a diff operation.
 
@@ -65,6 +67,7 @@ class DiffCommand:
         self.compare_level: str = compare_level
         self.data_dir: str = data_dir
         self.output_dir: str = output_dir
+        self.file_checksum: bool = file_checksum
         self.temp_dir: tempfile.TemporaryDirectory[str] | None = None
         self.image_uris: list[ImageURI] = []
         self.unpacked_image_paths: list[str] = []
@@ -109,7 +112,7 @@ class DiffCommand:
             self.unpacked_image_paths[0],
         ) == get_manifest_digest(self.unpacked_image_paths[1]):
             logger.info("All layers are identical")
-            self.write_to_files(0, 0, [])
+            self.write_to_files(0, 0, 0, [], [], {})
             return True
 
         if self.compare_level == "file":
@@ -149,6 +152,8 @@ class DiffCommand:
                         temp_flag = Flag(
                             flag["id"],
                             flag["description"],
+                            flag["severity"],
+                            flag["metadata"],
                             flag["filepath"],
                             flag["filetype"],
                             flag["command"],
@@ -211,15 +216,26 @@ class DiffCommand:
             ).open() as raw_diff_file:
                 diffoscope_json = json.load(raw_diff_file)
 
-            parsed_output = parse_diffoscope_output(
-                diffoscope_json,
-                self.flags,
-            )
-            self.write_to_files(
-                parsed_output[0],
-                parsed_output[1],
-                parsed_output[2],
-            )
+        (
+            unknown_issues_count,
+            trivial_issues_count,
+            nontrivial_issues_count,
+            diff_list,
+            files_summary,
+            checksum_summary,
+        ) = parse_diffoscope_output(
+            diffoscope_json,
+            self.flags,
+            file_checksum=self.file_checksum,
+        )
+        self.write_to_files(
+            unknown_issues_count,
+            trivial_issues_count,
+            nontrivial_issues_count,
+            diff_list,
+            files_summary,
+            checksum_summary,
+        )
 
         return True
 
@@ -278,14 +294,25 @@ class DiffCommand:
         ).open() as raw_diff_file:
             diffoscope_json = json.load(raw_diff_file)
 
-        parsed_output = parse_diffoscope_output(
+        (
+            unknown_issues_count,
+            trivial_issues_count,
+            nontrivial_issues_count,
+            diff_list,
+            files_summary,
+            checksum_summary,
+        ) = parse_diffoscope_output(
             diffoscope_json,
             self.flags,
+            file_checksum=self.file_checksum,
         )
         self.write_to_files(
-            parsed_output[0],
-            parsed_output[1],
-            parsed_output[2],
+            unknown_issues_count,
+            trivial_issues_count,
+            nontrivial_issues_count,
+            diff_list,
+            files_summary,
+            checksum_summary,
         )
 
         return True
@@ -299,14 +326,25 @@ class DiffCommand:
         with Path(self.input_files[0]).open() as raw_diff_file:
             diffoscope_json = json.load(raw_diff_file)
 
-        parsed_output = parse_diffoscope_output(
+        (
+            unknown_issues_count,
+            trivial_issues_count,
+            nontrivial_issues_count,
+            diff_list,
+            files_summary,
+            checksum_summary,
+        ) = parse_diffoscope_output(
             diffoscope_json,
             self.flags,
+            file_checksum=self.file_checksum,
         )
         self.write_to_files(
-            parsed_output[0],
-            parsed_output[1],
-            parsed_output[2],
+            unknown_issues_count,
+            trivial_issues_count,
+            nontrivial_issues_count,
+            diff_list,
+            files_summary,
+            checksum_summary,
         )
 
         return True
@@ -314,8 +352,11 @@ class DiffCommand:
     def write_to_files(
         self: "DiffCommand",
         unknown_issue_count: int,
-        flagged_issue_count: int,
+        trivial_issue_count: int,
+        nontrivial_issue_count: int,
         diffs: list,
+        files_summary: list[dict[str, Any]],
+        checksum_summary: dict[Any, Any],
     ) -> None:
         """Writes all diff output to files.
 
@@ -328,12 +369,14 @@ class DiffCommand:
             flagged_issue_count: Count of flagged issues
             diffs: List of diffs, each being a dict item returned
                     from Diff.to_slim_dict()
-
+            files_summary: File analysis of trivial/nontrivial issue
+            checksum_summary: File checksum comparison result summary
         Returns:
             None
         """
         unified_diff_id = 1
         unified_diff_dict = {}
+        flagged_issue_count = trivial_issue_count + nontrivial_issue_count
 
         for diff in diffs:
             unified_diff_dict[unified_diff_id] = diff["unified_diff"]
@@ -343,10 +386,50 @@ class DiffCommand:
 
         summary_json = {
             "summary": {
-                "unknown_issues": unknown_issue_count,
-                "flagged_issues": flagged_issue_count,
+                "issue_summary": {
+                    "unknown_issues": unknown_issue_count,
+                    "trivial_issues": trivial_issue_count,
+                    "nontrivial_issues": nontrivial_issue_count,
+                    "flagged_issues": flagged_issue_count,
+                    "total_issues": unknown_issue_count + flagged_issue_count,
+                },
+                "checksum summary": {
+                    "total_image1_file_count": checksum_summary.get(
+                        "total_common_files", 0
+                    )
+                    + len(checksum_summary.get("only_in_image1", [])),
+                    "total_image2_file_count": checksum_summary.get(
+                        "total_common_files", 0
+                    )
+                    + len(checksum_summary.get("only_in_image2", [])),
+                    "total_common_files": checksum_summary.get(
+                        "total_common_files", 0
+                    ),
+                    "identical_file_count": len(
+                        checksum_summary.get("checksum_matches", [])
+                    ),
+                    "trivial_checksum_different_file_count": sum(
+                        len(entry.get("trivial_checksum_different_files", []))
+                        for entry in files_summary or []
+                    ),
+                    "nontrivial_checksum_different_file_count": sum(
+                        len(
+                            entry.get(
+                                "nontrivial_checksum_different_files", []
+                            )
+                        )
+                        for entry in files_summary or []
+                    ),
+                    "only_in_image1_file_count": len(
+                        checksum_summary.get("only_in_image1", [])
+                    ),
+                    "only_in_image2_file_count": len(
+                        checksum_summary.get("only_in_image2", [])
+                    ),
+                },
             },
-            "Diffs": diffs,
+            "files": files_summary or [],
+            "diffs": diffs,
         }
 
         output_dir = self.output_dir + "/"

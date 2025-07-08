@@ -98,11 +98,26 @@ def vessel(logging_level: str) -> None:
         "in current directory."
     ),
 )
+@click.option(
+    "-f",
+    "--file-checksum",
+    type=click.Path(
+        file_okay=False,
+        readable=True,
+        writable=True,
+        resolve_path=True,
+    ),
+    help=(
+        "Enable this option if you would like to record checksum matches "
+        "and mismatches of the unpacked filesystem."
+    ),
+)
 def diff(
     input_files: list[str],
     compare_level: str,
     data_dir: str,
     output_dir: str,
+    file_checksum: bool,
 ) -> None:
     """Unpack container images and compare differences with diffoscope.
 
@@ -113,5 +128,6 @@ def diff(
         compare_level,
         data_dir,
         output_dir,
+        file_checksum,
     ).execute()
     sys.exit(not success)

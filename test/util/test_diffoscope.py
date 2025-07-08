@@ -25,8 +25,11 @@
 
 """Unit test for diffoscope util functions"""
 
+import pytest
+
 from test.fixture import get_test_diffoscope_output, get_test_flag
 from vessel.utils.diffoscope import (
+    build_diff_lookup,
     build_diffoscope_command,
     parse_diffoscope_output,
 )
@@ -37,6 +40,20 @@ def test_build_diffoscope_command():
     output_file = "diff.json"
     path1 = "/test_path/file1"
     path2 = "/test_path/file2"
+    exclude_params = [
+        "--exclude-directory-metadata",
+        "no",
+        "--profile",
+        f"{output_dir}/profile.txt",
+        "--exclude-command",
+        r"^readelf.*",
+        "--exclude-command",
+        r"^objdump.*",
+        "--exclude-command",
+        r"^strings.*",
+        "--exclude-command",
+        r"^xxd.*",
+    ]
 
     expected_cmd_file = [
         "diffoscope",
@@ -46,6 +63,7 @@ def test_build_diffoscope_command():
         path1,
         path2,
     ]
+    expected_cmd_file.extend(exclude_params)
     assert (
         build_diffoscope_command(output_dir, output_file, path1, path2, "file")
         == expected_cmd_file
@@ -54,10 +72,11 @@ def test_build_diffoscope_command():
     expected_cmd_image = [
         "diffoscope",
         "--json",
-        output_dir + "/" + output_file,
+        f"{output_dir}/{output_file}",
         path1,
         path2,
     ]
+    expected_cmd_image.extend(exclude_params)
     assert (
         build_diffoscope_command(
             output_dir, output_file, path1, path2, "image"
@@ -66,16 +85,107 @@ def test_build_diffoscope_command():
     )
 
 
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        # Two matching paths
+        (
+            [
+                {
+                    "source1": "source1/rootfs/path1",
+                    "source2": "source2/rootfs/path1",
+                    "unified_diff_id": "",
+                    "unified_diff": "",
+                },
+                {
+                    "source1": "source1/rootfs/path2",
+                    "source2": "source2/rootfs/path2",
+                    "unified_diff_id": "",
+                    "unified_diff": "",
+                },
+            ],
+            {
+                ("path1", "path1"): [
+                    {
+                        "source1": "source1/rootfs/path1",
+                        "source2": "source2/rootfs/path1",
+                        "unified_diff_id": "",
+                        "unified_diff": "",
+                    },
+                ],
+                ("path2", "path2"): [
+                    {
+                        "source1": "source1/rootfs/path2",
+                        "source2": "source2/rootfs/path2",
+                        "unified_diff_id": "",
+                        "unified_diff": "",
+                    },
+                ],
+            },
+        ),
+        # One matching path, one mismatched path
+        (
+            [
+                {
+                    "source1": "source1/rootfs/path1",
+                    "source2": "source2/rootfs/path1",
+                    "unified_diff_id": "",
+                    "unified_diff": "",
+                },
+                {
+                    "source1": "source1/rootfs/path2",
+                    "source2": "source2/rootfs/path3",
+                    "unified_diff_id": "",
+                    "unified_diff": "",
+                },
+            ],
+            {
+                ("path1", "path1"): [
+                    {
+                        "source1": "source1/rootfs/path1",
+                        "source2": "source2/rootfs/path1",
+                        "unified_diff_id": "",
+                        "unified_diff": "",
+                    },
+                ],
+                # Note: classify_checksum_mismatches only looks up (relative_path, relative_path) keys,
+                # so (path2, path2) will never get used, but this still verifies the correct behavior.
+                ("path2", "path2"): [
+                    {
+                        "source1": "source1/rootfs/path2",
+                        "source2": "source2/rootfs/path3",
+                        "unified_diff_id": "",
+                        "unified_diff": "",
+                    },
+                ],
+            },
+        ),
+    ],
+)
+def test_build_diff_lookup(test_input, expected):
+    """Test build_diff_lookup."""
+    output = build_diff_lookup(test_input)
+    assert output == expected
+
+
 def test_parse_diffoscope_output_debug():
     test_diff = get_test_diffoscope_output()
     test_flag = get_test_flag()
 
-    unknown_issues, flagged_issues, diff_list = parse_diffoscope_output(
-        test_diff, [test_flag]
-    )
+    (
+        unknown_issues,
+        trivial_issues,
+        nontrivial_issues,
+        diff_list,
+        files_summary,
+        checksum_summary,
+    ) = parse_diffoscope_output(test_diff, [test_flag])
 
     assert unknown_issues == 0
-    assert flagged_issues > 0
+    assert trivial_issues > 0
+    assert nontrivial_issues == 0
     assert len(diff_list) > 0
     assert "flagged_issues" in diff_list[0]
     assert diff_list[0]["flagged_issues"][0]["id"] == "test_flag"
+    assert len(files_summary) > 0
+    assert checksum_summary["total_common_files"] == 0
