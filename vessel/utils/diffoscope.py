@@ -88,11 +88,14 @@ def build_diffoscope_command(
 def build_diff_lookup(
     diff_list: list[dict[str, Any]],
 ) -> dict[tuple[str, str], list[dict[str, Any]]]:
-    """
-    Build a lookup dictionary for diff results, keyed by (relative_path, relative_path).
+    """Build a lookup dictionary for diff results, keyed by (relative_path1, relative_path2).
 
-    Each key is a tuple of paths relative to the 'rootfs/' directory,
-    with the 'rootfs/' prefix removed from both source paths.
+    Args:
+        diff_list: List of all diffs from diffoscope output
+
+    Returns:
+        Dict keyed with a tuple of paths relative to 'rootfs' directory, and value
+        all of the diffs detected by diffoscope for those paths
     """
 
     def relative_path_after_rootfs(path):
@@ -104,8 +107,7 @@ def build_diff_lookup(
 
     lookup: dict[Any, Any] = {}
     for diff in diff_list:
-        relative_path = relative_path_after_rootfs(diff["source1"])
-        key = (relative_path, relative_path)
+        key = (relative_path_after_rootfs(diff["source1"]), relative_path_after_rootfs(diff["source2"]))
         if key not in lookup:
             lookup[key] = []
         lookup[key].append(diff)
