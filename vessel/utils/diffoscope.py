@@ -91,7 +91,7 @@ def build_diff_lookup(
     """Build a lookup dictionary for diff results, keyed by (relative_path1, relative_path2).
 
     Args:
-        diff_list: List of all diffs from diffoscope output
+        diff_list: List of all diffs from parsed diffoscope output
 
     Returns:
         Dict keyed with a tuple of paths relative to 'rootfs' directory, and value
@@ -376,10 +376,10 @@ def parse_diffoscope_output(
         rootfs_path2 = Path(current_detail["source2"])
         hashed_files1 = hash_folder_contents(rootfs_path1)
         hashed_files2 = hash_folder_contents(rootfs_path2)
-        checksum_summary = summarize_checksums(
-            rootfs_path1, hashed_files1, rootfs_path2, hashed_files2
-        )
         diff_lookup = build_diff_lookup(diff_list)
+        checksum_summary = summarize_checksums(
+            diff_lookup, rootfs_path1, hashed_files1, rootfs_path2, hashed_files2,
+        )
         trivial_diffs, nontrivial_diffs = classify_checksum_mismatches(
             checksum_summary, diff_lookup, hashed_files1, hashed_files2
         )

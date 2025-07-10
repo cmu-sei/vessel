@@ -25,11 +25,14 @@
 
 """Utility checksum functions."""
 
+from logging import getLogger
 import hashlib
 from pathlib import Path
 from typing import Any
 
 import magic
+
+logger = getLogger(__name__)
 
 
 class FileHash:
@@ -77,7 +80,26 @@ def hash_folder_contents(folder_path: Path) -> dict[str, FileHash]:
     return {str(filehash.path): filehash for filehash in file_hashes}
 
 
+def make_checksum_dict(
+    path1: str,
+    path2: str,
+    path1_hash: str,
+    path2_hash: str,
+    filetype1: str,
+    filetype2: str,
+) -> dict[str, str]:
+    """Return input data as a dict for summary output."""
+    return {
+        "path1": path1,
+        "path2": path2,
+        "path1_sha256": path1_hash,
+        "path2_sha256": path2_hash,
+        "filetype1": filetype1,
+        "filetype2": filetype2,
+    }
+
 def summarize_checksums(
+    diff_lookup: dict[tuple[str, str], list[dict[str, Any]]],
     folder_path1: Path,
     hashed_files1: dict[str, FileHash],
     folder_path2: Path,
@@ -109,27 +131,58 @@ def summarize_checksums(
 
     checksum_mismatches = []
     checksum_matches = []
-    for f in common_files:
-        if hashed_files1[f].hash != hashed_files2[f].hash:
+    for path in common_files:
+        if hashed_files1[path].hash != hashed_files2[path].hash:
             checksum_mismatches.append(
-                {
-                    "path": f,
-                    "path1_sha256": hashed_files1[f].hash,
-                    "path2_sha256": hashed_files2[f].hash,
-                    "filetype1": hashed_files1[f].filetype,
-                    "filetype2": hashed_files2[f].filetype,
-                }
+                make_checksum_dict(
+                    path,
+                    path,
+                    hashed_files1[path].hash,
+                    hashed_files2[path].hash,
+                    hashed_files1[path].filetype,
+                    hashed_files2[path].filetype,
+                )
             )
         else:
             checksum_matches.append(
-                {
-                    "path": f,
-                    "path1_sha256": hashed_files1[f].hash,
-                    "path2_sha256": hashed_files2[f].hash,
-                    "filetype1": hashed_files1[f].filetype,
-                    "filetype2": hashed_files2[f].filetype,
-                }
+                make_checksum_dict(
+                    path,
+                    path,
+                    hashed_files1[path].hash,
+                    hashed_files2[path].hash,
+                    hashed_files1[path].filetype,
+                    hashed_files2[path].filetype,
+                )
             )
+    
+    for key_tuple in diff_lookup:
+        if key_tuple[0] != key_tuple[1]:
+            if key_tuple[0] not in hashed_files1:
+                logger.error(f"{key_tuple[0]} found in diff list, but not in hashes.")
+            elif key_tuple[1] not in hashed_files1:
+                logger.error(f"{key_tuple[1]} found in diff list, but not in hashes.")
+            elif hashed_files1[key_tuple[0]].hash != hashed_files2[key_tuple[1]]:
+                checksum_mismatches.append(
+                    make_checksum_dict(
+                        key_tuple[0],
+                        key_tuple[1],
+                        hashed_files1[path].hash,
+                        hashed_files2[path].hash,
+                        hashed_files1[path].filetype,
+                        hashed_files2[path].filetype,
+                    )
+                )
+            else:
+                checksum_matches.append(
+                    make_checksum_dict(
+                        key_tuple[0],
+                        key_tuple[1],
+                        hashed_files1[path].hash,
+                        hashed_files2[path].hash,
+                        hashed_files1[path].filetype,
+                        hashed_files2[path].filetype,
+                    )
+                )
 
     return {
         "image1": str(folder_path1),
@@ -164,8 +217,7 @@ def classify_checksum_mismatches(
     trivial_diffs = []
     nontrivial_diffs = []
     for entry in checksum_summary.get("checksum_mismatches", []):
-        relative_path = entry["path"]
-        key = (relative_path, relative_path)
+        key = (entry["path1"], entry["path2"])
         entry_diffs = diff_lookup.get(key, [])
         entry_flagged_issues = []
         entry_unknown_issues = []
@@ -190,10 +242,10 @@ def classify_checksum_mismatches(
                 types.append(key2)
                 seen_types.add(key2)
         filetype1 = (
-            hashed_files1[relative_path].filetype if relative_path in hashed_files1 else None
+            hashed_files1[entry["path1"]].filetype if entry["path1"] in hashed_files1 else None
         )
         filetype2 = (
-            hashed_files2[relative_path].filetype if relative_path in hashed_files2 else None
+            hashed_files2[entry["path2"]].filetype if entry["path2"] in hashed_files2 else None
         )
 
         all_trivial = True
@@ -205,8 +257,8 @@ def classify_checksum_mismatches(
         if entry_unknown_issues:
             nontrivial_diffs.append(
                 {
-                    "files1": relative_path,
-                    "files2": relative_path,
+                    "files1": entry["path1"],
+                    "files2": entry["path2"],
                     "flagged_issue_types": types,
                     "filetype1": filetype1,
                     "filetype2": filetype2,
@@ -216,8 +268,8 @@ def classify_checksum_mismatches(
         elif stat_has_nonmeta:
             nontrivial_diffs.append(
                 {
-                    "files1": relative_path,
-                    "files2": relative_path,
+                    "files1": entry["path1"],
+                    "files2": entry["path2"],
                     "flagged_issue_types": types,
                     "filetype1": filetype1,
                     "filetype2": filetype2,
@@ -228,8 +280,8 @@ def classify_checksum_mismatches(
             if all_trivial:
                 trivial_diffs.append(
                     {
-                        "files1": relative_path,
-                        "files2": relative_path,
+                        "files1": entry["path1"],
+                        "files2": entry["path2"],
                         "flagged_issue_types": types,
                         "filetype1": filetype1,
                         "filetype2": filetype2,
@@ -238,8 +290,8 @@ def classify_checksum_mismatches(
             else:
                 nontrivial_diffs.append(
                     {
-                        "files1": relative_path,
-                        "files2": relative_path,
+                        "files1": entry["path1"],
+                        "files2": entry["path2"],
                         "flagged_issue_types": types,
                         "filetype1": filetype1,
                         "filetype2": filetype2,
@@ -249,8 +301,8 @@ def classify_checksum_mismatches(
         else:
             nontrivial_diffs.append(
                 {
-                    "files1": relative_path,
-                    "files2": relative_path,
+                    "files1": entry["path1"],
+                    "files2": entry["path2"],
                     "filetype1": filetype1,
                     "filetype2": filetype2,
                 }
