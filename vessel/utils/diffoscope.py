@@ -374,14 +374,12 @@ def parse_diffoscope_output(
         rootfs_path2 = Path(current_detail["source2"])
         hashed_files1 = hash_folder_contents(rootfs_path1)
         hashed_files2 = hash_folder_contents(rootfs_path2)
-        files1 = {str(filehash.path): filehash for filehash in hashed_files1}
-        files2 = {str(filehash.path): filehash for filehash in hashed_files2}
         checksum_summary = summarize_checksums(
             rootfs_path1, hashed_files1, rootfs_path2, hashed_files2
         )
         diff_lookup = build_diff_lookup(diff_list)
         trivial_diffs, nontrivial_diffs = classify_checksum_mismatches(
-            checksum_summary, diff_lookup, files1, files2
+            checksum_summary, diff_lookup, hashed_files1, hashed_files2
         )
         files_summary.append(
             {

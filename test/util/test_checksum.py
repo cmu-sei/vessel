@@ -37,15 +37,15 @@ from vessel.utils.checksum import FileHash, summarize_checksums
         (
             {
                 "folder_path1": "folder_path1",
-                "hashed_files1": [
-                    FileHash("filepath1", "ASCII text", "filehash1"),
-                    FileHash("filepath2", "ASCII text", "filehash2"),
-                ],
+                "hashed_files1": {
+                    "filepath1": FileHash("filepath1", "ASCII text", "filehash1"),
+                    "filepath2": FileHash("filepath2", "ASCII text", "filehash2"),
+                },
                 "folder_path2": "folder_path2",
-                "hashed_files2": [
-                    FileHash("filepath1", "ASCII text", "filehash1"),
-                    FileHash("filepath2", "ASCII text", "filehash2"),
-                ],
+                "hashed_files2": {
+                    "filepath1": FileHash("filepath1", "ASCII text", "filehash1"),
+                    "filepath2": FileHash("filepath2", "ASCII text", "filehash2"),
+                },
             },
             {
                 "image1": "folder_path1",
@@ -76,15 +76,15 @@ from vessel.utils.checksum import FileHash, summarize_checksums
         (
             {
                 "folder_path1": "folder_path1",
-                "hashed_files1": [
-                    FileHash("filepath1", "ASCII text", "filehash1"),
-                    FileHash("filepath2", "ASCII text", "filehash2"),
-                ],
+                "hashed_files1": {
+                    "filepath1": FileHash("filepath1", "ASCII text", "filehash1"),
+                    "filepath2": FileHash("filepath2", "ASCII text", "filehash2"),
+                },
                 "folder_path2": "folder_path2",
-                "hashed_files2": [
-                    FileHash("filepath1", "ASCII text", "filehash1"),
-                    FileHash("filepath2", "ASCII text", "filehash3"),
-                ],
+                "hashed_files2": {
+                    "filepath1": FileHash("filepath1", "ASCII text", "filehash1"),
+                    "filepath2": FileHash("filepath2", "ASCII text", "filehash3"),
+                },
             },
             {
                 "image1": "folder_path1",
@@ -116,15 +116,15 @@ from vessel.utils.checksum import FileHash, summarize_checksums
         (
             {
                 "folder_path1": "folder_path1",
-                "hashed_files1": [
-                    FileHash("filepath1", "ASCII text", "filehash1"),
-                    FileHash("filepath2", "ASCII text", "filehash2"),
-                ],
+                "hashed_files1": {
+                    "filepath1": FileHash("filepath1", "ASCII text", "filehash1"),
+                    "filepath2": FileHash("filepath2", "ASCII text", "filehash2"),
+                },
                 "folder_path2": "folder_path2",
-                "hashed_files2": [
-                    FileHash("filepath1", "ASCII text", "filehash1"),
-                    FileHash("filepath3", "ASCII text", "filehash3"),
-                ],
+                "hashed_files2": {
+                    "filepath1": FileHash("filepath1", "ASCII text", "filehash1"),
+                    "filepath3": FileHash("filepath3", "ASCII text", "filehash3"),
+                },
             },
             {
                 "image1": "folder_path1",

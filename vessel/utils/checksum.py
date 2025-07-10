@@ -53,14 +53,15 @@ class FileHash:
         self.hash = hash
 
 
-def hash_folder_contents(folder_path: Path) -> list[FileHash]:
+def hash_folder_contents(folder_path: Path) -> dict[str, FileHash]:
     """Calculate hash for each file within a path.
 
     Args:
         folder_path: Path to folder to hash all contents of
 
     Returns:
-        List containing FileHash for each file in folder_path
+        Dict with filepaths as keys and FileHash object values with an
+        entry for each file in folder_path
     """
     file_hashes: list[FileHash] = []
 
@@ -73,14 +74,14 @@ def hash_folder_contents(folder_path: Path) -> list[FileHash]:
         filetype = magic.from_file(str(file_path))
         file_hashes.append(FileHash(str(relative_path), filetype, hash))
 
-    return file_hashes
+    return {str(filehash.path): filehash for filehash in file_hashes}
 
 
 def summarize_checksums(
     folder_path1: Path,
-    hashed_files1: list[FileHash],
+    hashed_files1: dict[str, FileHash],
     folder_path2: Path,
-    hashed_files2: list[FileHash],
+    hashed_files2: dict[str, FileHash],
 ) -> dict:
     """Compares checkums of all files in two folder paths.
 
@@ -90,9 +91,9 @@ def summarize_checksums(
 
     Args:
         folder_path1: Path to first folder
-        hashed_files1: List containing FileHash for each file in folder_path1
+        hashed_files1: Dict containing FileHash for each file in folder_path1 with filepath as key
         folder_path2: Path to second folder
-        hashed_files2: List containing FileHash for each file in folder_path2
+        hashed_files2: Dict containing FileHash for each file in folder_path2 with filepath as key
 
     Dict summarizing:
         - image1, image2: the two image keys.
@@ -102,34 +103,31 @@ def summarize_checksums(
         - only_in_image1: files only in image1.
         - only_in_image2: files only in image2.
     """
-    files1 = {str(filehash.path): filehash for filehash in hashed_files1}
-    files2 = {str(filehash.path): filehash for filehash in hashed_files2}
-
-    only_in_image1 = sorted(set(files1.keys()) - set(files2.keys()))
-    only_in_image2 = sorted(set(files2.keys()) - set(files1.keys()))
-    common_files = sorted(set(files1.keys()) & set(files2.keys()))
+    only_in_image1 = sorted(set(hashed_files1.keys()) - set(hashed_files2.keys()))
+    only_in_image2 = sorted(set(hashed_files2.keys()) - set(hashed_files1.keys()))
+    common_files = sorted(set(hashed_files1.keys()) & set(hashed_files2.keys()))
 
     checksum_mismatches = []
     checksum_matches = []
     for f in common_files:
-        if files1[f].hash != files2[f].hash:
+        if hashed_files1[f].hash != hashed_files2[f].hash:
             checksum_mismatches.append(
                 {
                     "path": f,
-                    "path1_sha256": files1[f].hash,
-                    "path2_sha256": files2[f].hash,
-                    "filetype1": files1[f].filetype,
-                    "filetype2": files2[f].filetype,
+                    "path1_sha256": hashed_files1[f].hash,
+                    "path2_sha256": hashed_files2[f].hash,
+                    "filetype1": hashed_files1[f].filetype,
+                    "filetype2": hashed_files2[f].filetype,
                 }
             )
         else:
             checksum_matches.append(
                 {
                     "path": f,
-                    "path1_sha256": files1[f].hash,
-                    "path2_sha256": files2[f].hash,
-                    "filetype1": files1[f].filetype,
-                    "filetype2": files2[f].filetype,
+                    "path1_sha256": hashed_files1[f].hash,
+                    "path2_sha256": hashed_files2[f].hash,
+                    "filetype1": hashed_files1[f].filetype,
+                    "filetype2": hashed_files2[f].filetype,
                 }
             )
 
