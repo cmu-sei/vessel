@@ -27,7 +27,18 @@
 
 import pytest
 
-from vessel.utils.checksum import FileHash, summarize_checksums
+from vessel.utils.checksum import FileHash, summarize_checksums, classify_checksum_mismatches
+
+# @pytest.mark.parametrize(
+#     "test, expected",
+#     [
+#         (
+
+#         )
+#     ]
+# )
+# def test_hash_folder_contents():
+#     pass
 
 
 @pytest.mark.parametrize(
@@ -149,4 +160,114 @@ from vessel.utils.checksum import FileHash, summarize_checksums
 def test_summarize_checksums(test_input, expected):
     """Test summarize_checkums."""
     output = summarize_checksums(**test_input)
+    assert output == expected
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        # No mismatches, 1 match
+        (
+            {
+                "checksum_summary": {
+                    "image1": "source1/rootfs",
+                    "image2": "source2/rootfs",
+                    "total_common_files": 2,
+                    "checksum_mismatches": [],
+                    "checksum_matches": [
+                        {
+                            "path": "path1",
+                            "path1_sha256": "hash1",
+                            "path2_sha256": "hash1",
+                            "filetype1": "ASCII text",
+                            "filetype2": "ASCII text",
+                        },
+                    ],
+                    "only_in_image1": [],
+                    "only_in_image2": [],
+                },
+                "diff_lookup": {},
+                "hashed_files1": {
+                    "path1": FileHash("path1", "ASCII text", "hash1")
+                },
+                "hashed_files2": {
+                    "path1": FileHash("path1", "ASCII text", "hash1")
+                },
+            },
+            ([], []),
+        ),
+        # 2 nontrivial mismatch, 1 match
+        (
+            {
+                "checksum_summary": {
+                    "image1": "source1/rootfs",
+                    "image2": "source2/rootfs",
+                    "total_common_files": 2,
+                    "checksum_mismatches": [
+                        {
+                            "path": "path1",
+                            "path1_sha256": "hash1",
+                            "path2_sha256": "hash1.1",
+                            "filetype1": "ASCII text",
+                            "filetype2": "ASCII text",
+                        },
+                        {
+                            "path": "path2",
+                            "path1_sha256": "hash2",
+                            "path2_sha256": "hash2.1",
+                            "filetype1": "ASCII text",
+                            "filetype2": "ASCII text",
+                        },
+                    ],
+                    "checksum_matches": [
+                        {
+                            "path": "path3",
+                            "path1_sha_256": "hash3",
+                            "path1_sha256": "hash3",
+                            "filetype1": "ASCII text",
+                            "filetype2": "ASCII text",
+                        }
+                    ],
+                    "only_in_image1": [],
+                    "only_in_image2": [],
+                },
+                "diff_lookup": {
+                    ("path1", "path1"): [
+                        {
+                        "source1": "source1/rootfs/path1",
+                        "source2": "source2/rootfs/path1",
+                        "unified_diff_id": 1,
+                        "unified_diff": "diff1",
+                        },
+                    ],
+                    ("path2", "path2"): [
+                        {
+                            "source1": "source1/rootfs/path2",
+                            "source2": "source2/rootfs/path2",
+                            "unified_diff_id": 2,
+                            "unified_diff": "diff2",
+                        },
+                    ],
+                },
+                "hashed_files1": {
+                    "path1": FileHash("path1", "ASCII text", "hash1"),
+                    "path2": FileHash("path2", "ASCII text", "hash2"),
+                    "path3": FileHash("path3", "ASCII text", "hash3"),
+                },
+                "hashed_files2": {
+                    "path1": FileHash("path1", "ASCII text", "hash1.1"),
+                    "path2": FileHash("path2", "ASCII text", "hash2.1"),
+                    "path3": FileHash("path3", "ASCII text", "hash3"),
+                }
+            },
+            ([], []),
+        ),
+    ],
+)
+def test_classify_checksum_mismatches(test_input, expected):
+    """Test classify_checksum_mismatches."""
+    output = classify_checksum_mismatches(**test_input)
+
+    print(output)
+
     assert output == expected
