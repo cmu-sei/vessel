@@ -145,14 +145,16 @@ def summarize_checksums(
 def classify_checksum_mismatches(
     checksum_summary: dict[str, Any],
     diff_lookup: dict[tuple[str, str], list[dict[str, Any]]],
-    files1: dict[str, Any],
-    files2: dict[str, Any],
+    hashed_files1: dict[str, FileHash],
+    hashed_files2: dict[str, FileHash],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Classify each checksum mismatch as either trivial or nontrivial.
 
     Args:
         checksum_summary: Summary dict from summarize_checksums().
         diff_lookup: Dict mapping file pairs to diff result dicts.
+        hashed_files1: Dict mapping filepaths to FileHash of that file for first folder
+        hashed_files2: Dict mapping filepaths to FileHash of that file for second folder
 
     Returns:
         A tuple (trivial_diffs, nontrivial_diffs):
@@ -188,10 +190,10 @@ def classify_checksum_mismatches(
                 types.append(key2)
                 seen_types.add(key2)
         filetype1 = (
-            files1[relative_path].filetype if relative_path in files1 else None
+            hashed_files1[relative_path].filetype if relative_path in hashed_files1 else None
         )
         filetype2 = (
-            files2[relative_path].filetype if relative_path in files2 else None
+            hashed_files2[relative_path].filetype if relative_path in hashed_files2 else None
         )
 
         all_trivial = True
