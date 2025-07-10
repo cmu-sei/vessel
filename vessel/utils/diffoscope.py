@@ -103,12 +103,12 @@ def build_diff_lookup(
         return path
 
     lookup: dict[Any, Any] = {}
-    for d in diff_list:
-        relative_path = relative_path_after_rootfs(d["source1"])
+    for diff in diff_list:
+        relative_path = relative_path_after_rootfs(diff["source1"])
         key = (relative_path, relative_path)
         if key not in lookup:
             lookup[key] = []
-        lookup[key].append(d)
+        lookup[key].append(diff)
 
     return lookup
 
