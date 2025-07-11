@@ -171,19 +171,19 @@ def test_parse_diffoscope_output_debug():
     test_flag = get_test_flag()
 
     (
-        unknown_issues,
-        trivial_issues,
-        nontrivial_issues,
+        unknown_failures,
+        trivial_failures,
+        nontrivial_failures,
         diff_list,
         files_summary,
         checksum_summary,
     ) = parse_diffoscope_output(test_diff, [test_flag])
 
-    assert unknown_issues == 0
-    assert trivial_issues > 0
-    assert nontrivial_issues == 0
+    assert unknown_failures == 0
+    assert trivial_failures > 0
+    assert nontrivial_failures == 0
     assert len(diff_list) > 0
-    assert "flagged_issues" in diff_list[0]
-    assert diff_list[0]["flagged_issues"][0]["id"] == "test_flag"
+    assert "flagged_failures" in diff_list[0]
+    assert diff_list[0]["flagged_failures"][0]["id"] == "test_flag"
     assert len(files_summary) > 0
     assert checksum_summary["total_common_files"] == 0

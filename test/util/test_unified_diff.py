@@ -34,8 +34,8 @@ from vessel.utils.unified_diff import (
     align_diff_lines,
     equal_entry_list,
     intervals_to_str,
-    issues_from_difflines,
-    make_issue_dict,
+    failures_from_difflines,
+    make_failure_dict,
     parse_unified_diff_header,
 )
 
@@ -430,7 +430,7 @@ def test_align_diff_lines(test_input, expected):
 
 
 # -----------------------------------------------------------------------------
-# Tests for issues_from_difflines
+# Tests for failures_from_difflines
 # -----------------------------------------------------------------------------
 
 TEST_DIFFLINES = [
@@ -442,7 +442,7 @@ TEST_DIFFLINES = [
         },
         {
             "flagged": [
-                make_issue_dict(
+                make_failure_dict(
                     minus_str="123", plus_str="456", flag=get_test_flag()
                 )
             ],
@@ -459,7 +459,7 @@ TEST_DIFFLINES = [
         },
         {
             "flagged": [
-                make_issue_dict(
+                make_failure_dict(
                     minus_str="123", plus_str="456", flag=get_test_flag()
                 )
             ],
@@ -476,10 +476,10 @@ TEST_DIFFLINES = [
         },
         {
             "flagged": [
-                make_issue_dict(
+                make_failure_dict(
                     minus_str="123", plus_str="456", flag=get_test_flag()
                 ),
-                make_issue_dict(
+                make_failure_dict(
                     minus_str="321", plus_str="654", flag=get_test_flag()
                 ),
             ],
@@ -492,10 +492,10 @@ TEST_DIFFLINES = [
 
 
 @pytest.mark.parametrize("test_input, expected", TEST_DIFFLINES)
-def test_issues_from_difflines(test_input, expected):
-    """Tests that issues are correctly flagged, and intervals are updated correctly"""
+def test_failures_from_difflines(test_input, expected):
+    """Tests that failures are correctly flagged, and intervals are updated correctly"""
 
-    flagged, unknown, minus_unmatched, plus_unmatched = issues_from_difflines(
+    flagged, unknown, minus_unmatched, plus_unmatched = failures_from_difflines(
         **test_input
     )
 
@@ -506,7 +506,7 @@ def test_issues_from_difflines(test_input, expected):
 
 
 # -----------------------------------------------------------------------------
-# Tests for make_issue_dict
+# Tests for make_failure_dict
 # -----------------------------------------------------------------------------
 
 TEST_ISSUE_DICT_INPUT = [
@@ -561,10 +561,10 @@ TEST_ISSUE_DICT_INPUT = [
 
 
 @pytest.mark.parametrize("test_input, expected", TEST_ISSUE_DICT_INPUT)
-def test_make_issue_dict(test_input, expected):
+def test_make_failure_dict(test_input, expected):
     """Tests that the dict is created properly."""
 
-    dict = make_issue_dict(**test_input)
+    dict = make_failure_dict(**test_input)
 
     assert dict == expected
 
