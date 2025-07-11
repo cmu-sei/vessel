@@ -157,10 +157,15 @@ def summarize_checksums(
     
     for key_tuple in diff_lookup:
         if key_tuple[0] != key_tuple[1]:
+            only_in_image1 = list(set(only_in_image1) - set(key_tuple[0]))
+            only_in_image2 = list(set(only_in_image2) - set(key_tuple[1]))
+            common_files.extend([key_tuple[0], key_tuple[1]])
+            common_files = sorted(common_files)
+
             if key_tuple[0] not in hashed_files1:
-                logger.error(f"{key_tuple[0]} found in diff list, but not in hashes.")
-            elif key_tuple[1] not in hashed_files1:
-                logger.error(f"{key_tuple[1]} found in diff list, but not in hashes.")
+                logger.info(f"{key_tuple[0]} found in diff list, but not in hashes.")
+            elif key_tuple[1] not in hashed_files2:
+                logger.info(f"{key_tuple[1]} found in diff list, but not in hashes.")
             elif hashed_files1[key_tuple[0]].hash != hashed_files2[key_tuple[1]]:
                 checksum_mismatches.append(
                     make_checksum_dict(
