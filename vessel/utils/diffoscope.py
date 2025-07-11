@@ -40,8 +40,8 @@ from vessel.utils.flag import Flag
 from vessel.utils.unified_diff import (
     Diff,
     intervals_to_str,
-    issues_from_difflines,
-    make_issue_dict,
+    failures_from_difflines,
+    make_failure_dict,
 )
 
 
@@ -129,7 +129,7 @@ def parse_diffoscope_output(
     """Recursively parses diffoscope json output.
 
     Recursively navigates through entirety of diffoscope json output
-    parsing the diffs and returning a JSON object with issues
+    parsing the diffs and returning a JSON object with failures
     flagged based on contents of `config/diff_config.yaml`
 
     Args:
@@ -146,17 +146,17 @@ def parse_diffoscope_output(
         parent_comments: List of comments from the parent object in diffoscope
                         as sometimes the comments that relate to a child are in
                         the parent detail
-        files_summary: File analysis of trivial/nontrivial issue
+        files_summary: File analysis of trivial/nontrivial failure
         file_checksum: Whether detail of checksum matches and mismatch
                        should be included in the summary.json
 
     Returns:
-        Count of unknown issues, count of flagged issues, diff list,
+        Count of unknown failures, count of flagged failures, diff list,
         and overall file analysis summary and checksum comparison summary.
     """
-    trivial_issues_count = 0
-    nontrivial_issues_count = 0
-    unknown_issues_count = 0
+    trivial_failures_count = 0
+    nontrivial_failures_count = 0
+    unknown_failures_count = 0
     diff_list = []
 
     if files_summary is None:
@@ -256,7 +256,7 @@ def parse_diffoscope_output(
                     and is_binary
                     and flag.regex["indiff"] == re.compile(".*")
                 ):
-                    diff.flagged_issues.append(
+                    diff.flagged_failures.append(
                         {
                             "id": flag.flag_id,
                             "description": flag.description,
@@ -272,11 +272,11 @@ def parse_diffoscope_output(
                 # Handle any non-binary line that matches the flag
                 elif flag_matches:
                     (
-                        flagged_issue_list,
-                        unknown_issue_list,
+                        flagged_failure_list,
+                        unknown_failure_list,
                         minus_line.unmatched_intervals,
                         plus_line.unmatched_intervals,
-                    ) = issues_from_difflines(
+                    ) = failures_from_difflines(
                         minus_line,
                         plus_line,
                         flag,
@@ -286,27 +286,27 @@ def parse_diffoscope_output(
                     if flag.regex["indiff"] != re.compile(
                         ".*"
                     ) or flag.flag_id not in [
-                        flag["id"] for flag in diff.flagged_issues
+                        flag["id"] for flag in diff.flagged_failures
                     ]:
-                        for issue in flagged_issue_list:
-                            issue["metadata"] = getattr(
+                        for failure in flagged_failure_list:
+                            failure["metadata"] = getattr(
                                 flag, "metadata", False
                             )
                             if getattr(flag, "severity") == "Low":
-                                trivial_issues_count += 1
+                                trivial_failures_count += 1
                             else:
-                                nontrivial_issues_count += 1
-                        unknown_issues_count += len(unknown_issue_list)
-                        diff.flagged_issues.extend(flagged_issue_list)
-                        diff.unknown_issues.extend(unknown_issue_list)
+                                nontrivial_failures_count += 1
+                        unknown_failures_count += len(unknown_failure_list)
+                        diff.flagged_failures.extend(flagged_failure_list)
+                        diff.unknown_failures.extend(unknown_failure_list)
 
             # Check so line by line comparison don't happen in binary diffs and
             # this is after all the flags have been checked so the diff is done
             # being evaluated
             if is_binary:
-                if len(diff.flagged_issues) == 0:
-                    unknown_issues_count += 1
-                    diff.unknown_issues.append(
+                if len(diff.flagged_failures) == 0:
+                    unknown_failures_count += 1
+                    diff.unknown_failures.append(
                         {
                             "comments": [
                                 "Flag indiff regex are not ran on binary "
@@ -335,9 +335,9 @@ def parse_diffoscope_output(
                 else None
             )
             if minus_unmatched_str != plus_unmatched_str:
-                unknown_issues_count += 1
-                diff.unknown_issues.append(
-                    make_issue_dict(
+                unknown_failures_count += 1
+                diff.unknown_failures.append(
+                    make_failure_dict(
                         minus_line if minus_line else None,
                         plus_line if plus_line else None,
                         minus_unmatched_str,
@@ -359,9 +359,9 @@ def parse_diffoscope_output(
                 files_summary,
                 file_checksum=file_checksum,
             )
-            unknown_issues_count += child_return[0]
-            trivial_issues_count += child_return[1]
-            nontrivial_issues_count += child_return[2]
+            unknown_failures_count += child_return[0]
+            trivial_failures_count += child_return[1]
+            nontrivial_failures_count += child_return[2]
             diff_list.extend(child_return[3])
 
     checksum_summary = {}
@@ -404,18 +404,18 @@ def parse_diffoscope_output(
             )
 
         return (
-            unknown_issues_count,
-            trivial_issues_count,
-            nontrivial_issues_count,
+            unknown_failures_count,
+            trivial_failures_count,
+            nontrivial_failures_count,
             diff_list,
             files_summary,
             checksum_summary,
         )
 
     return (
-        unknown_issues_count,
-        trivial_issues_count,
-        nontrivial_issues_count,
+        unknown_failures_count,
+        trivial_failures_count,
+        nontrivial_failures_count,
         diff_list,
         files_summary,
         checksum_summary,

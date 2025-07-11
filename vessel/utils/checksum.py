@@ -211,32 +211,32 @@ def classify_checksum_mismatches(
 
     Returns:
         A tuple (trivial_diffs, nontrivial_diffs):
-            - trivial_diffs: list of dicts for files with only trivial flagged issues.
-            - nontrivial_diffs: list of dicts for files with unknown issues, non-metadata stat{} flagged issues.
+            - trivial_diffs: list of dicts for files with only trivial flagged failures.
+            - nontrivial_diffs: list of dicts for files with unknown failures, non-metadata stat{} flagged failures.
     """
     trivial_diffs = []
     nontrivial_diffs = []
     for entry in checksum_summary.get("checksum_mismatches", []):
         key = (entry["path1"], entry["path2"])
         entry_diffs = diff_lookup.get(key, [])
-        entry_flagged_issues = []
-        entry_unknown_issues = []
+        entry_flagged_failures = []
+        entry_unknown_failures = []
         stat_has_nonmeta = False
         for diff in entry_diffs:
-            flagged = diff.get("flagged_issues", [])
-            unknowns = diff.get("unknown_issues", [])
-            entry_flagged_issues.extend(flagged)
-            entry_unknown_issues.extend(unknowns)
+            flagged = diff.get("flagged_failures", [])
+            unknowns = diff.get("unknown_failures", [])
+            entry_flagged_failures.extend(flagged)
+            entry_unknown_failures.extend(unknowns)
 
-            # Only check stat {} flagged issues for non-metadata
+            # Only check stat {} flagged failures for non-metadata
             if diff.get("command", "") == "stat {}":
-                for issue in flagged:
-                    if not issue.get("metadata", False):
+                for failure in flagged:
+                    if not failure.get("metadata", False):
                         stat_has_nonmeta = True
 
         types = []
         seen_types = set()
-        for f in entry_flagged_issues:
+        for f in entry_flagged_failures:
             key2 = f"{f['id']}|{f['description']}"
             if key2 not in seen_types:
                 types.append(key2)
@@ -249,55 +249,55 @@ def classify_checksum_mismatches(
         )
 
         all_trivial = True
-        for issue in entry_flagged_issues:
-            if "severity" in issue and issue["severity"] != "Low":
+        for failure in entry_flagged_failures:
+            if "severity" in failure and failure["severity"] != "Low":
                 all_trivial = False
 
-        # If there are any unknown issues, classify as nontrivial
-        if entry_unknown_issues:
+        # If there are any unknown failures, classify as nontrivial
+        if entry_unknown_failures:
             nontrivial_diffs.append(
                 {
                     "files1": entry["path1"],
                     "files2": entry["path2"],
-                    "flagged_issue_types": types,
+                    "flagged_failure_types": types,
                     "filetype1": filetype1,
                     "filetype2": filetype2,
                 }
             )
-        # If any stat {} flagged issue has metadata == False, nontrivial
+        # If any stat {} flagged failure has metadata == False, nontrivial
         elif stat_has_nonmeta:
             nontrivial_diffs.append(
                 {
                     "files1": entry["path1"],
                     "files2": entry["path2"],
-                    "flagged_issue_types": types,
+                    "flagged_failure_types": types,
                     "filetype1": filetype1,
                     "filetype2": filetype2,
                 }
             )
-        # If there are flagged issues (and no unknowns), trivial only if all flagged issues are severity Low
-        elif entry_flagged_issues:
-            if all_trivial:
-                trivial_diffs.append(
-                    {
-                        "files1": entry["path1"],
-                        "files2": entry["path2"],
-                        "flagged_issue_types": types,
-                        "filetype1": filetype1,
-                        "filetype2": filetype2,
-                    }
-                )
-            else:
-                nontrivial_diffs.append(
-                    {
-                        "files1": entry["path1"],
-                        "files2": entry["path2"],
-                        "flagged_issue_types": types,
-                        "filetype1": filetype1,
-                        "filetype2": filetype2,
-                    }
-                )
-        # Otherwise, nontrivial by default (For example: no flagged/unknown issues)
+        # If there are flagged failures (and no unknowns), trivial only if all flagged failures are severity Low and nonmetadata
+        elif entry_flagged_failures:
+            all_trivial = all(failure.get("severity") == "Low" for failure in entry_flagged_failures)
+            all_metadata = all(failure.get("metadata", False) for failure in entry_flagged_failures)
+            # Only trivial, but all are metadata: treat as nontrivial/unknown
+            if all_trivial and all_metadata:
+                nontrivial_diffs.append({
+                    "files1": entry["path1"],
+                    "files2": entry["path2"],
+                    "flagged_failure_types": types,
+                    "filetype1": filetype1,
+                    "filetype2": filetype2,
+                })
+            # Only trivial, and some are not metadata: treat as trivial
+            elif all_trivial:
+                trivial_diffs.append({
+                    "files1": entry["path1"],
+                    "files2": entry["path2"],
+                    "flagged_failure_types": types,
+                    "filetype1": filetype1,
+                    "filetype2": filetype2,
+                })
+        # Otherwise, nontrivial by default (For example: no flagged/unknown failures)
         else:
             nontrivial_diffs.append(
                 {
