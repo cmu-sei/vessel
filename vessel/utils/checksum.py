@@ -157,15 +157,10 @@ def summarize_checksums(
     
     for key_tuple in diff_lookup:
         if key_tuple[0] != key_tuple[1]:
-            only_in_image1 = list(set(only_in_image1) - set(key_tuple[0]))
-            only_in_image2 = list(set(only_in_image2) - set(key_tuple[1]))
-            common_files.extend([key_tuple[0], key_tuple[1]])
-            common_files = sorted(common_files)
-
             if key_tuple[0] not in hashed_files1:
-                logger.info(f"{key_tuple[0]} found in diff list, but not in hashes.")
-            elif key_tuple[1] not in hashed_files2:
-                logger.info(f"{key_tuple[1]} found in diff list, but not in hashes.")
+                logger.error(f"{key_tuple[0]} found in diff list, but not in hashes.")
+            elif key_tuple[1] not in hashed_files1:
+                logger.error(f"{key_tuple[1]} found in diff list, but not in hashes.")
             elif hashed_files1[key_tuple[0]].hash != hashed_files2[key_tuple[1]]:
                 checksum_mismatches.append(
                     make_checksum_dict(
@@ -226,18 +221,6 @@ def classify_checksum_mismatches(
         entry_diffs = diff_lookup.get(key, [])
         entry_flagged_failures = []
         entry_unknown_failures = []
-        stat_has_nonmeta = False
-        for diff in entry_diffs:
-            flagged = diff.get("flagged_failures", [])
-            unknowns = diff.get("unknown_failures", [])
-            entry_flagged_failures.extend(flagged)
-            entry_unknown_failures.extend(unknowns)
-
-            # Only check stat {} flagged failures for non-metadata
-            if diff.get("command", "") == "stat {}":
-                for failure in flagged:
-                    if not failure.get("metadata", False):
-                        stat_has_nonmeta = True
 
         types = []
         seen_types = set()
@@ -269,18 +252,8 @@ def classify_checksum_mismatches(
                     "filetype2": filetype2,
                 }
             )
-        # If any stat {} flagged failure has metadata == False, nontrivial
-        elif stat_has_nonmeta:
-            nontrivial_diffs.append(
-                {
-                    "files1": entry["path1"],
-                    "files2": entry["path2"],
-                    "flagged_failure_types": types,
-                    "filetype1": filetype1,
-                    "filetype2": filetype2,
-                }
-            )
-        # If there are flagged failures (and no unknowns), trivial only if all flagged failures are severity Low and nonmetadata
+            
+        # If there are flagged failures (and no unknowns), trivial only if all flagged failures are severity Low and at least one nonmetadata
         elif entry_flagged_failures:
             all_trivial = all(failure.get("severity") == "Low" for failure in entry_flagged_failures)
             all_metadata = all(failure.get("metadata", False) for failure in entry_flagged_failures)
