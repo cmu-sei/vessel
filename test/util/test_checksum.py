@@ -25,14 +25,15 @@
 
 """Unit test for checksum util functions"""
 
-import pytest
 import re
+
+import pytest
 
 from vessel.utils.checksum import (
     FileHash,
-    summarize_checksums,
     classify_checksum_mismatches,
     hash_folder_contents,
+    summarize_checksums,
 )
 
 # @pytest.mark.parametrize(

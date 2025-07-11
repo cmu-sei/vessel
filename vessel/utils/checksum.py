@@ -25,8 +25,8 @@
 
 """Utility checksum functions."""
 
-from logging import getLogger
 import hashlib
+from logging import getLogger
 from pathlib import Path
 from typing import Any
 
@@ -231,7 +231,7 @@ def classify_checksum_mismatches(
     nontrivial_diffs = []
     for entry in checksum_summary.get("checksum_mismatches", []):
         key = (entry["path1"], entry["path2"])
-        entry_diffs = diff_lookup.get(key, [])
+        #entry_diffs = diff_lookup.get(key, [])
         entry_flagged_failures = []
         entry_unknown_failures = []
 

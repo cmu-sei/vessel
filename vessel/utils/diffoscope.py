@@ -39,8 +39,8 @@ from vessel.utils.checksum import (
 from vessel.utils.flag import Flag
 from vessel.utils.unified_diff import (
     Diff,
-    intervals_to_str,
     failures_from_difflines,
+    intervals_to_str,
     make_failure_dict,
 )
 
