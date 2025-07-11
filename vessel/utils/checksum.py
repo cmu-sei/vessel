@@ -230,8 +230,8 @@ def classify_checksum_mismatches(
     trivial_diffs = []
     nontrivial_diffs = []
     for entry in checksum_summary.get("checksum_mismatches", []):
-        key = (entry["path1"], entry["path2"])
-        #entry_diffs = diff_lookup.get(key, [])
+        # key = (entry["path1"], entry["path2"])
+        # entry_diffs = diff_lookup.get(key, [])
         entry_flagged_failures = []
         entry_unknown_failures = []
 
