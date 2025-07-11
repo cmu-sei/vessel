@@ -107,7 +107,10 @@ def build_diff_lookup(
 
     lookup: dict[Any, Any] = {}
     for diff in diff_list:
-        key = (relative_path_after_rootfs(diff["source1"]), relative_path_after_rootfs(diff["source2"]))
+        key = (
+            relative_path_after_rootfs(diff["source1"]),
+            relative_path_after_rootfs(diff["source2"]),
+        )
         if key not in lookup:
             lookup[key] = []
         lookup[key].append(diff)
@@ -378,7 +381,11 @@ def parse_diffoscope_output(
         hashed_files2 = hash_folder_contents(rootfs_path2)
         diff_lookup = build_diff_lookup(diff_list)
         checksum_summary = summarize_checksums(
-            diff_lookup, rootfs_path1, hashed_files1, rootfs_path2, hashed_files2,
+            diff_lookup,
+            rootfs_path1,
+            hashed_files1,
+            rootfs_path2,
+            hashed_files2,
         )
         trivial_diffs, nontrivial_diffs = classify_checksum_mismatches(
             checksum_summary, diff_lookup, hashed_files1, hashed_files2

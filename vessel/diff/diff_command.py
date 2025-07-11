@@ -376,7 +376,9 @@ class DiffCommand:
         """
         unified_diff_id = 1
         unified_diff_dict = {}
-        flagged_failure_count = trivial_failure_count + nontrivial_failure_count
+        flagged_failure_count = (
+            trivial_failure_count + nontrivial_failure_count
+        )
 
         for diff in diffs:
             unified_diff_dict[unified_diff_id] = diff["unified_diff"]
@@ -391,7 +393,8 @@ class DiffCommand:
                     "trivial_failures": trivial_failure_count,
                     "nontrivial_failures": nontrivial_failure_count,
                     "flagged_failures": flagged_failure_count,
-                    "total_failures": unknown_failure_count + flagged_failure_count,
+                    "total_failures": unknown_failure_count
+                    + flagged_failure_count,
                 },
                 "checksum summary": {
                     "total_image1_file_count": checksum_summary.get(

@@ -28,7 +28,12 @@
 import pytest
 import re
 
-from vessel.utils.checksum import FileHash, summarize_checksums, classify_checksum_mismatches, hash_folder_contents
+from vessel.utils.checksum import (
+    FileHash,
+    summarize_checksums,
+    classify_checksum_mismatches,
+    hash_folder_contents,
+)
 
 # @pytest.mark.parametrize(
 #     "test, expected",
@@ -50,13 +55,21 @@ from vessel.utils.checksum import FileHash, summarize_checksums, classify_checks
             {
                 "folder_path1": "folder_path1",
                 "hashed_files1": {
-                    "filepath1": FileHash("filepath1", "ASCII text", "filehash1"),
-                    "filepath2": FileHash("filepath2", "ASCII text", "filehash2"),
+                    "filepath1": FileHash(
+                        "filepath1", "ASCII text", "filehash1"
+                    ),
+                    "filepath2": FileHash(
+                        "filepath2", "ASCII text", "filehash2"
+                    ),
                 },
                 "folder_path2": "folder_path2",
                 "hashed_files2": {
-                    "filepath1": FileHash("filepath1", "ASCII text", "filehash1"),
-                    "filepath2": FileHash("filepath2", "ASCII text", "filehash2"),
+                    "filepath1": FileHash(
+                        "filepath1", "ASCII text", "filehash1"
+                    ),
+                    "filepath2": FileHash(
+                        "filepath2", "ASCII text", "filehash2"
+                    ),
                 },
             },
             {
@@ -89,13 +102,21 @@ from vessel.utils.checksum import FileHash, summarize_checksums, classify_checks
             {
                 "folder_path1": "folder_path1",
                 "hashed_files1": {
-                    "filepath1": FileHash("filepath1", "ASCII text", "filehash1"),
-                    "filepath2": FileHash("filepath2", "ASCII text", "filehash2"),
+                    "filepath1": FileHash(
+                        "filepath1", "ASCII text", "filehash1"
+                    ),
+                    "filepath2": FileHash(
+                        "filepath2", "ASCII text", "filehash2"
+                    ),
                 },
                 "folder_path2": "folder_path2",
                 "hashed_files2": {
-                    "filepath1": FileHash("filepath1", "ASCII text", "filehash1"),
-                    "filepath2": FileHash("filepath2", "ASCII text", "filehash3"),
+                    "filepath1": FileHash(
+                        "filepath1", "ASCII text", "filehash1"
+                    ),
+                    "filepath2": FileHash(
+                        "filepath2", "ASCII text", "filehash3"
+                    ),
                 },
             },
             {
@@ -129,13 +150,21 @@ from vessel.utils.checksum import FileHash, summarize_checksums, classify_checks
             {
                 "folder_path1": "folder_path1",
                 "hashed_files1": {
-                    "filepath1": FileHash("filepath1", "ASCII text", "filehash1"),
-                    "filepath2": FileHash("filepath2", "ASCII text", "filehash2"),
+                    "filepath1": FileHash(
+                        "filepath1", "ASCII text", "filehash1"
+                    ),
+                    "filepath2": FileHash(
+                        "filepath2", "ASCII text", "filehash2"
+                    ),
                 },
                 "folder_path2": "folder_path2",
                 "hashed_files2": {
-                    "filepath1": FileHash("filepath1", "ASCII text", "filehash1"),
-                    "filepath3": FileHash("filepath3", "ASCII text", "filehash3"),
+                    "filepath1": FileHash(
+                        "filepath1", "ASCII text", "filehash1"
+                    ),
+                    "filepath3": FileHash(
+                        "filepath3", "ASCII text", "filehash3"
+                    ),
                 },
             },
             {
@@ -235,10 +264,10 @@ def test_summarize_checksums(test_input, expected):
                 "diff_lookup": {
                     ("path1", "path1"): [
                         {
-                        "source1": "source1/rootfs/path1",
-                        "source2": "source2/rootfs/path1",
-                        "unified_diff_id": 1,
-                        "unified_diff": "diff1",
+                            "source1": "source1/rootfs/path1",
+                            "source2": "source2/rootfs/path1",
+                            "unified_diff_id": 1,
+                            "unified_diff": "diff1",
                         },
                     ],
                     ("path2", "path2"): [
@@ -259,7 +288,7 @@ def test_summarize_checksums(test_input, expected):
                     "path1": FileHash("path1", "ASCII text", "hash1.1"),
                     "path2": FileHash("path2", "ASCII text", "hash2.1"),
                     "path3": FileHash("path3", "ASCII text", "hash3"),
-                }
+                },
             },
             ([], []),
         ),
@@ -293,6 +322,8 @@ def test_hash_folder_contents(tmp_path):
     for path, filehash in result.items():
         assert isinstance(filehash, FileHash)
         assert filehash.path == path
-        assert re.fullmatch(r"[a-f0-9]{64}", filehash.hash)  # make sure it's valid SHA256
+        assert re.fullmatch(
+            r"[a-f0-9]{64}", filehash.hash
+        )  # make sure it's valid SHA256
         assert isinstance(filehash.filetype, str)
         assert filehash.filetype != ""
