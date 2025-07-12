@@ -164,12 +164,16 @@ def summarize_checksums(
 
     for key_tuple in diff_lookup:
         if key_tuple[0] != key_tuple[1]:
+            only_in_image1 = list(set(only_in_image1) - set(key_tuple[0]))
+            only_in_image2 = list(set(only_in_image2) - set(key_tuple[1]))
+            common_files.extend([key_tuple[0], key_tuple[1]])
+            common_files = sorted(common_files)
             if key_tuple[0] not in hashed_files1:
-                logger.error(
+                logger.info(
                     f"{key_tuple[0]} found in diff list, but not in hashes."
                 )
-            elif key_tuple[1] not in hashed_files1:
-                logger.error(
+            elif key_tuple[1] not in hashed_files2:
+                logger.info(
                     f"{key_tuple[1]} found in diff list, but not in hashes."
                 )
             elif (
@@ -257,11 +261,6 @@ def classify_checksum_mismatches(
             if entry["path2"] in hashed_files2
             else None
         )
-
-        all_trivial = True
-        for failure in entry_flagged_failures:
-            if "severity" in failure and failure["severity"] != "Low":
-                all_trivial = False
 
         # If there are any unknown failures, classify as nontrivial
         if entry_unknown_failures:

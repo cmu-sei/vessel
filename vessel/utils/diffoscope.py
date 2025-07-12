@@ -295,6 +295,9 @@ def parse_diffoscope_output(
                             failure["metadata"] = getattr(
                                 flag, "metadata", False
                             )
+                            failure["severity"] = getattr(
+                                flag, "severity", "Low"
+                            )
                             if getattr(flag, "severity") == "Low":
                                 trivial_failures_count += 1
                             else:
