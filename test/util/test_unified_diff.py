@@ -33,8 +33,8 @@ from vessel.utils.unified_diff import (
     DiffLine,
     align_diff_lines,
     equal_entry_list,
-    intervals_to_str,
     failures_from_difflines,
+    intervals_to_str,
     make_failure_dict,
     parse_unified_diff_header,
 )
@@ -495,8 +495,8 @@ TEST_DIFFLINES = [
 def test_failures_from_difflines(test_input, expected):
     """Tests that failures are correctly flagged, and intervals are updated correctly"""
 
-    flagged, unknown, minus_unmatched, plus_unmatched = failures_from_difflines(
-        **test_input
+    flagged, unknown, minus_unmatched, plus_unmatched = (
+        failures_from_difflines(**test_input)
     )
 
     assert flagged == expected["flagged"]
