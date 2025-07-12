@@ -169,6 +169,7 @@ def summarize_checksums(
 
             if key_tuple[0] in hashed_files1 and key_tuple[1] in hashed_files2:
                 common_files.extend([key_tuple[0], key_tuple[1]])
+                common_files = sorted(common_files)
 
             if key_tuple[0] not in hashed_files1:
                 logger.info(
