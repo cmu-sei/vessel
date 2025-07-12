@@ -166,8 +166,10 @@ def summarize_checksums(
         if key_tuple[0] != key_tuple[1]:
             only_in_image1 = list(set(only_in_image1) - set(key_tuple[0]))
             only_in_image2 = list(set(only_in_image2) - set(key_tuple[1]))
-            common_files.extend([key_tuple[0], key_tuple[1]])
-            common_files = sorted(common_files)
+
+            if key_tuple[0] in hashed_files1 and key_tuple[1] in hashed_files2:
+                common_files.extend([key_tuple[0], key_tuple[1]])
+
             if key_tuple[0] not in hashed_files1:
                 logger.info(
                     f"{key_tuple[0]} found in diff list, but not in hashes."
