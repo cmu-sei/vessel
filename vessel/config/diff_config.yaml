@@ -299,3 +299,13 @@ flags:
     indiff: '/tmp/[a-zA-Z]+\.o'
     severity: 'Low'
     metadata: False
+
+  - id: 'RAND008'
+    description: "Directory size difference"
+    filepath: '.*'
+    filetype: '.*'
+    command: 'stat {}'
+    comment: '.*'
+    indiff: 'Size: \d+.*directory'
+    severity: 'Low'
+    metadata: False
