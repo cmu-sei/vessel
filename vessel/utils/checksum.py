@@ -308,6 +308,17 @@ def classify_checksum_mismatches(
                         "filetype2": filetype2,
                     }
                 )
+            # Otherwise, it's not all_trivial, append to non trivial
+            else:
+                nontrivial_diffs.append(
+                    {
+                        "files1": entry["path1"],
+                        "files2": entry["path2"],
+                        "flagged_failure_types": types,
+                        "filetype1": filetype1,
+                        "filetype2": filetype2,
+                    }
+                )
         # Otherwise, nontrivial by default (For example: no flagged/unknown failures)
         else:
             nontrivial_diffs.append(
