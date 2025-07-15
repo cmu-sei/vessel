@@ -277,7 +277,7 @@ def test_summarize_checksums(test_input, expected):
                 },
             },
             (
-                [], # Empty trivial
+                [],  # Empty trivial
                 [
                     {
                         "files1": "path1",
@@ -350,7 +350,7 @@ def test_summarize_checksums(test_input, expected):
                         "filetype2": "ASCII text",
                     }
                 ],
-                [], # Empty nontrivial
+                [],  # Empty nontrivial
             ),
         ),
         # Only flagged failures, but one is not Low severity(nontrivial) -> nontrivial
@@ -394,7 +394,7 @@ def test_summarize_checksums(test_input, expected):
                 },
             },
             (
-                [], # Empty trivial
+                [],  # Empty trivial
                 [
                     {
                         "files1": "path1",
@@ -449,7 +449,7 @@ def test_summarize_checksums(test_input, expected):
                 },
             },
             (
-                [], # Empty trivial
+                [],  # Empty trivial
                 [
                     {
                         "files1": "path1",
@@ -495,7 +495,7 @@ def test_summarize_checksums(test_input, expected):
                 },
             },
             (
-                [], # Empty trivial
+                [],  # Empty trivial
                 [
                     {
                         "files1": "path1",
