@@ -320,7 +320,7 @@ def classify_checksum_mismatches(
                         "filetype2": filetype2,
                     }
                 )
-        # Otherwise, nontrivial by default (For example: no flagged/unknown failures)
+        # Otherwise, no flag and no unknown issue, non trivial
         else:
             nontrivial_diffs.append(
                 {

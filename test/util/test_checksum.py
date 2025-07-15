@@ -54,6 +54,7 @@ from vessel.utils.checksum import (
         # Two files, two matches
         (
             {
+                "diff_lookup": {},
                 "folder_path1": "folder_path1",
                 "hashed_files1": {
                     "filepath1": FileHash(
@@ -80,14 +81,16 @@ from vessel.utils.checksum import (
                 "checksum_mismatches": [],
                 "checksum_matches": [
                     {
-                        "path": "filepath1",
+                        "path1": "filepath1",
+                        "path2": "filepath1",
                         "path1_sha256": "filehash1",
                         "path2_sha256": "filehash1",
                         "filetype1": "ASCII text",
                         "filetype2": "ASCII text",
                     },
                     {
-                        "path": "filepath2",
+                        "path1": "filepath2",
+                        "path2": "filepath2",
                         "path1_sha256": "filehash2",
                         "path2_sha256": "filehash2",
                         "filetype1": "ASCII text",
@@ -101,6 +104,7 @@ from vessel.utils.checksum import (
         # Two paths, one match
         (
             {
+                "diff_lookup": {},
                 "folder_path1": "folder_path1",
                 "hashed_files1": {
                     "filepath1": FileHash(
@@ -126,7 +130,8 @@ from vessel.utils.checksum import (
                 "total_common_files": 2,
                 "checksum_mismatches": [
                     {
-                        "path": "filepath2",
+                        "path1": "filepath2",
+                        "path2": "filepath2",
                         "path1_sha256": "filehash2",
                         "path2_sha256": "filehash3",
                         "filetype1": "ASCII text",
@@ -135,7 +140,8 @@ from vessel.utils.checksum import (
                 ],
                 "checksum_matches": [
                     {
-                        "path": "filepath1",
+                        "path1": "filepath1",
+                        "path2": "filepath1",
                         "path1_sha256": "filehash1",
                         "path2_sha256": "filehash1",
                         "filetype1": "ASCII text",
@@ -149,6 +155,7 @@ from vessel.utils.checksum import (
         # Three paths, two only in
         (
             {
+                "diff_lookup": {},
                 "folder_path1": "folder_path1",
                 "hashed_files1": {
                     "filepath1": FileHash(
@@ -175,7 +182,8 @@ from vessel.utils.checksum import (
                 "checksum_mismatches": [],
                 "checksum_matches": [
                     {
-                        "path": "filepath1",
+                        "path1": "filepath1",
+                        "path2": "filepath1",
                         "path1_sha256": "filehash1",
                         "path2_sha256": "filehash1",
                         "filetype1": "ASCII text",
@@ -197,7 +205,7 @@ def test_summarize_checksums(test_input, expected):
 @pytest.mark.parametrize(
     "test_input, expected",
     [
-        # No mismatches, 1 match
+        # No mismatches, empty trivial and nontrivial
         (
             {
                 "checksum_summary": {
@@ -207,7 +215,8 @@ def test_summarize_checksums(test_input, expected):
                     "checksum_mismatches": [],
                     "checksum_matches": [
                         {
-                            "path": "path1",
+                            "path1": "path1",
+                            "path2": "path1",
                             "path1_sha256": "hash1",
                             "path2_sha256": "hash1",
                             "filetype1": "ASCII text",
@@ -227,80 +236,282 @@ def test_summarize_checksums(test_input, expected):
             },
             ([], []),
         ),
-        # 2 nontrivial mismatch, 1 match
+        # Only flagged failures, all Low, all metadata -> nontrivial
         (
             {
                 "checksum_summary": {
                     "image1": "source1/rootfs",
                     "image2": "source2/rootfs",
-                    "total_common_files": 2,
+                    "total_common_files": 1,
                     "checksum_mismatches": [
                         {
-                            "path": "path1",
-                            "path1_sha256": "hash1",
-                            "path2_sha256": "hash1.1",
-                            "filetype1": "ASCII text",
-                            "filetype2": "ASCII text",
-                        },
-                        {
-                            "path": "path2",
-                            "path1_sha256": "hash2",
-                            "path2_sha256": "hash2.1",
-                            "filetype1": "ASCII text",
-                            "filetype2": "ASCII text",
-                        },
-                    ],
-                    "checksum_matches": [
-                        {
-                            "path": "path3",
-                            "path1_sha_256": "hash3",
-                            "path1_sha256": "hash3",
+                            "path1": "path1",
+                            "path2": "path1",
                             "filetype1": "ASCII text",
                             "filetype2": "ASCII text",
                         }
                     ],
+                    "checksum_matches": [],
                     "only_in_image1": [],
                     "only_in_image2": [],
                 },
                 "diff_lookup": {
                     ("path1", "path1"): [
                         {
-                            "source1": "source1/rootfs/path1",
-                            "source2": "source2/rootfs/path1",
-                            "unified_diff_id": 1,
-                            "unified_diff": "diff1",
-                        },
-                    ],
-                    ("path2", "path2"): [
-                        {
-                            "source1": "source1/rootfs/path2",
-                            "source2": "source2/rootfs/path2",
-                            "unified_diff_id": 2,
-                            "unified_diff": "diff2",
-                        },
-                    ],
+                            "flagged_failures": [
+                                {
+                                    "id": "TIME007",
+                                    "description": "File listing time difference in different format.",
+                                    "metadata": True,
+                                    "severity": "Low",
+                                }
+                            ]
+                        }
+                    ]
                 },
                 "hashed_files1": {
-                    "path1": FileHash("path1", "ASCII text", "hash1"),
-                    "path2": FileHash("path2", "ASCII text", "hash2"),
-                    "path3": FileHash("path3", "ASCII text", "hash3"),
+                    "path1": FileHash("path1", "ASCII text", "h1")
                 },
                 "hashed_files2": {
-                    "path1": FileHash("path1", "ASCII text", "hash1.1"),
-                    "path2": FileHash("path2", "ASCII text", "hash2.1"),
-                    "path3": FileHash("path3", "ASCII text", "hash3"),
+                    "path1": FileHash("path1", "ASCII text", "h2")
                 },
             },
-            ([], []),
+            (
+                [], # Empty trivial
+                [
+                    {
+                        "files1": "path1",
+                        "files2": "path1",
+                        "flagged_failure_types": [
+                            "TIME007|File listing time difference in different format."
+                        ],
+                        "filetype1": "ASCII text",
+                        "filetype2": "ASCII text",
+                    }
+                ],
+            ),
+        ),
+        # Only flagged failures, all Low, at least one metadata is False -> trivial
+        (
+            {
+                "checksum_summary": {
+                    "image1": "source1/rootfs",
+                    "image2": "source2/rootfs",
+                    "total_common_files": 1,
+                    "checksum_mismatches": [
+                        {
+                            "path1": "path1",
+                            "path2": "path1",
+                            "filetype1": "ASCII text",
+                            "filetype2": "ASCII text",
+                        }
+                    ],
+                    "checksum_matches": [],
+                    "only_in_image1": [],
+                    "only_in_image2": [],
+                },
+                "diff_lookup": {
+                    ("path1", "path1"): [
+                        {
+                            "flagged_failures": [
+                                {
+                                    "id": "TIME007",
+                                    "description": "File listing time difference in different format.",
+                                    "metadata": True,
+                                    "severity": "Low",
+                                },
+                                {
+                                    "id": "TIME008",
+                                    "description": "Logging time difference.",
+                                    "metadata": False,
+                                    "severity": "Low",
+                                },
+                            ]
+                        }
+                    ]
+                },
+                "hashed_files1": {
+                    "path1": FileHash("path1", "ASCII text", "h1")
+                },
+                "hashed_files2": {
+                    "path1": FileHash("path1", "ASCII text", "h2")
+                },
+            },
+            (
+                [
+                    {
+                        "files1": "path1",
+                        "files2": "path1",
+                        "flagged_failure_types": [
+                            "TIME007|File listing time difference in different format.",
+                            "TIME008|Logging time difference.",
+                        ],
+                        "filetype1": "ASCII text",
+                        "filetype2": "ASCII text",
+                    }
+                ],
+                [], # Empty nontrivial
+            ),
+        ),
+        # Only flagged failures, but one is not Low severity(nontrivial) -> nontrivial
+        (
+            {
+                "checksum_summary": {
+                    "image1": "source1/rootfs",
+                    "image2": "source2/rootfs",
+                    "total_common_files": 1,
+                    "checksum_mismatches": [
+                        {
+                            "path1": "path1",
+                            "path2": "path1",
+                            "filetype1": "ASCII text",
+                            "filetype2": "ASCII text",
+                        }
+                    ],
+                    "checksum_matches": [],
+                    "only_in_image1": [],
+                    "only_in_image2": [],
+                },
+                "diff_lookup": {
+                    ("path1", "path1"): [
+                        {
+                            "flagged_failures": [
+                                {
+                                    "id": "RAND006",
+                                    "description": "Generated certificate differences",
+                                    "metadata": False,
+                                    "severity": "Medium",
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "hashed_files1": {
+                    "path1": FileHash("path1", "ASCII text", "h1")
+                },
+                "hashed_files2": {
+                    "path1": FileHash("path1", "ASCII text", "h2")
+                },
+            },
+            (
+                [], # Empty trivial
+                [
+                    {
+                        "files1": "path1",
+                        "files2": "path1",
+                        "flagged_failure_types": [
+                            "RAND006|Generated certificate differences"
+                        ],
+                        "filetype1": "ASCII text",
+                        "filetype2": "ASCII text",
+                    }
+                ],
+            ),
+        ),
+        # Unknown failures -> nontrivial
+        (
+            {
+                "checksum_summary": {
+                    "image1": "source1/rootfs",
+                    "image2": "source2/rootfs",
+                    "total_common_files": 1,
+                    "checksum_mismatches": [
+                        {
+                            "path1": "path1",
+                            "path2": "path1",
+                            "filetype1": "ASCII text",
+                            "filetype2": "ASCII text",
+                        }
+                    ],
+                    "checksum_matches": [],
+                    "only_in_image1": [],
+                    "only_in_image2": [],
+                },
+                "diff_lookup": {
+                    ("unknownfile", "unknownfile"): [
+                        {
+                            "unknown_failures": [
+                                {
+                                    "minus_file_line_number": 2,
+                                    "plus_file_line_number": 2,
+                                    "minus_unmatched_str": "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDEg+yzqceNP49w",
+                                    "plus_unmatched_str": "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCzAlorKb6UtjG4",
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "hashed_files1": {
+                    "path1": FileHash("path1", "ASCII text", "h1")
+                },
+                "hashed_files2": {
+                    "path1": FileHash("path1", "ASCII text", "h2")
+                },
+            },
+            (
+                [], # Empty trivial
+                [
+                    {
+                        "files1": "path1",
+                        "files2": "path1",
+                        "flagged_failure_types": [],
+                        "filetype1": "ASCII text",
+                        "filetype2": "ASCII text",
+                    }
+                ],
+            ),
+        ),
+        # No flagged failures nor unknown failures -> nontrivial
+        (
+            {
+                "checksum_summary": {
+                    "image1": "source1/rootfs",
+                    "image2": "source2/rootfs",
+                    "total_common_files": 1,
+                    "checksum_mismatches": [
+                        {
+                            "path1": "path1",
+                            "path2": "path1",
+                            "filetype1": "ASCII text",
+                            "filetype2": "ASCII text",
+                        }
+                    ],
+                    "checksum_matches": [],
+                    "only_in_image1": [],
+                    "only_in_image2": [],
+                },
+                "diff_lookup": {
+                    ("path1", "path1"): [
+                        {
+                            # No flagged failures nor unknown failures
+                        }
+                    ]
+                },
+                "hashed_files1": {
+                    "path1": FileHash("path1", "ASCII text", "h1")
+                },
+                "hashed_files2": {
+                    "path1": FileHash("path1", "ASCII text", "h2")
+                },
+            },
+            (
+                [], # Empty trivial
+                [
+                    {
+                        "files1": "path1",
+                        "files2": "path1",
+                        "flagged_failure_types": [],
+                        "filetype1": "ASCII text",
+                        "filetype2": "ASCII text",
+                    }
+                ],
+            ),
         ),
     ],
 )
 def test_classify_checksum_mismatches(test_input, expected):
     """Test classify_checksum_mismatches."""
     output = classify_checksum_mismatches(**test_input)
-
-    print(output)
-
     assert output == expected
 
 
