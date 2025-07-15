@@ -326,6 +326,7 @@ def classify_checksum_mismatches(
                 {
                     "files1": entry["path1"],
                     "files2": entry["path2"],
+                    "flagged_failure_types": types,
                     "filetype1": filetype1,
                     "filetype2": filetype2,
                 }
