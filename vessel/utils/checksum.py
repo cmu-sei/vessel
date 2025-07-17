@@ -162,9 +162,7 @@ def summarize_checksums(
                 )
             )
 
-    for key_tuple in diff_lookup:
-        path1, path2 = key_tuple
-
+    for path1, path2 in diff_lookup:
         if path1 != path2:
             if path1 in only_in_image1 and path2 in only_in_image2:
                 only_in_image1 = list(set(only_in_image1) - {path1})
