@@ -58,8 +58,8 @@ class Diff:
         self.comments: list[str] = comments
         self.command: str = ""
 
-        self.flagged_issues: list[dict] = []
-        self.unknown_issues: list[dict] = []
+        self.flagged_failures: list[dict] = []
+        self.unknown_failures: list[dict] = []
 
         self.minus_aligned_lines: list[DiffLine] = []
         self.plus_aligned_lines: list[DiffLine] = []
@@ -83,10 +83,10 @@ class Diff:
         if self.comments:
             dict_obj["comments"] = self.comments
         dict_obj["unified_diff"] = self.unified_diff
-        if self.flagged_issues:
-            dict_obj["flagged_issues"] = self.flagged_issues
-        if self.unknown_issues:
-            dict_obj["unknown_issues"] = self.unknown_issues
+        if self.flagged_failures:
+            dict_obj["flagged_failures"] = self.flagged_failures
+        if self.unknown_failures:
+            dict_obj["unknown_failures"] = self.unknown_failures
 
         return dict_obj
 
@@ -137,7 +137,7 @@ def equal_entry_list(
     Returns:
         Two lists of the same length
     """
-    # TODO : Match these up better. Quite a few potential issues with different
+    # TODO : Match these up better. Quite a few potential failures with different
     #           number of lines diffs and such may not be fixable here though
     #           and would just have to be a better diff tool in diffoscope to
     #           give better unified diffs. Very hard to line up lines without
@@ -244,7 +244,7 @@ def align_diff_lines(
     return minus_aligned_lines, plus_aligned_lines
 
 
-def issues_from_difflines(
+def failures_from_difflines(
     minus_line: DiffLine,
     plus_line: DiffLine,
     flag: Flag,
@@ -252,11 +252,11 @@ def issues_from_difflines(
     """Checks lines against flag indiff regex and returns matched intervals.
 
     Input is two lines and their unmatched intervals. Checks each line for
-    matches with flag and then returns any flagged or unknown issues along
+    matches with flag and then returns any flagged or unknown failures along
     with updated unmatched intervals.
 
     If portions of a line are unmatched by regex, but are the same as the
-    portion of the relative - or + line it will not be shown as an issue.
+    portion of the relative - or + line it will not be shown as an failure.
 
     Args:
         minus_line: DiffLine object containing the minus line
@@ -264,11 +264,11 @@ def issues_from_difflines(
         flag: dict object containing regex to match against diff objects.
                 Entry from `config/diff_config.yaml`
 
-    :return: List of flagged issues, list of unknown issues, updated intervals
+    :return: List of flagged failures, list of unknown failures, updated intervals
                 in each line that haven't been matched by regex
     """
-    flagged_issues: list[dict[str, Any]] = []
-    unknown_issues: list[dict[str, Any]] = []
+    flagged_failures: list[dict[str, Any]] = []
+    unknown_failures: list[dict[str, Any]] = []
     minus_matched_intervals = (
         [
             match.span()
@@ -330,8 +330,8 @@ def issues_from_difflines(
             )
 
         if minus_match_interval is None:
-            unknown_issues.append(
-                make_issue_dict(
+            unknown_failures.append(
+                make_failure_dict(
                     minus_line,
                     plus_line,
                     None,
@@ -339,8 +339,8 @@ def issues_from_difflines(
                 ),
             )
         elif plus_match_interval is None:
-            unknown_issues.append(
-                make_issue_dict(
+            unknown_failures.append(
+                make_failure_dict(
                     minus_line,
                     plus_line,
                     minus_match_str,
@@ -348,8 +348,8 @@ def issues_from_difflines(
                 ),
             )
         elif minus_match_str != plus_match_str:
-            flagged_issues.append(
-                make_issue_dict(
+            flagged_failures.append(
+                make_failure_dict(
                     minus_line,
                     plus_line,
                     minus_match_str,
@@ -359,25 +359,25 @@ def issues_from_difflines(
             )
 
     return (
-        flagged_issues,
-        unknown_issues,
+        flagged_failures,
+        unknown_failures,
         minus_line.unmatched_intervals,
         plus_line.unmatched_intervals,
     )
 
 
-def make_issue_dict(
+def make_failure_dict(
     minus_line: Optional[DiffLine] = None,
     plus_line: Optional[DiffLine] = None,
     minus_str: Optional[str] = None,
     plus_str: Optional[str] = None,
     flag: Optional[Flag] = None,
 ) -> dict[str, Any]:
-    """Create issue dict object.
+    """Create failure dict object.
 
-    Used to ensure consistency in all issue objects that
+    Used to ensure consistency in all failure objects that
     will be written to final output file. A flag being passed
-    implies that it was a flagged issue and the flag information
+    implies that it was a flagged failure and the flag information
     will be embedded in the dict.
 
     Args:
@@ -388,7 +388,7 @@ def make_issue_dict(
         flag: Dict item of the flag to have id and description
 
     Returns:
-        A issue dict item.
+        A failure dict item.
     """
     if flag:
         return {
