@@ -167,7 +167,7 @@ def summarize_checksums(
             if path1 in only_in_image1 and path2 in only_in_image2:
                 only_in_image1 = list(set(only_in_image1) - {path1})
                 only_in_image2 = list(set(only_in_image2) - {path2})
-                common_files.extend([path1, path2])
+                common_files.append(f"{path1} <-> {path2}") # append the file pair so the common files don't get inflated
                 common_files = sorted(set(common_files))
 
             if path1 not in hashed_files1:
