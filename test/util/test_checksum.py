@@ -36,6 +36,7 @@ from vessel.utils.checksum import (
     summarize_checksums,
 )
 
+
 def test_hash_folder_contents(tmp_path):
     """Test hash_folder_contents."""
     # Create sample files
@@ -60,6 +61,7 @@ def test_hash_folder_contents(tmp_path):
         )  # make sure it's valid SHA256
         assert isinstance(filehash.filetype, str)
         assert filehash.filetype != ""
+
 
 @pytest.mark.parametrize(
     "test_input, expected",
