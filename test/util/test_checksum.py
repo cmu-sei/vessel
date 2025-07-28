@@ -36,17 +36,30 @@ from vessel.utils.checksum import (
     summarize_checksums,
 )
 
-# @pytest.mark.parametrize(
-#     "test, expected",
-#     [
-#         (
+def test_hash_folder_contents(tmp_path):
+    """Test hash_folder_contents."""
+    # Create sample files
+    file1 = tmp_path / "a.txt"
+    file1.write_text("hello")
 
-#         )
-#     ]
-# )
-# def test_hash_folder_contents():
-#     pass
+    subdir = tmp_path / "subdir"
+    subdir.mkdir()
+    file2 = subdir / "b.txt"
+    file2.write_text("world")
 
+    result = hash_folder_contents(tmp_path)
+
+    # Assertions
+    assert isinstance(result, dict)
+    assert set(result.keys()) == {"a.txt", "subdir/b.txt"}
+    for path, filehash in result.items():
+        assert isinstance(filehash, FileHash)
+        assert filehash.path == path
+        assert re.fullmatch(
+            r"[a-f0-9]{64}", filehash.hash
+        )  # make sure it's valid SHA256
+        assert isinstance(filehash.filetype, str)
+        assert filehash.filetype != ""
 
 @pytest.mark.parametrize(
     "test_input, expected",
@@ -513,29 +526,3 @@ def test_classify_checksum_mismatches(test_input, expected):
     """Test classify_checksum_mismatches."""
     output = classify_checksum_mismatches(**test_input)
     assert output == expected
-
-
-def test_hash_folder_contents(tmp_path):
-    """Test hash_folder_contents."""
-    # Create sample files
-    file1 = tmp_path / "a.txt"
-    file1.write_text("hello")
-
-    subdir = tmp_path / "subdir"
-    subdir.mkdir()
-    file2 = subdir / "b.txt"
-    file2.write_text("world")
-
-    result = hash_folder_contents(tmp_path)
-
-    # Assertions
-    assert isinstance(result, dict)
-    assert set(result.keys()) == {"a.txt", "subdir/b.txt"}
-    for path, filehash in result.items():
-        assert isinstance(filehash, FileHash)
-        assert filehash.path == path
-        assert re.fullmatch(
-            r"[a-f0-9]{64}", filehash.hash
-        )  # make sure it's valid SHA256
-        assert isinstance(filehash.filetype, str)
-        assert filehash.filetype != ""
