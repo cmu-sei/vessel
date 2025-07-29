@@ -217,9 +217,9 @@ class DiffCommand:
                 diffoscope_json = json.load(raw_diff_file)
 
         (
-            unknown_issues_count,
-            trivial_issues_count,
-            nontrivial_issues_count,
+            unknown_failures_count,
+            trivial_failures_count,
+            nontrivial_failures_count,
             diff_list,
             files_summary,
             checksum_summary,
@@ -229,9 +229,9 @@ class DiffCommand:
             file_checksum=self.file_checksum,
         )
         self.write_to_files(
-            unknown_issues_count,
-            trivial_issues_count,
-            nontrivial_issues_count,
+            unknown_failures_count,
+            trivial_failures_count,
+            nontrivial_failures_count,
             diff_list,
             files_summary,
             checksum_summary,
@@ -295,9 +295,9 @@ class DiffCommand:
             diffoscope_json = json.load(raw_diff_file)
 
         (
-            unknown_issues_count,
-            trivial_issues_count,
-            nontrivial_issues_count,
+            unknown_failures_count,
+            trivial_failures_count,
+            nontrivial_failures_count,
             diff_list,
             files_summary,
             checksum_summary,
@@ -307,9 +307,9 @@ class DiffCommand:
             file_checksum=self.file_checksum,
         )
         self.write_to_files(
-            unknown_issues_count,
-            trivial_issues_count,
-            nontrivial_issues_count,
+            unknown_failures_count,
+            trivial_failures_count,
+            nontrivial_failures_count,
             diff_list,
             files_summary,
             checksum_summary,
@@ -327,9 +327,9 @@ class DiffCommand:
             diffoscope_json = json.load(raw_diff_file)
 
         (
-            unknown_issues_count,
-            trivial_issues_count,
-            nontrivial_issues_count,
+            unknown_failures_count,
+            trivial_failures_count,
+            nontrivial_failures_count,
             diff_list,
             files_summary,
             checksum_summary,
@@ -339,9 +339,9 @@ class DiffCommand:
             file_checksum=self.file_checksum,
         )
         self.write_to_files(
-            unknown_issues_count,
-            trivial_issues_count,
-            nontrivial_issues_count,
+            unknown_failures_count,
+            trivial_failures_count,
+            nontrivial_failures_count,
             diff_list,
             files_summary,
             checksum_summary,
@@ -351,32 +351,34 @@ class DiffCommand:
 
     def write_to_files(
         self: "DiffCommand",
-        unknown_issue_count: int,
-        trivial_issue_count: int,
-        nontrivial_issue_count: int,
+        unknown_failure_count: int,
+        trivial_failure_count: int,
+        nontrivial_failure_count: int,
         diffs: list,
         files_summary: list[dict[str, Any]],
         checksum_summary: dict[Any, Any],
     ) -> None:
         """Writes all diff output to files.
 
-        Takes in the count of issues and the list of diffs. Separates out the
+        Takes in the count of failures and the list of diffs. Separates out the
         unified diffs, assigns them an ID, and writes those to a separate
         file.
 
         Args:
-            unknown_issue_count: Count of unknown issues
-            flagged_issue_count: Count of flagged issues
+            unknown_failure_count: Count of unknown failures
+            flagged_failure_count: Count of flagged failures
             diffs: List of diffs, each being a dict item returned
                     from Diff.to_slim_dict()
-            files_summary: File analysis of trivial/nontrivial issue
+            files_summary: File analysis of trivial/nontrivial failure
             checksum_summary: File checksum comparison result summary
         Returns:
             None
         """
         unified_diff_id = 1
         unified_diff_dict = {}
-        flagged_issue_count = trivial_issue_count + nontrivial_issue_count
+        flagged_failure_count = (
+            trivial_failure_count + nontrivial_failure_count
+        )
 
         for diff in diffs:
             unified_diff_dict[unified_diff_id] = diff["unified_diff"]
@@ -386,12 +388,13 @@ class DiffCommand:
 
         summary_json = {
             "summary": {
-                "issue_summary": {
-                    "unknown_issues": unknown_issue_count,
-                    "trivial_issues": trivial_issue_count,
-                    "nontrivial_issues": nontrivial_issue_count,
-                    "flagged_issues": flagged_issue_count,
-                    "total_issues": unknown_issue_count + flagged_issue_count,
+                "failure_summary": {
+                    "unknown_failures": unknown_failure_count,
+                    "trivial_failures": trivial_failure_count,
+                    "nontrivial_failures": nontrivial_failure_count,
+                    "flagged_failures": flagged_failure_count,
+                    "total_failures": unknown_failure_count
+                    + flagged_failure_count,
                 },
                 "checksum summary": {
                     "total_image1_file_count": checksum_summary.get(

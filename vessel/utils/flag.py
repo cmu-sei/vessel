@@ -30,7 +30,7 @@ from re import Pattern
 
 
 class Flag:
-    """Class to hold represent a flag for a known issue."""
+    """Class to hold represent a flag for a known failure."""
 
     def __init__(
         self: "Flag",

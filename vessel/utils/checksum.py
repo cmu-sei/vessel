@@ -26,10 +26,13 @@
 """Utility checksum functions."""
 
 import hashlib
+from logging import getLogger
 from pathlib import Path
 from typing import Any
 
 import magic
+
+logger = getLogger(__name__)
 
 
 class FileHash:
@@ -53,14 +56,15 @@ class FileHash:
         self.hash = hash
 
 
-def hash_folder_contents(folder_path: Path) -> list[FileHash]:
+def hash_folder_contents(folder_path: Path) -> dict[str, FileHash]:
     """Calculate hash for each file within a path.
 
     Args:
         folder_path: Path to folder to hash all contents of
 
     Returns:
-        List containing FileHash for each file in folder_path
+        Dict with filepaths as keys and FileHash object values with an
+        entry for each file in folder_path
     """
     file_hashes: list[FileHash] = []
 
@@ -73,14 +77,34 @@ def hash_folder_contents(folder_path: Path) -> list[FileHash]:
         filetype = magic.from_file(str(file_path))
         file_hashes.append(FileHash(str(relative_path), filetype, hash))
 
-    return file_hashes
+    return {str(filehash.path): filehash for filehash in file_hashes}
+
+
+def make_checksum_dict(
+    path1: str,
+    path2: str,
+    path1_hash: str,
+    path2_hash: str,
+    filetype1: str,
+    filetype2: str,
+) -> dict[str, str]:
+    """Return input data as a dict for summary output."""
+    return {
+        "path1": path1,
+        "path2": path2,
+        "path1_sha256": path1_hash,
+        "path2_sha256": path2_hash,
+        "filetype1": filetype1,
+        "filetype2": filetype2,
+    }
 
 
 def summarize_checksums(
+    diff_lookup: dict[tuple[str, str], list[dict[str, Any]]],
     folder_path1: Path,
-    hashed_files1: list[FileHash],
+    hashed_files1: dict[str, FileHash],
     folder_path2: Path,
-    hashed_files2: list[FileHash],
+    hashed_files2: dict[str, FileHash],
 ) -> dict:
     """Compares checkums of all files in two folder paths.
 
@@ -90,9 +114,9 @@ def summarize_checksums(
 
     Args:
         folder_path1: Path to first folder
-        hashed_files1: List containing FileHash for each file in folder_path1
+        hashed_files1: Dict containing FileHash for each file in folder_path1 with filepath as key
         folder_path2: Path to second folder
-        hashed_files2: List containing FileHash for each file in folder_path2
+        hashed_files2: Dict containing FileHash for each file in folder_path2 with filepath as key
 
     Dict summarizing:
         - image1, image2: the two image keys.
@@ -102,36 +126,81 @@ def summarize_checksums(
         - only_in_image1: files only in image1.
         - only_in_image2: files only in image2.
     """
-    files1 = {str(filehash.path): filehash for filehash in hashed_files1}
-    files2 = {str(filehash.path): filehash for filehash in hashed_files2}
-
-    only_in_image1 = sorted(set(files1.keys()) - set(files2.keys()))
-    only_in_image2 = sorted(set(files2.keys()) - set(files1.keys()))
-    common_files = sorted(set(files1.keys()) & set(files2.keys()))
+    only_in_image1 = sorted(
+        set(hashed_files1.keys()) - set(hashed_files2.keys())
+    )
+    only_in_image2 = sorted(
+        set(hashed_files2.keys()) - set(hashed_files1.keys())
+    )
+    common_files = sorted(
+        set(hashed_files1.keys()) & set(hashed_files2.keys())
+    )
 
     checksum_mismatches = []
     checksum_matches = []
-    for f in common_files:
-        if files1[f].hash != files2[f].hash:
+    for path in common_files:
+        if hashed_files1[path].hash != hashed_files2[path].hash:
             checksum_mismatches.append(
-                {
-                    "path": f,
-                    "path1_sha256": files1[f].hash,
-                    "path2_sha256": files2[f].hash,
-                    "filetype1": files1[f].filetype,
-                    "filetype2": files2[f].filetype,
-                }
+                make_checksum_dict(
+                    path,
+                    path,
+                    hashed_files1[path].hash,
+                    hashed_files2[path].hash,
+                    hashed_files1[path].filetype,
+                    hashed_files2[path].filetype,
+                )
             )
         else:
             checksum_matches.append(
-                {
-                    "path": f,
-                    "path1_sha256": files1[f].hash,
-                    "path2_sha256": files2[f].hash,
-                    "filetype1": files1[f].filetype,
-                    "filetype2": files2[f].filetype,
-                }
+                make_checksum_dict(
+                    path,
+                    path,
+                    hashed_files1[path].hash,
+                    hashed_files2[path].hash,
+                    hashed_files1[path].filetype,
+                    hashed_files2[path].filetype,
+                )
             )
+
+    for path1, path2 in diff_lookup:
+        if path1 != path2:
+            if path1 in only_in_image1 and path2 in only_in_image2:
+                only_in_image1 = list(set(only_in_image1) - {path1})
+                only_in_image2 = list(set(only_in_image2) - {path2})
+                common_files.append(
+                    f"{path1} <-> {path2}"
+                )  # append the file pair so the common files don't get inflated
+                common_files = sorted(set(common_files))
+
+            if path1 not in hashed_files1:
+                logger.info(f"{path1} found in diff list, but not in hashes.")
+                continue
+            if path2 not in hashed_files2:
+                logger.info(f"{path2} found in diff list, but not in hashes.")
+                continue
+
+            if hashed_files1[path1].hash != hashed_files2[path2].hash:
+                checksum_mismatches.append(
+                    make_checksum_dict(
+                        path1,
+                        path2,
+                        hashed_files1[path1].hash,
+                        hashed_files2[path2].hash,
+                        hashed_files1[path1].filetype,
+                        hashed_files2[path2].filetype,
+                    )
+                )
+            else:
+                checksum_matches.append(
+                    make_checksum_dict(
+                        path1,
+                        path2,
+                        hashed_files1[path1].hash,
+                        hashed_files2[path2].hash,
+                        hashed_files1[path1].filetype,
+                        hashed_files2[path2].filetype,
+                    )
+                )
 
     return {
         "image1": str(folder_path1),
@@ -147,110 +216,115 @@ def summarize_checksums(
 def classify_checksum_mismatches(
     checksum_summary: dict[str, Any],
     diff_lookup: dict[tuple[str, str], list[dict[str, Any]]],
-    files1: dict[str, Any],
-    files2: dict[str, Any],
+    hashed_files1: dict[str, FileHash],
+    hashed_files2: dict[str, FileHash],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Classify each checksum mismatch as either trivial or nontrivial.
 
     Args:
         checksum_summary: Summary dict from summarize_checksums().
         diff_lookup: Dict mapping file pairs to diff result dicts.
+        hashed_files1: Dict mapping filepaths to FileHash of that file for first folder
+        hashed_files2: Dict mapping filepaths to FileHash of that file for second folder
 
     Returns:
         A tuple (trivial_diffs, nontrivial_diffs):
-            - trivial_diffs: list of dicts for files with only trivial flagged issues.
-            - nontrivial_diffs: list of dicts for files with unknown issues, non-metadata stat{} flagged issues.
+            - trivial_diffs: list of dicts for files with only trivial flagged failures.
+            - nontrivial_diffs: list of dicts for files with unknown failures, non-metadata stat{} flagged failures.
     """
     trivial_diffs = []
     nontrivial_diffs = []
     for entry in checksum_summary.get("checksum_mismatches", []):
-        relative_path = entry["path"]
-        key = (relative_path, relative_path)
+        key = (entry["path1"], entry["path2"])
         entry_diffs = diff_lookup.get(key, [])
-        entry_flagged_issues = []
-        entry_unknown_issues = []
-        stat_has_nonmeta = False
+        entry_flagged_failures = []
+        entry_unknown_failures = []
         for diff in entry_diffs:
-            flagged = diff.get("flagged_issues", [])
-            unknowns = diff.get("unknown_issues", [])
-            entry_flagged_issues.extend(flagged)
-            entry_unknown_issues.extend(unknowns)
-
-            # Only check stat {} flagged issues for non-metadata
-            if diff.get("command", "") == "stat {}":
-                for issue in flagged:
-                    if not issue.get("metadata", False):
-                        stat_has_nonmeta = True
+            flagged = diff.get("flagged_failures", [])
+            unknowns = diff.get("unknown_failures", [])
+            entry_flagged_failures.extend(flagged)
+            entry_unknown_failures.extend(unknowns)
 
         types = []
         seen_types = set()
-        for f in entry_flagged_issues:
+        for f in entry_flagged_failures:
             key2 = f"{f['id']}|{f['description']}"
             if key2 not in seen_types:
                 types.append(key2)
                 seen_types.add(key2)
         filetype1 = (
-            files1[relative_path].filetype if relative_path in files1 else None
+            hashed_files1[entry["path1"]].filetype
+            if entry["path1"] in hashed_files1
+            else None
         )
         filetype2 = (
-            files2[relative_path].filetype if relative_path in files2 else None
+            hashed_files2[entry["path2"]].filetype
+            if entry["path2"] in hashed_files2
+            else None
         )
 
-        all_trivial = True
-        for issue in entry_flagged_issues:
-            if "severity" in issue and issue["severity"] != "Low":
-                all_trivial = False
+        # If there are any unknown failures, classify as nontrivial
+        if entry_unknown_failures:
+            nontrivial_diffs.append(
+                {
+                    "files1": entry["path1"],
+                    "files2": entry["path2"],
+                    "flagged_failure_types": types,
+                    "filetype1": filetype1,
+                    "filetype2": filetype2,
+                }
+            )
 
-        # If there are any unknown issues, classify as nontrivial
-        if entry_unknown_issues:
-            nontrivial_diffs.append(
-                {
-                    "files1": relative_path,
-                    "files2": relative_path,
-                    "flagged_issue_types": types,
-                    "filetype1": filetype1,
-                    "filetype2": filetype2,
-                }
+        # If there are flagged failures (and no unknowns), trivial only if all flagged failures are severity Low and at least one nonmetadata
+        elif entry_flagged_failures:
+            all_trivial = all(
+                failure.get("severity") == "Low"
+                for failure in entry_flagged_failures
             )
-        # If any stat {} flagged issue has metadata == False, nontrivial
-        elif stat_has_nonmeta:
-            nontrivial_diffs.append(
-                {
-                    "files1": relative_path,
-                    "files2": relative_path,
-                    "flagged_issue_types": types,
-                    "filetype1": filetype1,
-                    "filetype2": filetype2,
-                }
+            all_metadata = all(
+                failure.get("metadata", False)
+                for failure in entry_flagged_failures
             )
-        # If there are flagged issues (and no unknowns), trivial only if all flagged issues are severity Low
-        elif entry_flagged_issues:
-            if all_trivial:
-                trivial_diffs.append(
+            # Only trivial, but all are metadata: treat as nontrivial/unknown
+            if all_trivial and all_metadata:
+                nontrivial_diffs.append(
                     {
-                        "files1": relative_path,
-                        "files2": relative_path,
-                        "flagged_issue_types": types,
+                        "files1": entry["path1"],
+                        "files2": entry["path2"],
+                        "flagged_failure_types": types,
                         "filetype1": filetype1,
                         "filetype2": filetype2,
                     }
                 )
+            # Only trivial, and some are not metadata: treat as trivial
+            elif all_trivial:
+                trivial_diffs.append(
+                    {
+                        "files1": entry["path1"],
+                        "files2": entry["path2"],
+                        "flagged_failure_types": types,
+                        "filetype1": filetype1,
+                        "filetype2": filetype2,
+                    }
+                )
+            # Otherwise, it's not all_trivial, append to non trivial
             else:
                 nontrivial_diffs.append(
                     {
-                        "files1": relative_path,
-                        "files2": relative_path,
-                        "flagged_issue_types": types,
+                        "files1": entry["path1"],
+                        "files2": entry["path2"],
+                        "flagged_failure_types": types,
                         "filetype1": filetype1,
                         "filetype2": filetype2,
                     }
                 )
-        # Otherwise, nontrivial by default (For example: no flagged/unknown issues)
+        # Otherwise, no flag and no unknown issue, non trivial
         else:
             nontrivial_diffs.append(
                 {
-                    "files1": relative_path,
-                    "files2": relative_path,
+                    "files1": entry["path1"],
+                    "files2": entry["path2"],
+                    "flagged_failure_types": types,
                     "filetype1": filetype1,
                     "filetype2": filetype2,
                 }
