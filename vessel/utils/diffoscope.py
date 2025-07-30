@@ -371,11 +371,10 @@ def parse_diffoscope_output(
                     files_summary,
                     file_checksum=file_checksum,
                 )
-                unknown_issues_count += child_return[0]
-                trivial_issues_count += child_return[1]
-                nontrivial_issues_count += child_return[2]
+                unknown_failures_count += child_return[0]
+                trivial_failures_count += child_return[1]
+                nontrivial_failures_count += child_return[2]
                 diff_list.extend(child_return[3])
-
 
     checksum_summary = {}
     # Only generate the final summary when it's top-level call (end of recursion)
