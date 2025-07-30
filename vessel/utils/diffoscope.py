@@ -365,7 +365,6 @@ def parse_diffoscope_output(
                 child_return = parse_diffoscope_output(
                     child,
                     flags,
-                    umoci_image_paths,
                     current_detail["source1"],
                     current_detail["source2"],
                     current_detail.get("comments"),
