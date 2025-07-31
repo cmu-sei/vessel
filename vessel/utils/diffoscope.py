@@ -355,11 +355,14 @@ def parse_diffoscope_output(
 
     # Recurvisely navigating through the tree
     if "details" in current_detail:
-        tmpRegex = re.compile(r"/tmp/diffoscope_*")
+        umociRegex = re.compile(r"/umoci-unpack-output_")
+
         for child in current_detail["details"]:
-            # Ignore anything without our full /tmp/diffoscope path that shouldn't be showing in diffs
-            if not tmpRegex.search(child["source1"]) and not tmpRegex.search(
-                child["source2"]
+            # Ignore anything without the full umoci-unpack-putput_ path that shouldn't be showing in diffs
+            if (child["source1"][0] != "/"
+                or child["source2"][0] != "/"
+                or umociRegex.search(child["source1"])
+                or umociRegex.search(child["source2"])
             ):
                 child_return = parse_diffoscope_output(
                     child,
