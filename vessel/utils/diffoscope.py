@@ -358,7 +358,9 @@ def parse_diffoscope_output(
         tmpRegex = re.compile(r"/tmp/diffoscope_*")
         for child in current_detail["details"]:
             # Ignore anything without our full /tmp/diffoscope path that shouldn't be showing in diffs
-            if not tmpRegex.search(child["source1"]) and not tmpRegex.search(child["source2"]):
+            if not tmpRegex.search(child["source1"]) and not tmpRegex.search(
+                child["source2"]
+            ):
                 child_return = parse_diffoscope_output(
                     child,
                     flags,
