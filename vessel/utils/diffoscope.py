@@ -355,20 +355,29 @@ def parse_diffoscope_output(
 
     # Recurvisely navigating through the tree
     if "details" in current_detail:
+        umociRegex = re.compile(r"/umoci-unpack-")
+
         for child in current_detail["details"]:
-            child_return = parse_diffoscope_output(
-                child,
-                flags,
-                current_detail["source1"],
-                current_detail["source2"],
-                current_detail.get("comments"),
-                files_summary,
-                file_checksum=file_checksum,
-            )
-            unknown_failures_count += child_return[0]
-            trivial_failures_count += child_return[1]
-            nontrivial_failures_count += child_return[2]
-            diff_list.extend(child_return[3])
+            # Ignore anything without the umoci-unpack- path that shouldn't be showing in diffs
+            if (
+                child["source1"][0] != "/"
+                or child["source2"][0] != "/"
+                or umociRegex.search(child["source1"])
+                or umociRegex.search(child["source2"])
+            ):
+                child_return = parse_diffoscope_output(
+                    child,
+                    flags,
+                    current_detail["source1"],
+                    current_detail["source2"],
+                    current_detail.get("comments"),
+                    files_summary,
+                    file_checksum=file_checksum,
+                )
+                unknown_failures_count += child_return[0]
+                trivial_failures_count += child_return[1]
+                nontrivial_failures_count += child_return[2]
+                diff_list.extend(child_return[3])
 
     checksum_summary = {}
     # Only generate the final summary when it's top-level call (end of recursion)
