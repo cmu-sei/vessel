@@ -367,7 +367,7 @@ def parse_diffoscope_output(
             nontrivial_failures_count,
             diff_list,
         )
-      
+
     return (
         unknown_failures_count,
         trivial_failures_count,
