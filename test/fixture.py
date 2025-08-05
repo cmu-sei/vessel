@@ -44,13 +44,13 @@ def get_test_flag():
 def get_test_diffoscope_output():
     return {
         "diffoscope-json-version": 1,
-        "source1": "/example_path1/rootfs",
-        "source2": "/example_path2/rootfs",
+        "source1": "/umoci-unpack-example_path1/rootfs",
+        "source2": "/umoci-unpack-example_path2/rootfs",
         "unified_diff": None,
         "details": [
             {
-                "source1": "/example_path1/rootfs/app",
-                "source2": "/example_path2/rootfs/app",
+                "source1": "/umoci-unpack-example_path1/rootfs/app",
+                "source2": "/umoci-unpack-example_path2/rootfs/app",
                 "unified_diff": None,
                 "details": [
                     {
@@ -59,8 +59,8 @@ def get_test_diffoscope_output():
                         "unified_diff": "@@ -1,8 +1,8 @@\n \n   Size: 4096      \tBlocks: 8          IO Block: 4096   directory\n Device: 0,72\tLinks: 3\n Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)\n \n+Modify: 2024-12-03 21:14:59.000000000 +0000\n-Modify: 2024-12-03 20:54:07.000000000 +0000\n \n \n",
                     },
                     {
-                        "source1": "/example_path1/rootfs/app/cmd",
-                        "source2": "/example_path2/rootfs/app/cmd",
+                        "source1": "/umoci-unpack-example_path1/rootfs/app/cmd",
+                        "source2": "/umoci-unpack-example_path2/rootfs/app/cmd",
                         "unified_diff": None,
                         "details": [
                             {
@@ -69,8 +69,8 @@ def get_test_diffoscope_output():
                                 "unified_diff": "@@ -1,8 +1,8 @@\n \n   Size: 4096      \tBlocks: 8          IO Block: 4096   directory\n Device: 0,72\tLinks: 3\n Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)\n \n-Modify: 2024-12-03 20:54:07.000000000 +0000\n+Modify: 2024-12-03 21:14:59.000000000 +0000\n \n \n",
                             },
                             {
-                                "source1": "/example_path1/rootfs/app/cmd/acmesolver",
-                                "source2": "/example_path2/rootfs/app/cmd/acmesolver",
+                                "source1": "/umoci-unpack-example_path1/rootfs/app/cmd/acmesolver",
+                                "source2": "/umoci-unpack-example_path2/rootfs/app/cmd/acmesolver",
                                 "unified_diff": None,
                                 "details": [
                                     {
@@ -100,8 +100,8 @@ def get_test_diffoscope_output():
                 ],
             },
             {
-                "source1": "/example_path1/rootfs/licenses",
-                "source2": "/example_path2/rootfs/licenses",
+                "source1": "/umoci-unpack-example_path1/rootfs/licenses",
+                "source2": "/umoci-unpack-example_path2/rootfs/licenses",
                 "unified_diff": None,
                 "details": [
                     {
