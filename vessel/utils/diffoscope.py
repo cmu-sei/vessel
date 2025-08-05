@@ -355,56 +355,11 @@ def parse_diffoscope_output(
                     current_detail["source1"],
                     current_detail["source2"],
                     current_detail.get("comments"),
-                    files_summary,
-                    file_checksum=file_checksum,
                 )
                 unknown_failures_count += child_return[0]
                 trivial_failures_count += child_return[1]
                 nontrivial_failures_count += child_return[2]
                 diff_list.extend(child_return[3])
-
-    checksum_summary = {}
-    # Only generate the final summary when it's top-level call (end of recursion)
-    if (
-        parent_source1 == ""
-        and parent_source2 == ""
-        and parent_comments is None
-    ):
-        # Path to rootfs of unpacked image, ex: image1/rootfs
-        rootfs_path1 = Path(current_detail["source1"])
-        rootfs_path2 = Path(current_detail["source2"])
-        hashed_files1 = hash_folder_contents(rootfs_path1)
-        hashed_files2 = hash_folder_contents(rootfs_path2)
-        diff_lookup = build_diff_lookup(diff_list)
-        checksum_summary = summarize_checksums(
-            diff_lookup,
-            rootfs_path1,
-            hashed_files1,
-            rootfs_path2,
-            hashed_files2,
-        )
-        trivial_diffs, nontrivial_diffs = classify_checksum_mismatches(
-            checksum_summary, diff_lookup, hashed_files1, hashed_files2
-        )
-        files_summary.append(
-            {
-                "image1": checksum_summary["image1"],
-                "image2": checksum_summary["image2"],
-                "only_in_image1": checksum_summary["only_in_image1"],
-                "only_in_image2": checksum_summary["only_in_image2"],
-                "trivial_checksum_different_files": trivial_diffs,
-                "nontrivial_checksum_different_files": nontrivial_diffs,
-            }
-        )
-        if file_checksum:
-            files_summary.append(
-                {
-                    "checksum_mismatches": checksum_summary[
-                        "checksum_mismatches"
-                    ],
-                    "checksum_matches": checksum_summary["checksum_matches"],
-                }
-            )
 
         return (
             unknown_failures_count,
