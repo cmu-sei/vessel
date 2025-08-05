@@ -7,8 +7,8 @@ FROM python:3.11-bookworm AS release
 # its specific diff plugins.
 RUN apt-get update && \
   apt-get install -y --allow-downgrades --no-install-recommends \
-    python3-dev \
-    build-essential \
+    python3-dev=3.11.2-1+b1 \
+    build-essential=12.9 \
     skopeo=1.9.3+ds1-1+b10 \
     umoci=0.4.7+ds-3+b7 \
     libmagic-dev=1:5.44-3 \
