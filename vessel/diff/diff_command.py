@@ -62,7 +62,6 @@ class DiffCommand:
         compare_level: str,
         data_dir: str,
         output_dir: str,
-        file_checksum: bool,
     ) -> None:
         """Initializer for a diff operation.
 
@@ -73,7 +72,6 @@ class DiffCommand:
         self.compare_level: str = compare_level
         self.data_dir: str = data_dir
         self.output_dir: str = output_dir
-        self.file_checksum: bool = file_checksum
         self.temp_dir: tempfile.TemporaryDirectory[str] | None = None
         self.image_uris: list[ImageURI] = []
         self.unpacked_image_paths: list[str] = []
