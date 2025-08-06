@@ -56,6 +56,8 @@ logger = getLogger(__name__)
 class DiffCommand:
     """Class that setups up and executes a diff operation."""
 
+    CHECKSUM_METADATA_FILENAME = "checksum_metadata.json"
+
     def __init__(
         self: "DiffCommand",
         input_files: list[str],
@@ -101,34 +103,13 @@ class DiffCommand:
             )
             return False
 
-        # When two inputs provided, determine the mode.
-        if self.input_files[0].endswith(".json") and self.input_files[
-            1
-        ].endswith(".json"):
-            # Accept either order; must be one diffoscope and one checksum metadata file
-            if (
-                "checksum_metadata" in self.input_files[0]
-                or "checksum_metadata" in self.input_files[1]
-            ):
-                diffoscope_json_path = (
-                    self.input_files[0]
-                    if "checksum_metadata" not in self.input_files[0]
-                    else self.input_files[1]
-                )
-                checksum_json_path = (
-                    self.input_files[0]
-                    if "checksum_metadata" in self.input_files[0]
-                    else self.input_files[1]
-                )
-                return self.compare_from_diffoscope_and_checksum_json(
-                    diffoscope_json_path, checksum_json_path
-                )
-            else:
-                logger.error(
-                    "When providing two JSON files, one must be a checksum_metadata.json file."
-                )
-                return False
+        # If two inputs are json files, perform json comparison
+        if len(self.input_files) == 2 and all(
+            f.endswith(".json") for f in self.input_files
+        ):
+            return self.compare_diffoscope_and_checksum_json()
 
+        # Proceed with image comparison
         logger.info("Images to be compared:")
         logger.info("- %s", self.input_files[0])
         logger.info("- %s", self.input_files[1])
@@ -253,33 +234,8 @@ class DiffCommand:
 
         rootfs_path1 = Path(self.unpacked_image_paths[0])
         rootfs_path2 = Path(self.unpacked_image_paths[1])
-        hashed_files1 = hash_folder_contents(rootfs_path1)
-        hashed_files2 = hash_folder_contents(rootfs_path2)
-
-        metadata_path = str(Path(self.output_dir) / "checksum_metadata.json")
-
-        save_checksum_metadata(
-            metadata_path,
-            hashed_files1,
-            hashed_files2,
-            image1_path=str(rootfs_path1),
-            image2_path=str(rootfs_path2),
-        )
-
-        files_summary, checksum_summary = generate_filesummary_and_checksum(
-            diff_list,
-            hashed_files1=hashed_files1,
-            hashed_files2=hashed_files2,
-            image1_path=str(rootfs_path1),
-            image2_path=str(rootfs_path2),
-        )
-        self.write_to_files(
-            unknown,
-            trivial,
-            nontrivial,
-            diff_list,
-            files_summary,
-            checksum_summary,
+        self.process_and_save_results(
+            rootfs_path1, rootfs_path2, diff_list, unknown, trivial, nontrivial
         )
 
         return True
@@ -345,31 +301,8 @@ class DiffCommand:
 
         rootfs_path1 = Path(f"{self.umoci_image_paths[0]}/rootfs")
         rootfs_path2 = Path(f"{self.umoci_image_paths[1]}/rootfs")
-        hashed_files1 = hash_folder_contents(rootfs_path1)
-        hashed_files2 = hash_folder_contents(rootfs_path2)
-        metadata_path = str(Path(self.output_dir) / "checksum_metadata.json")
-        save_checksum_metadata(
-            metadata_path,
-            hashed_files1,
-            hashed_files2,
-            image1_path=str(rootfs_path1),
-            image2_path=str(rootfs_path2),
-        )
-
-        files_summary, checksum_summary = generate_filesummary_and_checksum(
-            diff_list,
-            hashed_files1=hashed_files1,
-            hashed_files2=hashed_files2,
-            image1_path=str(rootfs_path1),
-            image2_path=str(rootfs_path2),
-        )
-        self.write_to_files(
-            unknown,
-            trivial,
-            nontrivial,
-            diff_list,
-            files_summary,
-            checksum_summary,
+        self.process_and_save_results(
+            rootfs_path1, rootfs_path2, diff_list, unknown, trivial, nontrivial
         )
 
         return True
@@ -419,7 +352,7 @@ class DiffCommand:
             files_summary,
             checksum_summary,
         )
-
+        logger.info("Finished json comparison")
         return True
 
     def write_to_files(
@@ -519,3 +452,89 @@ class DiffCommand:
             "w",
         ) as outfile:
             outfile.write(json.dumps(unified_diff_dict, indent=4))
+
+    def compare_diffoscope_and_checksum_json(self):
+        """If two JSON files are provided, and one is named checksum_metadata.json,
+        run the comparison and return the result. Otherwise, log an error and return False.
+        """
+        path1, path2 = self.input_files[0], self.input_files[1]
+        file1, file2 = Path(path1).name, Path(path2).name
+
+        if (
+            file1 != self.CHECKSUM_METADATA_FILENAME
+            and file2 != self.CHECKSUM_METADATA_FILENAME
+        ):
+            logger.error(
+                "When providing two JSON files, one must be a checksum_metadata.json file."
+            )
+            return False
+
+        checksum_json_path = (
+            path1 if file1 == self.CHECKSUM_METADATA_FILENAME else path2
+        )
+        diffoscope_json_path = (
+            path2 if file1 == self.CHECKSUM_METADATA_FILENAME else path1
+        )
+        logger.info("Performing json comparison")
+        return self.compare_from_diffoscope_and_checksum_json(
+            diffoscope_json_path, checksum_json_path
+        )
+
+    def process_and_save_results(
+        self,
+        rootfs_path1: Path,
+        rootfs_path2: Path,
+        diff_list,
+        unknown,
+        trivial,
+        nontrivial,
+    ):
+        """
+        Processes image diff results, generates and saves checksum metadata and summaries,
+        and writes final output files.
+
+        Steps for processing diffoscope output:
+        - Hash the contents of each root filesystem
+        - Save a checksum metadata file with hash results for both images
+        - Generate summary for file and checksum differences
+        - Write summary output to files
+
+        Args:
+            rootfs_path1 (Path): Path to the first image's unpacked root filesystem
+            rootfs_path2 (Path): Path to the second image's unpacked root filesystem
+            diff_list: List of detailed differences returned by diffoscope
+            unknown: Count of unknown differences (from diffoscope parsing)
+            trivial: Count of trivial differences (from diffoscope parsing)
+            nontrivial: Count of nontrivial differences (from diffoscope parsing)
+        """
+        hashed_files1 = hash_folder_contents(rootfs_path1)
+        hashed_files2 = hash_folder_contents(rootfs_path2)
+
+        metadata_path = str(
+            Path(self.output_dir) / self.CHECKSUM_METADATA_FILENAME
+        )
+
+        save_checksum_metadata(
+            metadata_path,
+            hashed_files1,
+            hashed_files2,
+            image1_path=str(rootfs_path1),
+            image2_path=str(rootfs_path2),
+        )
+
+        files_summary, checksum_summary = generate_filesummary_and_checksum(
+            diff_list,
+            hashed_files1=hashed_files1,
+            hashed_files2=hashed_files2,
+            image1_path=str(rootfs_path1),
+            image2_path=str(rootfs_path2),
+        )
+
+        self.write_to_files(
+            unknown,
+            trivial,
+            nontrivial,
+            diff_list,
+            files_summary,
+            checksum_summary,
+        )
