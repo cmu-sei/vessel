@@ -1,0 +1,250 @@
+# yaml-language-server: $schema=../../.schema/model.yaml
+- Code: EXT001
+  Name: add-without-checksum
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: true
+  Repair_Support: false
+- Code: EXT002
+  Name: curl-wget-remote
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: true
+  Repair_Support: false
+- Code: EXT003
+  Name: git-clone
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: true
+  Repair_Support: false
+- Code: VER001
+  Name: dockerfile-from-tag
+  Severity: low
+  Message: "Dockerfile FROM should always use the @sha256 digest of an image explicitly."
+  Diff_Support: false
+  Lint_Support: true
+  Repair_Support: true
+  Hadolint_Severity: warning
+  Hadolint_Rule: DL3006
+- Code: VER003
+  Name: apt-install-version-pinning
+  Severity: low
+  Message: "apt-get install should pin the package version"
+  Diff_Support: false
+  Lint_Support: true
+  Repair_Support: false
+  Hadolint_Severity: warning
+  Hadolint_Rule: DL3008
+- Code: VER004
+  Name: dnf-install-version-pinning
+  Severity: low
+  Message: "dnf install should pin the package version"
+  Diff_Support: false
+  Lint_Support: true
+  Repair_Support: false
+  Hadolint_Severity: warning
+  Hadolint_Rule: DL3041
+- Code: VER005
+  Name: pip-install-version-pinning
+  Severity: low
+  Message: "pin versions in pip"
+  Diff_Support: false
+  Lint_Support: true
+  Repair_Support: false
+  Hadolint_Severity: warning
+  Hadolint_Rule: DL3013
+- Code: VER006
+  Name: npm-install-version-pinning
+  Severity: low
+  Message: "pin versions in npm"
+  Diff_Support: false
+  Lint_Support: true
+  Repair_Support: false
+  Hadolint_Severity: warning
+  Hadolint_Rule: DL3016
+- Code: VER007
+  Name: apk-add-version-pinning
+  Severity: low
+  Message: "apk add should pin package version"
+  Diff_Support: false
+  Lint_Support: true
+  Repair_Support: false
+  Hadolint_Severity: warning
+  Hadolint_Rule: DL3018
+- Code: VER008
+  Name: gem-install-version-pinning
+  Severity: low
+  Message: "pin version in gem install"
+  Diff_Support: false
+  Lint_Support: true
+  Repair_Support: false
+  Hadolint_Severity: warning
+  Hadolint_Rule: DL3028
+- Code: VER009
+  Name: yum-install-version-pinning
+  Severity: low
+  Message: "yum install should pin the package version"
+  Diff_Support: false
+  Lint_Support: true
+  Repair_Support: false
+  Hadolint_Severity: warning
+  Hadolint_Rule: DL3033
+- Code: VER010
+  Name: zypper-install-version-pinning
+  Severity: low
+  Message: "pin versions in zypper"
+  Diff_Support: false
+  Lint_Support: true
+  Repair_Support: false
+  Hadolint_Severity: warning
+  Hadolint_Rule: DL3037
+- Code: TIME001
+  Name: Utilizing output of date command to files
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME002
+  Name: Container build without pinning date/time
+  Severity: low
+  Message: "e.g. SOURCE_DATE_EPOCH"
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME003
+  Name: Java builds include current date/time
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME004
+  Name: Git clone time difference
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME005
+  Name: Files in zip file have different timestamp
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME006
+  Name: Time difference for npm update check
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME007
+  Name: File listing time difference
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME008
+  Name: Logging time difference
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME009
+  Name: Date and time difference for Go builds
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME010
+  Name: Date and time difference for Go binary output
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME011
+  Name: Modified time in git index file
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME012
+  Name: Modified file time
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME013
+  Name: Created time in git index file
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME014
+  Name: Keybox created time diff
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME015
+  Name: Keybox last maintained time diff
+  Severity: low
+  Message: ""
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME016
+  Name: pyc-moddate
+  Severity: low
+  Message: "Python bytecode moddate differences"
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME017
+  Name: ""
+  Severity: low
+  Message: "Python last check time difference"
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME018
+  Name: ""
+  Severity: low
+  Message: "Time difference in unpacked db"
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME019
+  Name: ""
+  Severity: low
+  Message: "Timer setup time difference"
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME020
+  Name: gcloud-last-update-check
+  Severity: low
+  Message: "gcloud last_update_check.json timestamp"
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false
+- Code: TIME021
+  Name: gcloud-last-survey-prompt
+  Severity: low
+  Message: "gcloud last_survey_prompt.yaml timestamp"
+  Diff_Support: false
+  Lint_Support: false
+  Repair_Support: false

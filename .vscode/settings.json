@@ -1,3 +1,6 @@
 {
-    "python.analysis.typeCheckingMode": "basic"
+    "python.analysis.typeCheckingMode": "basic",
+    "yaml.schemas": {
+        "file://${workspaceFolder}/.schema/model.yaml": "file://${workspaceFolder}/docs/reproducibility_model/v2.yaml"
+    }
 }
