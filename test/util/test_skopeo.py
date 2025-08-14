@@ -26,7 +26,7 @@
 
 from pathlib import Path
 
-from vessel.utils.skopeo import skopeo_copy
+from vessel.utils import skopeo
 from vessel.utils.uri import ImageURI
 
 
@@ -37,6 +37,19 @@ def test_skopeo_copy(tmp_path: Path):
     test_image_name = "hello-world:latest"
     test_image_uri = ImageURI(f"docker://{test_image_name}")
 
-    dest_path = skopeo_copy(test_image_uri, str(tmp_path))
+    dest_path = skopeo.skopeo_copy(test_image_uri, str(tmp_path))
 
     assert dest_path == f"{tmp_path}/{test_image_name.replace(':', '.')}"
+
+
+def test_skopeo_config():
+    """Tests that skopeo can load the config from an image."""
+
+    # Sample image in Docker hub
+    test_image_name = "hello-world:latest"
+    test_image_uri = ImageURI(f"docker://{test_image_name}")
+
+    config = skopeo.skopeo_get_config(test_image_uri)
+
+    # Check if it looks like a config struct, with at least the fields required by the OCI spec.
+    assert all(key in config for key in ["architecture", "os", "rootfs"])

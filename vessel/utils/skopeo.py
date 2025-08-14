@@ -25,9 +25,11 @@
 
 """Utility skopeo funcitons."""
 
+import json
 import subprocess
 import sys
 from logging import getLogger
+from typing import Any
 
 from vessel.utils.uri import ImageURI
 
@@ -49,17 +51,54 @@ def skopeo_copy(image_uri: ImageURI, output_path: str) -> str:
     """
     dest_path = f"{output_path}/{image_uri.output_identifier}"
 
+    run_skopeo(
+        "copy",
+        args=[
+            image_uri.container_transport,
+            f"oci:{dest_path}:{image_uri.tag}",
+        ],
+    )
+
+    return dest_path
+
+
+def skopeo_get_config(image_uri: ImageURI) -> dict[str, Any]:
+    """Uses skopeo to get the config file of an OCI image.
+
+    Args:
+        image_uri: Path of the image
+
+    Returns:
+        A dictionary with the config.
+    """
+
+    # Run skopeo inspect to get the config.
+    result = run_skopeo("inspect", args=["--config", f"{image_uri}"])
+
+    # Load as a dict and return.
+    return json.loads(result.stdout)
+
+
+def run_skopeo(
+    command: str, args: list[str]
+) -> subprocess.CompletedProcess[str]:
+    """Executes the given Skopeo command.
+
+    Args:
+        command: The skopeo command to run.
+        args: Arguments for skopeo.
+
+    Returns:
+        The results of the command execution.
+    """
+    skopeo_runtime = "/usr/bin/skopeo"
     try:
-        subprocess.run(
-            [
-                "/usr/bin/skopeo",
-                "copy",
-                image_uri.container_transport,
-                f"oci:{dest_path}:{image_uri.tag}",
-            ],
-            check=True,
+        command_list = [skopeo_runtime, command]
+        for arg in args:
+            command_list.append(f"{arg}")
+
+        return subprocess.run(
+            command_list, capture_output=True, text=True, check=True
         )
     except subprocess.CalledProcessError:
         sys.exit(1)
-
-    return dest_path

@@ -40,6 +40,10 @@ class ImageURI:
         )
         self.output_identifier = f"{self.image_name}.{self.tag}"
 
+    def __str__(self) -> str:
+        """String representation."""
+        return self.container_transport
+
 
 def parse_container_transport(container_transport: str) -> tuple[str, str]:
     """Parse skopeo path to return image name and tag.

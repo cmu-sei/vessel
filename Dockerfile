@@ -61,6 +61,7 @@ RUN apt-get update && \
     python3-guestfs=1:1.48.6-2  \
     ca-certificates=20230311 \
     pipx=1.1.0-1 \
+    libpython3-dev=3.11.2-1+b1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
