@@ -100,5 +100,6 @@ def run_skopeo(
         return subprocess.run(
             command_list, capture_output=True, text=True, check=True
         )
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e} - stderr: {e.stderr}")
         sys.exit(1)

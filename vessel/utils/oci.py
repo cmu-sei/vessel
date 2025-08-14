@@ -27,6 +27,10 @@
 
 import json
 from pathlib import Path
+from typing import Any
+
+from vessel.utils import skopeo
+from vessel.utils.uri import ImageURI
 
 
 def get_manifest_digest(unpacked_path: str) -> str:
@@ -47,3 +51,15 @@ def get_manifest_digest(unpacked_path: str) -> str:
     # TODO: If there are ever multiple manifests, ensure this selects the
     # correct one
     return index_json["manifests"][0]["digest"][7:]
+
+
+def get_config(unpacked_path: str) -> dict[str, Any]:
+    """Returns a dict with the config info for an OCI folder.
+
+    Args:
+        unpacked_path: The path to the unpacked OCI image.
+
+    Returns:
+        Dict with config fields.
+    """
+    return skopeo.skopeo_get_config(ImageURI(f"oci:{unpacked_path}"))

@@ -28,7 +28,8 @@
 import json
 from pathlib import Path
 
-from vessel.utils.oci import get_manifest_digest
+from vessel.utils import oci, skopeo
+from vessel.utils.uri import ImageURI
 
 
 def create_test_manifest(manifest_path: Path, hash: str):
@@ -48,6 +49,19 @@ def test_get_manifest_digest(tmp_path: Path):
     manifest_path = tmp_path / manifest_file
     create_test_manifest(manifest_path, test_hash)
 
-    digest = get_manifest_digest(str(tmp_path))
+    digest = oci.get_manifest_digest(str(tmp_path))
 
     assert digest == test_hash
+
+
+def test_get_config(tmp_path: Path):
+    """Tests that a config from an OCI image can be properly loaded."""
+
+    # Get a valid config from an existing image.
+    test_image_name = "hello-world:latest"
+    test_image_uri = ImageURI(f"docker://{test_image_name}")
+    output_path = skopeo.skopeo_copy(test_image_uri, str(tmp_path))
+
+    config = oci.get_config(output_path)
+
+    assert "architecture" in config
