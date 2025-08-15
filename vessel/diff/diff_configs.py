@@ -74,6 +74,11 @@ def compare_configs(
                 CONFIG_KEY,
             )
         )
+    # If the config field is not on one of the two sides, then mark that directly.
+    elif CONFIG_KEY in config1 and CONFIG_KEY not in config2:
+        diffs.append(ConfigDiff(CONFIG_KEY, None, config1[CONFIG_KEY], None))
+    elif CONFIG_KEY in config2 and CONFIG_KEY not in config1:
+        diffs.append(ConfigDiff(CONFIG_KEY, None, None, config2[CONFIG_KEY]))
 
     return diffs
 
