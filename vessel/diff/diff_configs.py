@@ -64,10 +64,10 @@ def compare_configs(
     config2 = oci.get_config(unpacked_image_path2)
 
     # First check first-level critical configs, then inside the config field.
-    diffs = compare_dict(config1, config2, [ARCH_KEY, OS_KEY])
+    diffs = _compare_dict(config1, config2, [ARCH_KEY, OS_KEY])
     if CONFIG_KEY in config1 and CONFIG_KEY in config2:
         diffs.extend(
-            compare_dict(
+            _compare_dict(
                 config1[CONFIG_KEY],
                 config2[CONFIG_KEY],
                 CONFIG_SUBKEYS,
@@ -78,7 +78,7 @@ def compare_configs(
     return diffs
 
 
-def compare_dict(
+def _compare_dict(
     dict1: dict[str, Any],
     dict2: dict[str, Any],
     keys: list[str],
