@@ -127,7 +127,7 @@ def parse_diffoscope_output(
     files_summary: Optional[list[dict[str, Any]]] = None,
     file_checksum: bool = False,
 ) -> tuple[
-    int, int, int, list[dict[Any, Any]], list[dict[str, Any]], dict[Any, Any]
+    int, int, int, list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]
 ]:
     """Recursively parses diffoscope json output.
 
@@ -154,13 +154,14 @@ def parse_diffoscope_output(
                        should be included in the summary.json
 
     Returns:
-        Count of unknown failures, count of flagged failures, diff list,
-        and overall file analysis summary and checksum comparison summary.
+        Count of unknown failures, count of flagged trivial failures,
+        count of flagged non-trivial failures, diff list,
+        overall file analysis summary and checksum comparison summary.
     """
     trivial_failures_count = 0
     nontrivial_failures_count = 0
     unknown_failures_count = 0
-    diff_list = []
+    diff_list: list[dict[str, Any]] = []
 
     if files_summary is None:
         files_summary = []
@@ -379,7 +380,7 @@ def parse_diffoscope_output(
                 nontrivial_failures_count += child_return[2]
                 diff_list.extend(child_return[3])
 
-    checksum_summary = {}
+    checksum_summary: dict[str, Any] = {}
     # Only generate the final summary when it's top-level call (end of recursion)
     if (
         parent_source1 == ""

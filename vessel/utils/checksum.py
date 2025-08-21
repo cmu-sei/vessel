@@ -105,7 +105,7 @@ def summarize_checksums(
     hashed_files1: dict[str, FileHash],
     folder_path2: Path,
     hashed_files2: dict[str, FileHash],
-) -> dict:
+) -> dict[str, Any]:
     """Compares checkums of all files in two folder paths.
 
     Compares checksums of all files in two folder paths. Returns summary of the comparison

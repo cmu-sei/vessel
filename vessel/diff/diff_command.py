@@ -354,9 +354,9 @@ class DiffCommand:
         unknown_failure_count: int,
         trivial_failure_count: int,
         nontrivial_failure_count: int,
-        diffs: list,
+        diffs: list[dict[str, Any]],
         files_summary: list[dict[str, Any]],
-        checksum_summary: dict[Any, Any],
+        checksum_summary: dict[str, Any],
     ) -> None:
         """Writes all diff output to files.
 
@@ -366,7 +366,8 @@ class DiffCommand:
 
         Args:
             unknown_failure_count: Count of unknown failures
-            flagged_failure_count: Count of flagged failures
+            trivial_failure_count: Count of trivial flagged failures
+            nontrivial_failure_count: Count of non-trivial flagged failures
             diffs: List of diffs, each being a dict item returned
                     from Diff.to_slim_dict()
             files_summary: File analysis of trivial/nontrivial failure
