@@ -64,14 +64,17 @@ To see commands and options:
 * `docker run --rm vessel diff --help`
 
 Example running on two OCI tars:
-* `docker run --rm -v INPUTDIR:/input -v OUTPUTDIR:/output vessel diff oci-archive:/input/image1.tar oci-archive:/input/image2.tar -o /output`
+* `docker run --rm -v <INPUTDIR>:/opt/project/input -v <OUTPUTDIR>:/opt/project/output vessel diff -o ./output oci-archive:/input/image1.tar oci-archive:/input/image2.tar -o /output`
 
 Example running on two images from Docker Hub:
-* `docker run --rm -v $PWD/output:/output vessel diff docker://alpine:3.20.2 docker://alpine:3.20.2`
+* `docker run --rm -v $PWD/output:/opt/project/output vessel diff -o ./output docker://alpine:3.20.2 docker://alpine:3.20.2`
+
+Example running on two images from Docker Hub using the default output folder with sample script:
+* `bash docker_vessel_diff.sh docker://alpine:3.20.1 docker://alpine:3.20.2`
 
 Example running on two images from a private Docker registry:
 * `docker login [registry]`
-* `docker run --rm -v $HOME/.docker/config.json:/root/.docker/config.json -v $PWD/output:/output vessel diff docker://[registry]/alpine docker://[registry]/alpine`
+* `docker run --rm -v $HOME/.docker/config.json:/root/.docker/config.json -v $PWD/output:/opt/project/output vessel diff -o ./output docker://[registry]/alpine docker://[registry]/alpine`
 
 ## Development
 
