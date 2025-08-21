@@ -35,7 +35,10 @@ from typing import Any
 
 import yaml
 
+from vessel.diff import diff_configs
+from vessel.diff.diff_configs import ConfigDiff
 from vessel.utils.checksum import (
+    FileHash,
     generate_filesummary_and_checksum,
     hash_folder_contents,
     load_checksum_metadata,
@@ -124,7 +127,7 @@ class DiffCommand:
             self.unpacked_image_paths[0],
         ) == get_manifest_digest(self.unpacked_image_paths[1]):
             logger.info("All layers are identical")
-            self.write_to_files(0, 0, 0, [], [], {})
+            self.write_to_files(0, 0, 0, [], [], [], {})
             return True
 
         if self.compare_level == "file":
@@ -234,8 +237,18 @@ class DiffCommand:
 
         rootfs_path1 = Path(self.unpacked_image_paths[0])
         rootfs_path2 = Path(self.unpacked_image_paths[1])
+
+        # Compare image's config files.
+        config_diffs = diff_configs.compare_configs(rootfs_path1, rootfs_path2)
+
         self.process_and_save_results(
-            rootfs_path1, rootfs_path2, diff_list, unknown, trivial, nontrivial
+            rootfs_path1,
+            rootfs_path2,
+            unknown,
+            trivial,
+            nontrivial,
+            diff_list,
+            config_diffs,
         )
 
         return True
@@ -301,8 +314,18 @@ class DiffCommand:
 
         rootfs_path1 = Path(f"{self.umoci_image_paths[0]}/rootfs")
         rootfs_path2 = Path(f"{self.umoci_image_paths[1]}/rootfs")
+
+        # Compare image's config files.
+        config_diffs = diff_configs.compare_configs(rootfs_path1, rootfs_path2)
+
         self.process_and_save_results(
-            rootfs_path1, rootfs_path2, diff_list, unknown, trivial, nontrivial
+            rootfs_path1,
+            rootfs_path2,
+            unknown,
+            trivial,
+            nontrivial,
+            diff_list,
+            config_diffs,
         )
 
         return True
@@ -337,21 +360,19 @@ class DiffCommand:
             load_checksum_metadata(checksum_json_path)
         )
 
-        files_summary, checksum_summary = generate_filesummary_and_checksum(
-            diff_list,
-            hashed_files1=hashed_files1,
-            hashed_files2=hashed_files2,
-            image1_path=image1_path,
-            image2_path=image2_path,
-        )
-        self.write_to_files(
+        config_diffs: list[ConfigDiff] = []
+        self.generate_and_save_summary(
+            hashed_files1,
+            hashed_files2,
+            image1_path,
+            image2_path,
             unknown,
             trivial,
             nontrivial,
             diff_list,
-            files_summary,
-            checksum_summary,
+            config_diffs,
         )
+
         logger.info("Finished json comparison")
         return True
 
@@ -361,6 +382,7 @@ class DiffCommand:
         trivial_failure_count: int,
         nontrivial_failure_count: int,
         diffs: list[dict[str, Any]],
+        config_diffs: list[ConfigDiff],
         files_summary: list[dict[str, Any]],
         checksum_summary: dict[str, Any],
     ) -> None:
@@ -376,6 +398,7 @@ class DiffCommand:
             nontrivial_failure_count: Count of non-trivial flagged failures
             diffs: List of diffs, each being a dict item returned
                     from Diff.to_slim_dict()
+            config_diffs: List of diffs between image config files.
             files_summary: File analysis of trivial/nontrivial failure
             checksum_summary: File checksum comparison result summary
         Returns:
@@ -485,10 +508,11 @@ class DiffCommand:
         self,
         rootfs_path1: Path,
         rootfs_path2: Path,
-        diff_list,
-        unknown,
-        trivial,
-        nontrivial,
+        unknown: int,
+        trivial: int,
+        nontrivial: int,
+        diff_list: list[dict[str, Any]],
+        config_diffs: list[ConfigDiff],
     ):
         """
         Processes image diff results, generates and saves checksum metadata and summaries,
@@ -503,13 +527,16 @@ class DiffCommand:
         Args:
             rootfs_path1 (Path): Path to the first image's unpacked root filesystem
             rootfs_path2 (Path): Path to the second image's unpacked root filesystem
-            diff_list: List of detailed differences returned by diffoscope
             unknown: Count of unknown differences (from diffoscope parsing)
             trivial: Count of trivial differences (from diffoscope parsing)
             nontrivial: Count of nontrivial differences (from diffoscope parsing)
+            diff_list: List of detailed differences returned by diffoscope
+            config_diffs: List of differences between image config files.
         """
         hashed_files1 = hash_folder_contents(rootfs_path1)
         hashed_files2 = hash_folder_contents(rootfs_path2)
+        image1_path = str(rootfs_path1)
+        image2_path = str(rootfs_path2)
 
         metadata_path = str(
             Path(self.output_dir) / self.CHECKSUM_METADATA_FILENAME
@@ -519,16 +546,42 @@ class DiffCommand:
             metadata_path,
             hashed_files1,
             hashed_files2,
-            image1_path=str(rootfs_path1),
-            image2_path=str(rootfs_path2),
+            image1_path=image1_path,
+            image2_path=image2_path,
         )
+
+        self.generate_and_save_summary(
+            hashed_files1,
+            hashed_files2,
+            image1_path,
+            image2_path,
+            unknown,
+            trivial,
+            nontrivial,
+            diff_list,
+            config_diffs,
+        )
+
+    def generate_and_save_summary(
+        self,
+        hashed_files1: dict[str, FileHash],
+        hashed_files2: dict[str, FileHash],
+        image1_path: str,
+        image2_path: str,
+        unknown: int,
+        trivial: int,
+        nontrivial: int,
+        diff_list: list[dict[str, Any]],
+        config_diffs: list[ConfigDiff],
+    ):
+        """Generates remaining data and creates summary file."""
 
         files_summary, checksum_summary = generate_filesummary_and_checksum(
             diff_list,
             hashed_files1=hashed_files1,
             hashed_files2=hashed_files2,
-            image1_path=str(rootfs_path1),
-            image2_path=str(rootfs_path2),
+            image1_path=image1_path,
+            image2_path=image2_path,
         )
 
         self.write_to_files(
@@ -536,6 +589,7 @@ class DiffCommand:
             trivial,
             nontrivial,
             diff_list,
+            config_diffs,
             files_summary,
             checksum_summary,
         )
