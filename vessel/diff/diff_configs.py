@@ -32,7 +32,7 @@ from vessel.utils import oci
 
 # Critical keys to be compared.
 ARCH_KEY = "architecture"
-OS_KEY = "OS"
+OS_KEY = "os"
 CONFIG_KEY = "config"
 CONFIG_SUBKEYS = [
     "User",
@@ -65,6 +65,8 @@ def compare_configs(
 
     # First check first-level critical configs, then inside the config field.
     diffs = _compare_dict(config1, config2, [ARCH_KEY, OS_KEY])
+
+    # Now check inside the config field, or mark if either file does not have that field.
     if CONFIG_KEY in config1 and CONFIG_KEY in config2:
         diffs.extend(
             _compare_dict(
@@ -74,7 +76,6 @@ def compare_configs(
                 CONFIG_KEY,
             )
         )
-    # If the config field is not on one of the two sides, then mark that directly.
     elif CONFIG_KEY in config1 and CONFIG_KEY not in config2:
         diffs.append(ConfigDiff(CONFIG_KEY, None, config1[CONFIG_KEY], None))
     elif CONFIG_KEY in config2 and CONFIG_KEY not in config1:
