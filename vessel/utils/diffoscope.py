@@ -119,7 +119,7 @@ def parse_diffoscope_output(
     parent_source1: str = "",
     parent_source2: str = "",
     parent_comments: list[str] | None = None,
-) -> tuple[int, int, int, list[dict[Any, Any]]]:
+) -> tuple[int, int, int, list[dict[str, Any]]]:
     """Recursively parses diffoscope json output
 
     Recursively navigates through entirety of diffoscope json output
@@ -141,8 +141,8 @@ def parse_diffoscope_output(
                         as sometimes the comments that relate to a child are in
                         the parent detail
     Returns:
-        Count of unknown failures, count of flagged failures, diff list,
-        and overall file analysis summary
+        Count of unknown failures, count of trivial failures,
+        count of non-trivial failures, and diff list
     """
     trivial_failures_count = 0
     nontrivial_failures_count = 0
