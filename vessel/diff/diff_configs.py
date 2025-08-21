@@ -26,6 +26,7 @@
 """Compares two OCI config files for critical changes."""
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Optional
 
 from vessel.utils import oci
@@ -54,14 +55,25 @@ class ConfigDiff:
     value1: Optional[Any]
     value2: Optional[Any]
 
+    def to_dict(self) -> dict[str, Any]:
+        """Returns diff object as a dict."""
+        dict_obj: dict[str, Any] = {
+            "config_key": self.key
+            if not self.parent_key
+            else f"{self.parent_key}/{self.key}",
+            "value1": self.value1,
+            "value2": self.value1,
+        }
+        return dict_obj
+
 
 def compare_configs(
-    unpacked_image_path1: str, unpacked_image_path2: str
+    unpacked_image_path1: Path, unpacked_image_path2: Path
 ) -> list[ConfigDiff]:
     """Compares two OCI config files, specifically for required/important fields."""
 
-    config1 = oci.get_config(unpacked_image_path1)
-    config2 = oci.get_config(unpacked_image_path2)
+    config1 = oci.get_config(str(unpacked_image_path1))
+    config2 = oci.get_config(str(unpacked_image_path2))
 
     # First check first-level critical configs, then inside the config field.
     diffs = _compare_dict(config1, config2, [ARCH_KEY, OS_KEY])
