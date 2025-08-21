@@ -26,11 +26,14 @@
 """Utility checksum functions."""
 
 import hashlib
+import json
 from logging import getLogger
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import magic
+
+from vessel.utils.diffoscope import build_diff_lookup
 
 logger = getLogger(__name__)
 
@@ -54,6 +57,29 @@ class FileHash:
         self.path = path
         self.filetype = filetype
         self.hash = hash
+
+    def to_dict(self) -> dict[str, str]:
+        """Serialize FileHash to dict"""
+        return {
+            "filetype": self.filetype,
+            "hash": self.hash,
+        }
+
+    @staticmethod
+    def from_dict(path: str, dictionary: dict[str, str]) -> "FileHash":
+        """
+        Deserialize a FileHash object from a dictionary.
+
+        Args:
+            path (str): The path of the file (used as the key in the metadata dict).
+            dictionary (dict): Dictionary with keys 'filetype' and 'hash'.
+
+        Returns:
+            FileHash: New FileHash object created from the dictionary.
+        """
+        return FileHash(
+            path=path, filetype=dictionary["filetype"], hash=dictionary["hash"]
+        )
 
 
 def hash_folder_contents(folder_path: Path) -> dict[str, FileHash]:
@@ -97,6 +123,33 @@ def make_checksum_dict(
         "filetype1": filetype1,
         "filetype2": filetype2,
     }
+
+
+def save_checksum_metadata(
+    path, hashed_files1, hashed_files2, image1_path=None, image2_path=None
+):
+    data = {
+        "image1_path": str(image1_path) if image1_path is not None else "",
+        "image2_path": str(image2_path) if image2_path is not None else "",
+        "hashed_files1": {k: v.to_dict() for k, v in hashed_files1.items()},
+        "hashed_files2": {k: v.to_dict() for k, v in hashed_files2.items()},
+    }
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+
+
+def load_checksum_metadata(path):
+    with open(path, "r") as f:
+        data = json.load(f)
+    hashed_files1 = {
+        k: FileHash.from_dict(k, v) for k, v in data["hashed_files1"].items()
+    }
+    hashed_files2 = {
+        k: FileHash.from_dict(k, v) for k, v in data["hashed_files2"].items()
+    }
+    image1 = data.get("image1_path", "")
+    image2 = data.get("image2_path", "")
+    return hashed_files1, hashed_files2, image1, image2
 
 
 def summarize_checksums(
@@ -331,3 +384,91 @@ def classify_checksum_mismatches(
             )
 
     return trivial_diffs, nontrivial_diffs
+
+
+def generate_filesummary_and_checksum(
+    diff_list: list[dict],
+    rootfs_path1: Optional[Path] = None,
+    rootfs_path2: Optional[Path] = None,
+    hashed_files1: Optional[dict[str, "FileHash"]] = None,
+    hashed_files2: Optional[dict[str, "FileHash"]] = None,
+    image1_path: Optional[str] = None,
+    image2_path: Optional[str] = None,
+) -> tuple[list[dict], dict]:
+    """Generate file summary and checksum summary
+
+    Build diff_lookup table from the diff results and compute
+    checksums and file differences between two image rootfs directories or
+    two precomputed hashed_files dictionaries
+
+    Args:
+        diff_list: diffs from parsed diffoscope output.
+        rootfs_path1: (Optional) Path to first image rootfs.
+        rootfs_path2: (Optional) Path to second image rootfs.
+        hashed_files1: (Optional) Precomputed hashes for files in rootfs_path1.
+        hashed_files2: (Optional) Precomputed hashes for files in rootfs_path2.
+        image1: (Optional) image1 full path loaded from metadata.
+        image2: (Optional) image2 full path loaded from metadata.
+
+    Returns:
+        files_summary: List containing file and checksum comparison details.
+        checksum_summary: Dict summarizing checksum matches, mismatches, and unique files.
+    """
+    # If hashes not supplied, compute them from rootfs
+    if hashed_files1 is None:
+        if rootfs_path1 is None:
+            raise ValueError(
+                "rootfs_path1 cannot be None when hashed_files1 is not provided"
+            )
+        hashed_files1 = hash_folder_contents(rootfs_path1)
+    if hashed_files2 is None:
+        if rootfs_path2 is None:
+            raise ValueError(
+                "rootfs_path2 cannot be None when hashed_files2 is not provided"
+            )
+        hashed_files2 = hash_folder_contents(rootfs_path2)
+
+    # Make sure image1_path and image2_path were loaded from the metadata file as well
+    if rootfs_path1 is not None and rootfs_path2 is not None:
+        image1_path = str(rootfs_path1)
+        image2_path = str(rootfs_path2)
+    elif image1_path is not None and image2_path is not None:
+        image1_path = image1_path
+        image2_path = image2_path
+    else:
+        raise ValueError(
+            "When passing precomputed hashes, image1 path and image2 path must be provided"
+        )
+
+    diff_lookup = build_diff_lookup(diff_list)
+    if rootfs_path1 is None or rootfs_path2 is None:
+        checksum_summary = summarize_checksums(
+            diff_lookup,
+            Path(image1_path),
+            hashed_files1,
+            Path(image2_path),
+            hashed_files2,
+        )
+    else:
+        checksum_summary = summarize_checksums(
+            diff_lookup,
+            rootfs_path1,
+            hashed_files1,
+            rootfs_path2,
+            hashed_files2,
+        )
+
+    trivial_diffs, nontrivial_diffs = classify_checksum_mismatches(
+        checksum_summary, diff_lookup, hashed_files1, hashed_files2
+    )
+    files_summary = [
+        {
+            "image1": checksum_summary["image1"],
+            "image2": checksum_summary["image2"],
+            "only_in_image1": checksum_summary["only_in_image1"],
+            "only_in_image2": checksum_summary["only_in_image2"],
+            "trivial_checksum_different_files": trivial_diffs,
+            "nontrivial_checksum_different_files": nontrivial_diffs,
+        }
+    ]
+    return files_summary, checksum_summary

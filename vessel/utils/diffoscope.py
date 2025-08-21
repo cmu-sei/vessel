@@ -27,15 +27,10 @@
 
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import magic
 
-from vessel.utils.checksum import (
-    classify_checksum_mismatches,
-    hash_folder_contents,
-    summarize_checksums,
-)
 from vessel.utils.flag import Flag
 from vessel.utils.unified_diff import (
     Diff,
@@ -124,12 +119,8 @@ def parse_diffoscope_output(
     parent_source1: str = "",
     parent_source2: str = "",
     parent_comments: list[str] | None = None,
-    files_summary: Optional[list[dict[str, Any]]] = None,
-    file_checksum: bool = False,
-) -> tuple[
-    int, int, int, list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]
-]:
-    """Recursively parses diffoscope json output.
+) -> tuple[int, int, int, list[dict[Any, Any]]]:
+    """Recursively parses diffoscope json output
 
     Recursively navigates through entirety of diffoscope json output
     parsing the diffs and returning a JSON object with failures
@@ -137,7 +128,7 @@ def parse_diffoscope_output(
 
     Args:
         current_detail: Dict object containing an instance of a diff
-                        from diffoscope output.
+                        from diffoscope output
         flags: List of all flags contained within
                 `config/diff_config.yaml`
         parent_source1: Source of diff of parent1 to substitute into
@@ -149,22 +140,14 @@ def parse_diffoscope_output(
         parent_comments: List of comments from the parent object in diffoscope
                         as sometimes the comments that relate to a child are in
                         the parent detail
-        files_summary: File analysis of trivial/nontrivial failure
-        file_checksum: Whether detail of checksum matches and mismatch
-                       should be included in the summary.json
-
     Returns:
-        Count of unknown failures, count of flagged trivial failures,
-        count of flagged non-trivial failures, diff list,
-        overall file analysis summary and checksum comparison summary.
+        Count of unknown failures, count of flagged failures, diff list,
+        and overall file analysis summary
     """
     trivial_failures_count = 0
     nontrivial_failures_count = 0
     unknown_failures_count = 0
     diff_list: list[dict[str, Any]] = []
-
-    if files_summary is None:
-        files_summary = []
 
     if current_detail["unified_diff"] is not None:
         temp_comments = []
@@ -372,64 +355,17 @@ def parse_diffoscope_output(
                     current_detail["source1"],
                     current_detail["source2"],
                     current_detail.get("comments"),
-                    files_summary,
-                    file_checksum=file_checksum,
                 )
                 unknown_failures_count += child_return[0]
                 trivial_failures_count += child_return[1]
                 nontrivial_failures_count += child_return[2]
                 diff_list.extend(child_return[3])
 
-    checksum_summary: dict[str, Any] = {}
-    # Only generate the final summary when it's top-level call (end of recursion)
-    if (
-        parent_source1 == ""
-        and parent_source2 == ""
-        and parent_comments is None
-    ):
-        # Path to rootfs of unpacked image, ex: image1/rootfs
-        rootfs_path1 = Path(current_detail["source1"])
-        rootfs_path2 = Path(current_detail["source2"])
-        hashed_files1 = hash_folder_contents(rootfs_path1)
-        hashed_files2 = hash_folder_contents(rootfs_path2)
-        diff_lookup = build_diff_lookup(diff_list)
-        checksum_summary = summarize_checksums(
-            diff_lookup,
-            rootfs_path1,
-            hashed_files1,
-            rootfs_path2,
-            hashed_files2,
-        )
-        trivial_diffs, nontrivial_diffs = classify_checksum_mismatches(
-            checksum_summary, diff_lookup, hashed_files1, hashed_files2
-        )
-        files_summary.append(
-            {
-                "image1": checksum_summary["image1"],
-                "image2": checksum_summary["image2"],
-                "only_in_image1": checksum_summary["only_in_image1"],
-                "only_in_image2": checksum_summary["only_in_image2"],
-                "trivial_checksum_different_files": trivial_diffs,
-                "nontrivial_checksum_different_files": nontrivial_diffs,
-            }
-        )
-        if file_checksum:
-            files_summary.append(
-                {
-                    "checksum_mismatches": checksum_summary[
-                        "checksum_mismatches"
-                    ],
-                    "checksum_matches": checksum_summary["checksum_matches"],
-                }
-            )
-
         return (
             unknown_failures_count,
             trivial_failures_count,
             nontrivial_failures_count,
             diff_list,
-            files_summary,
-            checksum_summary,
         )
 
     return (
@@ -437,6 +373,4 @@ def parse_diffoscope_output(
         trivial_failures_count,
         nontrivial_failures_count,
         diff_list,
-        files_summary,
-        checksum_summary,
     )
