@@ -62,7 +62,7 @@ class ConfigDiff:
             if not self.parent_key
             else f"{self.parent_key}/{self.key}",
             "value1": self.value1,
-            "value2": self.value1,
+            "value2": self.value2,
         }
         return dict_obj
 
