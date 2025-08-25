@@ -53,13 +53,13 @@ def get_manifest_digest(unpacked_path: str) -> str:
     return index_json["manifests"][0]["digest"][7:]
 
 
-def get_config(unpacked_path: str) -> dict[str, Any]:
+def get_config(oci_image_path: str) -> dict[str, Any]:
     """Returns a dict with the config info for an OCI folder.
 
     Args:
-        unpacked_path: The path to the unpacked OCI image.
+        oci_image_path: The path to the unpacked OCI image.
 
     Returns:
         Dict with config fields.
     """
-    return skopeo.skopeo_get_config(ImageURI(f"oci:{unpacked_path}"))
+    return skopeo.skopeo_get_config(ImageURI(f"oci:{oci_image_path}"))
