@@ -27,7 +27,6 @@
 
 import json
 import subprocess
-import sys
 import tempfile
 from logging import getLogger
 from pathlib import Path
@@ -51,6 +50,7 @@ from vessel.utils.diffoscope import (
 from vessel.utils.flag import Flag
 from vessel.utils.oci import get_manifest_digest
 from vessel.utils.skopeo import skopeo_copy
+from vessel.utils.umoci import umoci_unpack
 from vessel.utils.uri import ImageURI
 
 logger = getLogger(__name__)
@@ -79,8 +79,8 @@ class DiffCommand:
         self.output_dir: str = output_dir
         self.temp_dir: tempfile.TemporaryDirectory[str] | None = None
         self.image_uris: list[ImageURI] = []
-        self.unpacked_image_paths: list[str] = []
-        self.umoci_image_paths: list[str] = []
+        self.oci_image_paths: list[str] = []
+        self.oci_runtime_paths: list[str] = []
         self.diffoscope_output_file_name = "diffoscope_output.json"
         self.summary_output_file_name = "summary.json"
         self.unified_diff_output_file_name = "unified_diffs.json"
@@ -110,24 +110,24 @@ class DiffCommand:
         if len(self.input_files) == 2 and all(
             f.endswith(".json") for f in self.input_files
         ):
-            return self.compare_diffoscope_and_checksum_json()
+            return self._compare_diffoscope_and_checksum_json()
 
         # Proceed with image comparison
         logger.info("Images to be compared:")
         logger.info("- %s", self.input_files[0])
         logger.info("- %s", self.input_files[1])
 
-        if not self._unpack_images():
+        if not self._convert_to_oci_folder():
             return False
 
         if self.compare_level == "image":
             return self._compare_images()
 
         if get_manifest_digest(
-            self.unpacked_image_paths[0],
-        ) == get_manifest_digest(self.unpacked_image_paths[1]):
+            self.oci_image_paths[0],
+        ) == get_manifest_digest(self.oci_image_paths[1]):
             logger.info("All layers are identical")
-            self.write_to_files(0, 0, 0, [], [], [], {})
+            self._write_to_files(0, 0, 0, [], [], [], {})
             return True
 
         if self.compare_level == "file":
@@ -185,8 +185,8 @@ class DiffCommand:
 
         return True
 
-    def _unpack_images(self: "DiffCommand") -> bool:
-        """Unpacks images to data folder with skopeo."""
+    def _convert_to_oci_folder(self: "DiffCommand") -> bool:
+        """Converts images to a OCI data folder with skopeo."""
         self.image_uris = [
             ImageURI(container_transport)
             for container_transport in self.input_files
@@ -196,7 +196,7 @@ class DiffCommand:
             self.image_uris[0].output_identifier = f"{self.image_uris[0].output_identifier}_0"  # noqa: E501 # fmt: skip
             self.image_uris[1].output_identifier = f"{self.image_uris[1].output_identifier}_1"  # noqa: E501 # fmt: skip
 
-        self.unpacked_image_paths = [
+        self.oci_image_paths = [
             skopeo_copy(image_path, self.data_dir)
             for image_path in self.image_uris
         ]
@@ -209,49 +209,9 @@ class DiffCommand:
         Returns:
             True on success, else False
         """
-        cmd = build_diffoscope_command(
-            self.output_dir,
-            self.diffoscope_output_file_name,
-            self.unpacked_image_paths[0],
-            self.unpacked_image_paths[1],
-            self.compare_level,
+        return self._compare(
+            self.oci_image_paths[0], self.oci_image_paths[1], "_compare_images"
         )
-        try:
-            subprocess.run(cmd, check=True)  # noqa: S603
-        except subprocess.CalledProcessError as e:
-            if e.returncode == 1:
-                # Diffoscope returns 1 on differences, so this is normal
-                pass
-            else:
-                logger.exception("Failed: Diff.compare_images")
-                return False
-
-        with Path(
-            self.output_dir + "/" + self.diffoscope_output_file_name,
-        ).open() as raw_diff_file:
-            diffoscope_json = json.load(raw_diff_file)
-
-        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
-            diffoscope_json, self.flags
-        )
-
-        rootfs_path1 = Path(self.unpacked_image_paths[0])
-        rootfs_path2 = Path(self.unpacked_image_paths[1])
-
-        # Compare image's config files.
-        config_diffs = diff_configs.compare_configs(rootfs_path1, rootfs_path2)
-
-        self.process_and_save_results(
-            rootfs_path1,
-            rootfs_path2,
-            unknown,
-            trivial,
-            nontrivial,
-            diff_list,
-            config_diffs,
-        )
-
-        return True
 
     def _compare_files(self: "DiffCommand") -> bool:
         """Compare final image filesystem.
@@ -262,35 +222,25 @@ class DiffCommand:
         Returns:
             True on success, else False
         """
-        for unpack_path, uri in zip(
-            self.unpacked_image_paths,
-            self.image_uris,
-            strict=True,
-        ):
-            umoci_output_path = (
-                f"{self.data_dir}/umoci-unpack-{uri.output_identifier}"
-            )
-            self.umoci_image_paths.append(umoci_output_path)
+        self.oci_runtime_paths = umoci_unpack(
+            self.oci_image_paths, self.image_uris, self.data_dir
+        )
 
-            try:
-                subprocess.run(
-                    [  # noqa: S603
-                        "/usr/bin/umoci",
-                        "unpack",
-                        "--image",
-                        f"{unpack_path}:{uri.tag}",
-                        umoci_output_path,
-                    ],
-                    check=True,
-                )
-            except subprocess.CalledProcessError:
-                sys.exit(1)
+        return self._compare(
+            f"{self.oci_runtime_paths[0]}/rootfs",
+            f"{self.oci_runtime_paths[1]}/rootfs",
+            "_compare_files",
+        )
 
+    def _compare(
+        self: "DiffCommand", path1: str, path2: str, source: str
+    ) -> bool:
+        """Compares either OCI images or OCI runtime bundles."""
         cmd = build_diffoscope_command(
             self.output_dir,
             self.diffoscope_output_file_name,
-            f"{self.umoci_image_paths[0]}/rootfs",
-            f"{self.umoci_image_paths[1]}/rootfs",
+            path1,
+            path2,
             self.compare_level,
         )
         try:
@@ -300,7 +250,7 @@ class DiffCommand:
                 # Diffoscope returns 1 on differences, so this is normal
                 pass
             else:
-                logger.exception("Failed: Diff.compare_files")
+                logger.exception(f"Failed: Diff.{source}")
                 return False
 
         with Path(
@@ -312,15 +262,14 @@ class DiffCommand:
             diffoscope_json, self.flags
         )
 
-        rootfs_path1 = Path(f"{self.umoci_image_paths[0]}/rootfs")
-        rootfs_path2 = Path(f"{self.umoci_image_paths[1]}/rootfs")
-
         # Compare image's config files.
-        config_diffs = diff_configs.compare_configs(rootfs_path1, rootfs_path2)
+        config_diffs = diff_configs.compare_configs(
+            Path(self.oci_image_paths[0]), Path(self.oci_image_paths[1])
+        )
 
-        self.process_and_save_results(
-            rootfs_path1,
-            rootfs_path2,
+        self._process_and_save_results(
+            Path(path1),
+            Path(path2),
             unknown,
             trivial,
             nontrivial,
@@ -330,7 +279,7 @@ class DiffCommand:
 
         return True
 
-    def compare_from_diffoscope_and_checksum_json(
+    def _compare_from_diffoscope_and_checksum_json(
         self: "DiffCommand",
         diffoscope_json_path: str,
         checksum_json_path: str,
@@ -361,7 +310,7 @@ class DiffCommand:
         )
 
         config_diffs: list[ConfigDiff] = []
-        self.generate_and_save_summary(
+        self._generate_and_save_summary(
             hashed_files1,
             hashed_files2,
             image1_path,
@@ -376,7 +325,7 @@ class DiffCommand:
         logger.info("Finished json comparison")
         return True
 
-    def write_to_files(
+    def _write_to_files(
         self: "DiffCommand",
         unknown_failure_count: int,
         trivial_failure_count: int,
@@ -463,6 +412,7 @@ class DiffCommand:
             },
             "files": files_summary or [],
             "diffs": diffs,
+            "config_diffs": config_diffs,
         }
 
         output_dir = self.output_dir + "/"
@@ -477,7 +427,7 @@ class DiffCommand:
         ) as outfile:
             outfile.write(json.dumps(unified_diff_dict, indent=4))
 
-    def compare_diffoscope_and_checksum_json(self):
+    def _compare_diffoscope_and_checksum_json(self):
         """If two JSON files are provided, and one is named checksum_metadata.json,
         run the comparison and return the result. Otherwise, log an error and return False.
         """
@@ -500,14 +450,14 @@ class DiffCommand:
             path2 if file1 == self.CHECKSUM_METADATA_FILENAME else path1
         )
         logger.info("Performing json comparison")
-        return self.compare_from_diffoscope_and_checksum_json(
+        return self._compare_from_diffoscope_and_checksum_json(
             diffoscope_json_path, checksum_json_path
         )
 
-    def process_and_save_results(
+    def _process_and_save_results(
         self,
-        rootfs_path1: Path,
-        rootfs_path2: Path,
+        image1_path: Path,
+        image2_path: Path,
         unknown: int,
         trivial: int,
         nontrivial: int,
@@ -525,18 +475,16 @@ class DiffCommand:
         - Write summary output to files
 
         Args:
-            rootfs_path1 (Path): Path to the first image's unpacked root filesystem
-            rootfs_path2 (Path): Path to the second image's unpacked root filesystem
+            image1_path (Path): Path to the first image's OCI image folder or unpacked OCI filesystem
+            image2_path (Path): Path to the second image's OCI image folder or unpacked OCI filesystem
             unknown: Count of unknown differences (from diffoscope parsing)
             trivial: Count of trivial differences (from diffoscope parsing)
             nontrivial: Count of nontrivial differences (from diffoscope parsing)
             diff_list: List of detailed differences returned by diffoscope
             config_diffs: List of differences between image config files.
         """
-        hashed_files1 = hash_folder_contents(rootfs_path1)
-        hashed_files2 = hash_folder_contents(rootfs_path2)
-        image1_path = str(rootfs_path1)
-        image2_path = str(rootfs_path2)
+        hashed_files1 = hash_folder_contents(image1_path)
+        hashed_files2 = hash_folder_contents(image2_path)
 
         metadata_path = str(
             Path(self.output_dir) / self.CHECKSUM_METADATA_FILENAME
@@ -546,15 +494,15 @@ class DiffCommand:
             metadata_path,
             hashed_files1,
             hashed_files2,
-            image1_path=image1_path,
-            image2_path=image2_path,
+            image1_path=str(image1_path),
+            image2_path=str(image2_path),
         )
 
-        self.generate_and_save_summary(
+        self._generate_and_save_summary(
             hashed_files1,
             hashed_files2,
-            image1_path,
-            image2_path,
+            str(image1_path),
+            str(image2_path),
             unknown,
             trivial,
             nontrivial,
@@ -562,7 +510,7 @@ class DiffCommand:
             config_diffs,
         )
 
-    def generate_and_save_summary(
+    def _generate_and_save_summary(
         self,
         hashed_files1: dict[str, FileHash],
         hashed_files2: dict[str, FileHash],
@@ -584,7 +532,7 @@ class DiffCommand:
             image2_path=image2_path,
         )
 
-        self.write_to_files(
+        self._write_to_files(
             unknown,
             trivial,
             nontrivial,
