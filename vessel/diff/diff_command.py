@@ -35,7 +35,6 @@ from typing import Any
 import yaml
 
 from vessel.diff import diff_configs
-from vessel.diff.diff_configs import ConfigDiff
 from vessel.utils.checksum import (
     FileHash,
     generate_filesummary_and_checksum,
@@ -309,7 +308,7 @@ class DiffCommand:
             load_checksum_metadata(checksum_json_path)
         )
 
-        config_diffs: list[ConfigDiff] = []
+        config_diffs: list[dict[str, Any]] = []
         self._generate_and_save_summary(
             hashed_files1,
             hashed_files2,
@@ -331,7 +330,7 @@ class DiffCommand:
         trivial_failure_count: int,
         nontrivial_failure_count: int,
         diffs: list[dict[str, Any]],
-        config_diffs: list[ConfigDiff],
+        config_diffs: list[dict[str, Any]],
         files_summary: list[dict[str, Any]],
         checksum_summary: dict[str, Any],
     ) -> None:
@@ -462,7 +461,7 @@ class DiffCommand:
         trivial: int,
         nontrivial: int,
         diff_list: list[dict[str, Any]],
-        config_diffs: list[ConfigDiff],
+        config_diffs: list[dict[str, Any]],
     ):
         """
         Processes image diff results, generates and saves checksum metadata and summaries,
@@ -520,7 +519,7 @@ class DiffCommand:
         trivial: int,
         nontrivial: int,
         diff_list: list[dict[str, Any]],
-        config_diffs: list[ConfigDiff],
+        config_diffs: list[dict[str, Any]],
     ):
         """Generates remaining data and creates summary file."""
 

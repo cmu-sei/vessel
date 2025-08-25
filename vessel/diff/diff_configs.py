@@ -69,7 +69,7 @@ class ConfigDiff:
 
 def compare_configs(
     oci_image_path1: Path, oci_image_path2: Path
-) -> list[ConfigDiff]:
+) -> list[dict[str, Any]]:
     """
     Compares two OCI config files, specifically for required/important fields.
 
@@ -101,7 +101,7 @@ def compare_configs(
     elif CONFIG_KEY in config2 and CONFIG_KEY not in config1:
         diffs.append(ConfigDiff(CONFIG_KEY, None, None, config2[CONFIG_KEY]))
 
-    return diffs
+    return [diff.to_dict() for diff in diffs]
 
 
 def _compare_dict(
