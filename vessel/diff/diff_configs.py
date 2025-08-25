@@ -68,12 +68,20 @@ class ConfigDiff:
 
 
 def compare_configs(
-    unpacked_image_path1: Path, unpacked_image_path2: Path
+    oci_image_path1: Path, oci_image_path2: Path
 ) -> list[ConfigDiff]:
-    """Compares two OCI config files, specifically for required/important fields."""
+    """
+    Compares two OCI config files, specifically for required/important fields.
 
-    config1 = oci.get_config(str(unpacked_image_path1))
-    config2 = oci.get_config(str(unpacked_image_path2))
+    Args:
+        oci_image_path1, oci_image_path2: The path to the OCI image structured folder for each image.
+
+    Returns:
+        List of differences between the config files of each image.
+    """
+
+    config1 = oci.get_config(str(oci_image_path1))
+    config2 = oci.get_config(str(oci_image_path2))
 
     # First check first-level critical configs, then inside the config field.
     diffs = _compare_dict(config1, config2, [ARCH_KEY, OS_KEY])
