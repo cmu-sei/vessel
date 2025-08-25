@@ -35,7 +35,6 @@ items:
         Indicates whether an automated repair tool can fix this issue.
     Hadolint_Severity:
       type: string
-      enum: [error, warning, info]
       description: "Severity as reported by Hadolint (optional)."
     Hadolint_Rule:
       type: string
@@ -48,3 +47,5 @@ items:
     - Diff_Support
     - Lint_Support
     - Repair_Support
+    - Hadolint_Severity
+    - Hadolint_Rule

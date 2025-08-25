@@ -1,6 +1,10 @@
 {
     "python.analysis.typeCheckingMode": "basic",
     "yaml.schemas": {
-        "file://${workspaceFolder}/.schema/model.yaml": "file://${workspaceFolder}/docs/reproducibility_model/v2.yaml"
+        "https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json": "zarf.yaml",
+        "file:///${workspaceFolder}/docs/_data/rep_model_schema.yaml": [
+            "file:///${workspaceFolder}/docs/_data/rep_model_v2.yaml",
+            "file:///Users/pearl/Development/vessel/vessel/docs/_data/rep_model.yaml"
+        ]
     }
 }

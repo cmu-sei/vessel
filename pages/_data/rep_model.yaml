@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../.schema/model.yaml
+# yaml-language-server: $schema=./rep_model_schema.yaml
 - Code: EXT001
   Name: add-without-checksum
   Severity: low
@@ -6,6 +6,8 @@
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: EXT002
   Name: curl-wget-remote
   Severity: low
@@ -13,6 +15,8 @@
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: EXT003
   Name: git-clone
   Severity: low
@@ -20,6 +24,8 @@
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: VER001
   Name: dockerfile-from-tag
   Severity: low
@@ -108,6 +114,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME002
   Name: Container build without pinning date/time
   Severity: low
@@ -115,6 +123,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME003
   Name: Java builds include current date/time
   Severity: low
@@ -122,6 +132,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME004
   Name: Git clone time difference
   Severity: low
@@ -129,6 +141,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME005
   Name: Files in zip file have different timestamp
   Severity: low
@@ -136,6 +150,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME006
   Name: Time difference for npm update check
   Severity: low
@@ -143,6 +159,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME007
   Name: File listing time difference
   Severity: low
@@ -150,6 +168,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME008
   Name: Logging time difference
   Severity: low
@@ -157,6 +177,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME009
   Name: Date and time difference for Go builds
   Severity: low
@@ -164,6 +186,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME010
   Name: Date and time difference for Go binary output
   Severity: low
@@ -171,6 +195,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME011
   Name: Modified time in git index file
   Severity: low
@@ -178,6 +204,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME012
   Name: Modified file time
   Severity: low
@@ -185,6 +213,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME013
   Name: Created time in git index file
   Severity: low
@@ -192,6 +222,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME014
   Name: Keybox created time diff
   Severity: low
@@ -199,6 +231,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME015
   Name: Keybox last maintained time diff
   Severity: low
@@ -206,6 +240,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME016
   Name: pyc-moddate
   Severity: low
@@ -213,6 +249,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME017
   Name: ""
   Severity: low
@@ -220,6 +258,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: "" 
 - Code: TIME018
   Name: ""
   Severity: low
@@ -227,6 +267,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME019
   Name: ""
   Severity: low
@@ -234,6 +276,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME020
   Name: gcloud-last-update-check
   Severity: low
@@ -241,6 +285,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: TIME021
   Name: gcloud-last-survey-prompt
   Severity: low
@@ -248,6 +294,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: REC001
   Name: apt-recommended-deps
   Severity: low
@@ -264,6 +312,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: PLAT001
   Name: platform-pinning
   Severity: low
@@ -271,6 +321,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: PLAT002
   Name: ""
   Severity: low
@@ -278,6 +330,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: PLAT003
   Name: ""
   Severity: low
@@ -285,6 +339,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: PLAT004
   Name: git-index-device
   Severity: low
@@ -292,6 +348,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: PLAT005
   Name: platform-vars
   Severity: low
@@ -299,6 +357,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: CACHE001
   Name: apt-cache
   Severity: low
@@ -360,6 +420,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: CACHE008
   Name: go-build-cache
   Severity: low
@@ -367,6 +429,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: CACHE009
   Name: go-mod-download-cache
   Severity: low
@@ -374,6 +438,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: CACHE010
   Name: pip-cache
   Severity: low
@@ -381,6 +447,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: CACHE011
   Name: pyc-cache
   Severity: low
@@ -388,6 +456,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: RAND001
   Name: gcc-random-seed
   Severity: low
@@ -395,6 +465,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: RAND002
   Name: git-inode
   Severity: low
@@ -402,6 +474,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: RAND003
   Name: sqlite-transaction-id
   Severity: low
@@ -409,6 +483,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: RAND004
   Name: uuid-fontconfig
   Severity: low
@@ -416,6 +492,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: RAND005
   Name: etc-shadow
   Severity: low
@@ -423,6 +501,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: RAND006
   Name: cert-gen
   Severity: low
@@ -430,6 +510,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: RAND007
   Name: configure-tmp
   Severity: low
@@ -437,6 +519,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: ENV001
   Name: print-env
   Severity: low
@@ -444,6 +528,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: ENV002
   Name: env-unused
   Severity: low
@@ -451,6 +537,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: ENV003
   Name: system-locale
   Severity: low
@@ -458,6 +546,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: ENV004
   Name: different-build-args
   Severity: low
@@ -465,3 +555,5 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
