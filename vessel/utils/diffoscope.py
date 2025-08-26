@@ -26,6 +26,7 @@
 """Utility Diffoscope functions."""
 
 import re
+from logging import getLogger
 from pathlib import Path
 from typing import Any
 
@@ -38,6 +39,8 @@ from vessel.utils.unified_diff import (
     intervals_to_str,
     make_failure_dict,
 )
+
+logger = getLogger(__name__)
 
 
 def build_diffoscope_command(
@@ -113,12 +116,19 @@ def build_diff_lookup(
     return lookup
 
 
+def _is_path(source_string: object) -> bool:
+    """True if source tring is a path that starts with leading /"""
+    return isinstance(source_string, str) and source_string.startswith("/")
+
+
 def parse_diffoscope_output(
     current_detail: dict,
     flags: list[Flag],
     parent_source1: str = "",
     parent_source2: str = "",
     parent_comments: list[str] | None = None,
+    filetype_lookup1=None,
+    filetype_lookup2=None,
 ) -> tuple[int, int, int, list[dict[Any, Any]]]:
     """Recursively parses diffoscope json output
 
@@ -164,14 +174,15 @@ def parse_diffoscope_output(
             temp_comments,
             current_detail["unified_diff"],
         )
+
         # Handles case where diff is found with a command such as stat {}.
         # Diffoscope lists the source of the diff as the command that it used to get
         # the diff, so the file path must be grabbed from the parent.
-        if (
-            not Path(diff.source1).is_file()
-            and not Path(diff.source2).is_file()
-        ):
-            diff.command = current_detail["source1"]
+        src1_raw = str(current_detail.get("source1", ""))
+        src2_raw = str(current_detail.get("source2", ""))
+
+        if not _is_path(src1_raw) or not _is_path(src2_raw):
+            diff.command = src1_raw
             diff.source1 = parent_source1
             diff.source2 = parent_source2
 
@@ -197,23 +208,40 @@ def parse_diffoscope_output(
                 ):
                     flag_matches = False
 
-                # Check if filetype matches flag
-                if (
-                    flag_matches
-                    and Path(diff.source1).is_file()
-                    and Path(diff.source2).is_file()
-                ):
-                    file_type_1 = magic.from_file(
-                        diff.source1,
-                    )
-                    file_type_2 = magic.from_file(
-                        diff.source2,
-                    )
+                #  - If both files exist locally, use magic library for data type.
+                #  - Else, use types from the metadata.
+                if flag_matches:
+                    source_1_exists = Path(diff.source1).is_file()
+                    source_2_exists = Path(diff.source2).is_file()
+                    if source_1_exists and source_2_exists:
+                        file_type_1 = magic.from_file(diff.source1)
+                        file_type_2 = magic.from_file(diff.source2)
+                        if not flag.regex["filetype"].search(
+                            file_type_1
+                        ) or not flag.regex["filetype"].search(file_type_2):
+                            flag_matches = False
+                    else:
+                        # Local file does not exist: try checksum metadata lookups.
+                        if (
+                            filetype_lookup1 is not None
+                            and filetype_lookup2 is not None
+                        ):
+                            rel1 = diff.source1
+                            rel2 = diff.source2
+                            file_type_1 = (filetype_lookup1 or {}).get(
+                                rel1, ""
+                            )
+                            file_type_2 = (filetype_lookup2 or {}).get(
+                                rel2, ""
+                            )
 
-                    if not flag.regex["filetype"].search(
-                        file_type_1,
-                    ) or not flag.regex["filetype"].search(file_type_2):
-                        flag_matches = False
+                            if file_type_1 and file_type_2:
+                                if not flag.regex["filetype"].search(
+                                    file_type_1
+                                ) or not flag.regex["filetype"].search(
+                                    file_type_2
+                                ):
+                                    flag_matches = False
 
                 # Check if command matches flag
                 if flag_matches and not flag.regex["command"].search(
@@ -355,6 +383,8 @@ def parse_diffoscope_output(
                     current_detail["source1"],
                     current_detail["source2"],
                     current_detail.get("comments"),
+                    filetype_lookup1=filetype_lookup1,
+                    filetype_lookup2=filetype_lookup2,
                 )
                 unknown_failures_count += child_return[0]
                 trivial_failures_count += child_return[1]

@@ -453,8 +453,9 @@ class DiffCommand:
         ) as outfile:
             outfile.write(json.dumps(unified_diff_dict, indent=4))
 
-    def compare_diffoscope_and_checksum_json(self):
-        """If two JSON files are provided, and one is named checksum_metadata.json,
+    def compare_diffoscope_and_checksum_json(self) -> bool:
+        """
+        If two JSON files are provided, and one is named checksum_metadata.json,
         run the comparison and return the result. Otherwise, log an error and return False.
         """
         path1, path2 = self.input_files[0], self.input_files[1]
@@ -468,17 +469,49 @@ class DiffCommand:
                 "When providing two JSON files, one must be a checksum_metadata.json file."
             )
             return False
-
+        logger.info("Started json comparison")
         checksum_json_path = (
             path1 if file1 == self.CHECKSUM_METADATA_FILENAME else path2
         )
         diffoscope_json_path = (
             path2 if file1 == self.CHECKSUM_METADATA_FILENAME else path1
         )
-        logger.info("Performing json comparison")
-        return self.compare_from_diffoscope_and_checksum_json(
-            diffoscope_json_path, checksum_json_path
+
+        # Load checksum metadata first so we can pass filetype lookups to the parser
+        hashed_files1, hashed_files2, image1_path, image2_path = (
+            load_checksum_metadata(checksum_json_path)
         )
+        filetype_lookup1 = {k: v.filetype for k, v in hashed_files1.items()}
+        filetype_lookup2 = {k: v.filetype for k, v in hashed_files2.items()}
+
+        with Path(diffoscope_json_path).open() as f:
+            diffoscope_json = json.load(f)
+
+        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
+            diffoscope_json,
+            self.flags,
+            filetype_lookup1=filetype_lookup1,
+            filetype_lookup2=filetype_lookup2,
+        )
+
+        files_summary, checksum_summary = generate_filesummary_and_checksum(
+            diff_list,
+            hashed_files1=hashed_files1,
+            hashed_files2=hashed_files2,
+            image1_path=image1_path,
+            image2_path=image2_path,
+        )
+
+        self.write_to_files(
+            unknown,
+            trivial,
+            nontrivial,
+            diff_list,
+            files_summary,
+            checksum_summary,
+        )
+        logger.info("Finished json comparison")
+        return True
 
     def process_and_save_results(
         self,
