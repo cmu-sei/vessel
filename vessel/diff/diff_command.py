@@ -278,52 +278,6 @@ class DiffCommand:
 
         return True
 
-    def _compare_from_diffoscope_and_checksum_json(
-        self: "DiffCommand",
-        diffoscope_json_path: str,
-        checksum_json_path: str,
-    ) -> bool:
-        """
-        Compare results from diffoscope output and checksum metadata.
-
-        Loads a diffoscope JSON output and stored checksum metadata,
-        parses the diffoscope output to extract all diff data, then generates
-        file summary and checksum comparison results using the loaded checksum metadata.
-
-        Args:
-            diffoscope_json_path (str): Path to diffoscope JSON output file.
-            checksum_json_path (str): Path to checksum metadata JSON file.
-
-        Returns:
-            bool: True on success, False on error.
-        """
-        with Path(diffoscope_json_path).open() as f:
-            diffoscope_json = json.load(f)
-
-        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
-            diffoscope_json, self.flags
-        )
-
-        hashed_files1, hashed_files2, image1_path, image2_path = (
-            load_checksum_metadata(checksum_json_path)
-        )
-
-        config_diffs: list[dict[str, Any]] = []
-        self._generate_and_save_summary(
-            hashed_files1,
-            hashed_files2,
-            image1_path,
-            image2_path,
-            unknown,
-            trivial,
-            nontrivial,
-            diff_list,
-            config_diffs,
-        )
-
-        logger.info("Finished json comparison")
-        return True
-
     def _write_to_files(
         self: "DiffCommand",
         unknown_failure_count: int,
@@ -427,7 +381,8 @@ class DiffCommand:
             outfile.write(json.dumps(unified_diff_dict, indent=4))
 
     def _compare_diffoscope_and_checksum_json(self):
-        """If two JSON files are provided, and one is named checksum_metadata.json,
+        """
+        If two JSON files are provided, and one is named checksum_metadata.json,
         run the comparison and return the result. Otherwise, log an error and return False.
         """
         path1, path2 = self.input_files[0], self.input_files[1]
@@ -442,16 +397,51 @@ class DiffCommand:
             )
             return False
 
+        logger.info("Started json comparison")
         checksum_json_path = (
             path1 if file1 == self.CHECKSUM_METADATA_FILENAME else path2
         )
         diffoscope_json_path = (
             path2 if file1 == self.CHECKSUM_METADATA_FILENAME else path1
         )
-        logger.info("Performing json comparison")
-        return self._compare_from_diffoscope_and_checksum_json(
-            diffoscope_json_path, checksum_json_path
+
+        # Load checksum metadata first so we can pass filetype lookups to the parser
+        hashed_files1, hashed_files2, image1_path, image2_path = (
+            load_checksum_metadata(checksum_json_path)
         )
+        filetype_lookup1 = {k: v.filetype for k, v in hashed_files1.items()}
+        filetype_lookup2 = {k: v.filetype for k, v in hashed_files2.items()}
+
+        with Path(diffoscope_json_path).open() as f:
+            diffoscope_json = json.load(f)
+
+        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
+            diffoscope_json,
+            self.flags,
+            filetype_lookup1=filetype_lookup1,
+            filetype_lookup2=filetype_lookup2,
+        )
+
+        files_summary, checksum_summary = generate_filesummary_and_checksum(
+            diff_list,
+            hashed_files1=hashed_files1,
+            hashed_files2=hashed_files2,
+            image1_path=image1_path,
+            image2_path=image2_path,
+        )
+
+        config_diffs: list[dict[str, Any]] = []
+        self._write_to_files(
+            unknown,
+            trivial,
+            nontrivial,
+            diff_list,
+            config_diffs,
+            files_summary,
+            checksum_summary,
+        )
+        logger.info("Finished json comparison")
+        return True
 
     def _process_and_save_results(
         self,
