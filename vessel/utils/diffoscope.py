@@ -181,8 +181,8 @@ def parse_diffoscope_output(
         source1_raw = str(current_detail.get("source1", ""))
         source2_raw = str(current_detail.get("source2", ""))
 
-        if not _is_path(source1_raw) or not _is_path(source1_raw):
-            diff.command = source2_raw
+        if not _is_path(source1_raw) or not _is_path(source2_raw):
+            diff.command = source1_raw
             diff.source1 = parent_source1
             diff.source2 = parent_source2
 
