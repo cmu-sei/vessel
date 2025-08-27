@@ -178,11 +178,11 @@ def parse_diffoscope_output(
         # Handles case where diff is found with a command such as stat {}.
         # Diffoscope lists the source of the diff as the command that it used to get
         # the diff, so the file path must be grabbed from the parent.
-        src1_raw = str(current_detail.get("source1", ""))
-        src2_raw = str(current_detail.get("source2", ""))
+        source1_raw = str(current_detail.get("source1", ""))
+        source2_raw = str(current_detail.get("source2", ""))
 
-        if not _is_path(src1_raw) or not _is_path(src2_raw):
-            diff.command = src1_raw
+        if not _is_path(source1_raw) or not _is_path(source1_raw):
+            diff.command = source2_raw
             diff.source1 = parent_source1
             diff.source2 = parent_source2
 

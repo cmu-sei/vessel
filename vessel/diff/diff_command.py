@@ -307,54 +307,6 @@ class DiffCommand:
 
         return True
 
-    def compare_from_diffoscope_and_checksum_json(
-        self: "DiffCommand",
-        diffoscope_json_path: str,
-        checksum_json_path: str,
-    ) -> bool:
-        """
-        Compare results from diffoscope output and checksum metadata.
-
-        Loads a diffoscope JSON output and stored checksum metadata,
-        parses the diffoscope output to extract all diff data, then generates
-        file summary and checksum comparison results using the loaded checksum metadata.
-
-        Args:
-            diffoscope_json_path (str): Path to diffoscope JSON output file.
-            checksum_json_path (str): Path to checksum metadata JSON file.
-
-        Returns:
-            bool: True on success, False on error.
-        """
-        with Path(diffoscope_json_path).open() as f:
-            diffoscope_json = json.load(f)
-
-        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
-            diffoscope_json, self.flags
-        )
-
-        hashed_files1, hashed_files2, image1_path, image2_path = (
-            load_checksum_metadata(checksum_json_path)
-        )
-
-        files_summary, checksum_summary = generate_filesummary_and_checksum(
-            diff_list,
-            hashed_files1=hashed_files1,
-            hashed_files2=hashed_files2,
-            image1_path=image1_path,
-            image2_path=image2_path,
-        )
-        self.write_to_files(
-            unknown,
-            trivial,
-            nontrivial,
-            diff_list,
-            files_summary,
-            checksum_summary,
-        )
-        logger.info("Finished json comparison")
-        return True
-
     def write_to_files(
         self: "DiffCommand",
         unknown_failure_count: int,
