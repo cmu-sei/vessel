@@ -32,8 +32,8 @@ from typing import Any
 
 import magic
 
-from vessel.utils.flag import Flag
-from vessel.utils.unified_diff import (
+from vessel.diff.helpers.flag import Flag
+from vessel.diff.helpers.unified_diff import (
     Diff,
     failures_from_difflines,
     intervals_to_str,
@@ -277,7 +277,7 @@ def parse_diffoscope_output(
                             "description": flag.description,
                             "metadata": getattr(flag, "metadata", False),
                             "comments": [
-                                "Flag indiff regex are not ran on binary "
+                                "Flag indiff regex are not run on binary "
                                 "unified diff. However this matched all "
                                 "of the other criteria for this flag.",
                             ],

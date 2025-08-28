@@ -34,9 +34,9 @@ from vessel.utils.uri import ImageURI
 
 
 def get_manifest_digest(unpacked_path: str) -> str:
-    """Return a manifest digest from a unpacked OCI dir.
+    """Return a manifest digest from a runtime bundle OCI dir.
 
-    From a given unpacked OCI directory, reads the index file
+    From a given a runtime bundle OCI directory, reads the index file
     and returns the manifest hash.
 
     Args:

@@ -34,19 +34,19 @@ from typing import Any
 
 import yaml
 
-from vessel.diff import diff_configs
-from vessel.utils.checksum import (
+from vessel.diff.helpers import diff_configs
+from vessel.diff.helpers.checksum import (
     FileHash,
     generate_filesummary_and_checksum,
     hash_folder_contents,
     load_checksum_metadata,
     save_checksum_metadata,
 )
-from vessel.utils.diffoscope import (
+from vessel.diff.helpers.diffoscope import (
     build_diffoscope_command,
     parse_diffoscope_output,
 )
-from vessel.utils.flag import Flag
+from vessel.diff.helpers.flag import Flag
 from vessel.utils.oci import get_manifest_digest
 from vessel.utils.skopeo import skopeo_copy
 from vessel.utils.umoci import umoci_unpack

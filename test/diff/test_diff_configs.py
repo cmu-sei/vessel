@@ -25,7 +25,7 @@
 
 from pathlib import Path
 
-from vessel.diff import diff_configs
+from vessel.diff.helpers import diff_configs
 from vessel.utils import skopeo
 from vessel.utils.uri import ImageURI
 
