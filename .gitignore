@@ -181,3 +181,5 @@ pages/_site
 
 output/
 
+.vscode/
+
