@@ -63,13 +63,13 @@ def skopeo_copy(image_uri: ImageURI, output_path: str) -> str:
 
 
 def skopeo_get_config(image_uri: ImageURI) -> dict[str, Any]:
-    """Uses skopeo to get the config file of an OCI image.
+    """Uses skopeo to get the metadata/config file of an OCI image.
 
     Args:
         image_uri: Path of the image
 
     Returns:
-        A dictionary with the config.
+        A dictionary with the metadata fields.
     """
 
     # Run skopeo inspect to get the config.

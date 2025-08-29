@@ -62,6 +62,6 @@ def test_get_config(tmp_path: Path):
     test_image_uri = ImageURI(f"docker://{test_image_name}")
     output_path = skopeo.skopeo_copy(test_image_uri, str(tmp_path))
 
-    config = oci.get_config(output_path)
+    config = oci.get_metadata(output_path)
 
     assert "architecture" in config
