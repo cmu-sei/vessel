@@ -26,7 +26,6 @@
 """Utility Diffoscope functions."""
 
 import re
-from logging import getLogger
 from pathlib import Path
 from typing import Any
 
@@ -40,15 +39,13 @@ from vessel.utils.unified_diff import (
     make_failure_dict,
 )
 
-logger = getLogger(__name__)
-
 
 def build_diffoscope_command(
     output_dir_path: str,
     output_file_name: str,
     path1: str,
     path2: str,
-    compare_level: str,
+    mode: str,
 ) -> list[str]:
     """Generates a command list to execute diffoscope.
 
@@ -58,7 +55,7 @@ def build_diffoscope_command(
         output_file_name: File name that will be used for diffoscope output
         path1: The first path to compare
         path2: The second path to compare
-        compare_level: Diff mode (image or file)
+        mode: Comparison mode ("image" or "file")
 
     Returns:
         Commands list to execute diffoscope.
@@ -66,7 +63,7 @@ def build_diffoscope_command(
     cmd = ["diffoscope"]
     cmd.extend(["--json", f"{output_dir_path}/{output_file_name}"])
 
-    if compare_level == "file":
+    if mode == "file":
         cmd.append("--new-file")
 
     cmd.extend([path1, path2])
@@ -116,9 +113,9 @@ def build_diff_lookup(
     return lookup
 
 
-def _is_path(source_string: object) -> bool:
-    """True if source tring is a path that starts with leading /"""
-    return isinstance(source_string, str) and source_string.startswith("/")
+def is_path(source: str | Path) -> bool:
+    """Returns true if source string is an absolute path (leading '/')"""
+    return str(source).startswith("/")
 
 
 def parse_diffoscope_output(
@@ -127,8 +124,8 @@ def parse_diffoscope_output(
     parent_source1: str = "",
     parent_source2: str = "",
     parent_comments: list[str] | None = None,
-    filetype_lookup1=None,
-    filetype_lookup2=None,
+    filetype_lookup1: dict[str, str] | None = None,
+    filetype_lookup2: dict[str, str] | None = None,
 ) -> tuple[int, int, int, list[dict[Any, Any]]]:
     """Recursively parses diffoscope json output
 
@@ -178,11 +175,11 @@ def parse_diffoscope_output(
         # Handles case where diff is found with a command such as stat {}.
         # Diffoscope lists the source of the diff as the command that it used to get
         # the diff, so the file path must be grabbed from the parent.
-        source1_raw = str(current_detail.get("source1", ""))
-        source2_raw = str(current_detail.get("source2", ""))
+        source1 = current_detail.get("source1", "")
+        source2 = current_detail.get("source2", "")
 
-        if not _is_path(source1_raw) or not _is_path(source2_raw):
-            diff.command = source1_raw
+        if not is_path(source1) or not is_path(source2):
+            diff.command = source1
             diff.source1 = parent_source1
             diff.source2 = parent_source2
 
@@ -226,13 +223,11 @@ def parse_diffoscope_output(
                             filetype_lookup1 is not None
                             and filetype_lookup2 is not None
                         ):
-                            rel1 = diff.source1
-                            rel2 = diff.source2
                             file_type_1 = (filetype_lookup1 or {}).get(
-                                rel1, ""
+                                diff.source1, ""
                             )
                             file_type_2 = (filetype_lookup2 or {}).get(
-                                rel2, ""
+                                diff.source2, ""
                             )
 
                             if file_type_1 and file_type_2:
@@ -242,6 +237,9 @@ def parse_diffoscope_output(
                                     file_type_2
                                 ):
                                     flag_matches = False
+                        else:
+                            # We want to keep the flag match as it is if no look up dict was passed
+                            pass
 
                 # Check if command matches flag
                 if flag_matches and not flag.regex["command"].search(
