@@ -28,4 +28,5 @@ fi
 
 # Setup dependencies as needed.
 echo "Installing dependencies".
+poetry lock
 poetry install $QA_ENV

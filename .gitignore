@@ -177,3 +177,4 @@ pyrightconfig.json
 
 output/
 input/
+.python-version
