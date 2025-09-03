@@ -105,10 +105,6 @@ class DiffCommand:
             )
             return False
 
-        # default mode if not provided
-        if not self.mode:
-            self.mode = "file"
-
         if all(f.endswith(".json") for f in self.input_files):
             if self.mode != "json":
                 logger.error(
