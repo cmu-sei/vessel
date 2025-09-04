@@ -461,7 +461,7 @@ class DiffCommand:
             image1_path=image1_path,
             image2_path=image2_path,
         )
-        
+
         logger.info("Finished json comparison")
         return True
 
