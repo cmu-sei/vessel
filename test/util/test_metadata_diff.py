@@ -28,17 +28,17 @@ from pathlib import Path
 import pytest
 
 from vessel.utils import metadata_diff, skopeo
-from vessel.utils.metadata_diff import MetadataDiff
+from vessel.utils.metadata_diff import MetadataDiff, MetadataFlag
 from vessel.utils.uri import ImageURI
 
 
-def test_comp(tmp_path: Path):
+def test_compare_metadata(tmp_path: Path):
     """Tests that for two known images, the two known diffs are found."""
     test_image_name = "hello-world:latest"
     test_image_uri = ImageURI(f"docker://{test_image_name}")
     output_path1 = skopeo.skopeo_copy(test_image_uri, str(tmp_path))
 
-    test_image_name = "busybox:latest"
+    test_image_name = "busybox:1.36.1"
     test_image_uri = ImageURI(f"docker://{test_image_name}")
     output_path2 = skopeo.skopeo_copy(test_image_uri, str(tmp_path))
 
@@ -48,7 +48,31 @@ def test_comp(tmp_path: Path):
     print(f"Diffs: {diffs}")
     assert len(diffs) == 5
 
-    # assert False
+
+def test_match_flags():
+    """Checks that flag matching works."""
+    diffs = [
+        MetadataDiff("a", 1, None),
+        MetadataDiff("a", 1, 2),
+        MetadataDiff("b", 1, 2),
+        MetadataDiff("c", 1, 2),
+    ]
+    flags = [MetadataFlag("C1", "a", "Low"), MetadataFlag("C2", "b", "High")]
+
+    updated_diffs, summary = metadata_diff.match_flags(diffs, flags)
+
+    for diff in updated_diffs:
+        if diff.key == "a":
+            assert diff.matched_flag == MetadataFlag("C1", "a", "Low")
+        elif diff.key == "b":
+            assert diff.matched_flag == MetadataFlag("C2", "b", "High")
+        else:
+            assert not diff.matched_flag
+
+    assert summary.total_failures == 4
+    assert summary.flagged_failures == 3
+    assert summary.trivial_failures == 2
+    assert summary.nontrivial_failures == 1
 
 
 @pytest.mark.parametrize(

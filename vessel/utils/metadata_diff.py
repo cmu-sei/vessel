@@ -110,13 +110,14 @@ def match_flags(
     diffs: list[MetadataDiff], flags: list[MetadataFlag]
 ) -> tuple[list[MetadataDiff], MetadataDiffSummary]:
     """
-    Compares two OCI image metadata (config) files, specifically for required/important fields.
+    Matches flags to the given diffs, and returns update diffs with flags, as well as a match summary.
 
     Args:
-        flags: types of issues to look for.
+        diffs: list of diffs to mathc with the flags.
+        flags: types of issues to look for, to be matched on the diffs.
 
     Returns:
-        List of differences between the metadata (config) files of each image.
+        List of differences updated with their matched flags, as well as a summary of matches.
     """
     # Go over all diffs, and for each one, if a flag has a matching key, mark that flag in that diff.
     for diff in diffs:
@@ -132,6 +133,7 @@ def match_flags(
         if not diff.matched_flag:
             summary.unknown_failures += 1
         else:
+            summary.flagged_failures += 1
             if diff.matched_flag.severity == "Low":
                 summary.trivial_failures += 1
             else:
