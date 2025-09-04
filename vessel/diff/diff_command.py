@@ -34,6 +34,7 @@ from typing import Any
 
 import yaml
 
+from vessel.diff.failure import FailureSummary
 from vessel.utils import metadata_diff, umoci
 from vessel.utils.checksum import (
     generate_filesummary_and_checksum,
@@ -130,7 +131,15 @@ class DiffCommand:
             self.oci_image_paths[1]
         ):
             logger.info("All layers are identical")
-            self._write_to_files(0, 0, 0, [], [], [], {})
+            self._write_to_files(
+                FailureSummary(),
+                FailureSummary(),
+                FailureSummary(),
+                [],
+                [],
+                [],
+                {},
+            )
             return True
 
         if self.mode == "file":
@@ -284,9 +293,9 @@ class DiffCommand:
 
     def _write_to_files(
         self: "DiffCommand",
-        unknown_failure_count: int,
-        trivial_failure_count: int,
-        nontrivial_failure_count: int,
+        total_failure_summary: FailureSummary,
+        file_failure_summary: FailureSummary,
+        meta_failure_summary: FailureSummary,
         diffs: list[dict[str, Any]],
         meta_diffs: list[dict[str, Any]],
         files_summary: list[dict[str, Any]],
@@ -299,8 +308,9 @@ class DiffCommand:
         file.
 
         Args:
-            unknown_failure_count: Count of unknown failures
-            flagged_failure_count: Count of flagged failures
+            total_failure_summary: Summary of all failures in comparison
+            file_failure_summary: Summary of failures in file comparison
+            meta_failure_summary: Summary of failures in metadata/config comparison
             diffs: List of diffs, each being a dict item returned
                     from Diff.to_slim_dict()
             meta_diffs: List of diffs between OCI images metadata/configs.
@@ -311,9 +321,6 @@ class DiffCommand:
         """
         unified_diff_id = 1
         unified_diff_dict = {}
-        flagged_failure_count = (
-            trivial_failure_count + nontrivial_failure_count
-        )
 
         for diff in diffs:
             unified_diff_dict[unified_diff_id] = diff["unified_diff"]
@@ -323,14 +330,9 @@ class DiffCommand:
 
         summary_json = {
             "summary": {
-                "failure_summary": {
-                    "unknown_failures": unknown_failure_count,
-                    "trivial_failures": trivial_failure_count,
-                    "nontrivial_failures": nontrivial_failure_count,
-                    "flagged_failures": flagged_failure_count,
-                    "total_failures": unknown_failure_count
-                    + flagged_failure_count,
-                },
+                "total_failure_summary": total_failure_summary.to_dict(),
+                "file_failure_summary": file_failure_summary.to_dict(),
+                "meta_failure_summary": meta_failure_summary.to_dict(),
                 "checksum summary": {
                     "total_image1_file_count": checksum_summary.get(
                         "total_common_files", 0
@@ -424,12 +426,16 @@ class DiffCommand:
             filetype_lookup2=filetype_lookup2,
         )
 
+        file_failure_count = FailureSummary.calculate_file_failure_summary(
+            unknown, trivial, nontrivial
+        )
+
         self._summarize_and_write_outputs(
             diff_list=diff_list,
             meta_diffs=[],
-            unknown_failure_count=unknown,
-            trivial_failure_count=trivial,
-            nontrivial_failure_count=nontrivial,
+            total_failure_summary=file_failure_count,
+            file_failure_summary=file_failure_count,
+            meta_summary=FailureSummary(),
             hashed_files1=hashed_files1,
             hashed_files2=hashed_files2,
             image1_path=image1_path,
@@ -474,9 +480,9 @@ class DiffCommand:
         self,
         diff_list: list[dict[str, Any]],
         meta_diffs: list[dict[str, Any]],
-        unknown_failure_count: int,
-        trivial_failure_count: int,
-        nontrivial_failure_count: int,
+        total_failure_summary: FailureSummary,
+        file_failure_summary: FailureSummary,
+        meta_summary: FailureSummary,
         hashed_files1: dict[str, Any],
         hashed_files2: dict[str, Any],
         image1_path: str,
@@ -487,9 +493,9 @@ class DiffCommand:
         Args:
             diff_list: Diffs returned by diffoscope parsing
             meta_diffs: Diffs returned by metadata/config comparison
-            unknown_failure_count: Number of unknown differences
-            trivial_failure_count: Number of trivial differences
-            nontrivial_failure_count: Number of nontrivial differences
+            total_failure_summary: Summary of all failures in comparison
+            file_failure_summary: Summary of failures in file comparison
+            meta_failure_summary: Summary of failures in metadata/config comparison
             hashed_files1: Hash map for image 1 (path to metadata)
             hashed_files2: Hash map for image 2 (path to metadata)
             image1_path: Path to first image filesystem
@@ -504,9 +510,9 @@ class DiffCommand:
         )
 
         self._write_to_files(
-            unknown_failure_count=unknown_failure_count,
-            trivial_failure_count=trivial_failure_count,
-            nontrivial_failure_count=nontrivial_failure_count,
+            total_failure_summary=total_failure_summary,
+            file_failure_summary=file_failure_summary,
+            meta_failure_summary=meta_summary,
             diffs=diff_list,
             meta_diffs=meta_diffs,
             files_summary=files_summary,
@@ -537,6 +543,12 @@ class DiffCommand:
             image1_path, image2_path
         )
 
+        file_failure_summary = FailureSummary.calculate_file_failure_summary(
+            unknown_failure_count,
+            trivial_failure_count,
+            nontrivial_failure_count,
+        )
+
         meta_diffs = metadata_diff.compare_metadata(
             Path(self.oci_image_paths[0]), Path(self.oci_image_paths[1])
         )
@@ -545,16 +557,20 @@ class DiffCommand:
         )
 
         # Update totals with metadata/config failures.
-        unknown_failure_count += meta_summary.unknown_failures
-        trivial_failure_count += meta_summary.trivial_failures
-        nontrivial_failure_count += meta_summary.nontrivial_failures
-
+        total_failure_summary = FailureSummary.calculate_file_failure_summary(
+            unknown_failure_count=file_failure_summary.unknown_failures
+            + meta_summary.unknown_failures,
+            trivial_failure_count=file_failure_summary.trivial_failures
+            + meta_summary.trivial_failures,
+            nontrivial_failure_count=file_failure_summary.nontrivial_failures
+            + meta_summary.nontrivial_failures,
+        )
         self._summarize_and_write_outputs(
             diff_list=diff_list,
             meta_diffs=[diff.to_dict() for diff in meta_diffs],
-            unknown_failure_count=unknown_failure_count,
-            trivial_failure_count=trivial_failure_count,
-            nontrivial_failure_count=nontrivial_failure_count,
+            total_failure_summary=total_failure_summary,
+            file_failure_summary=file_failure_summary,
+            meta_summary=meta_summary,
             hashed_files1=hashed_files1,
             hashed_files2=hashed_files2,
             image1_path=str(image1_path),

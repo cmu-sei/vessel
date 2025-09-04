@@ -32,6 +32,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Optional
 
+from vessel.diff.failure import FailureSummary
 from vessel.utils import oci
 
 KEY_SEPARATOR = "/"
@@ -77,30 +78,6 @@ class MetadataFlag:
         return asdict(self)
 
 
-@dataclass
-class MetadataDiffSummary:
-    """Represents a summary of failures in OCI image metadata/config."""
-
-    unknown_failures: int = 0
-    """Number of failures that did not match a flag."""
-
-    flagged_failures: int = 0
-    """Number of failures that did match a flag."""
-
-    trivial_failures: int = 0
-    """Number of failures that matched a flag with a severity of as Low."""
-
-    nontrivial_failures: int = 0
-    """Number of failures that matched a flag with a severity different than Low."""
-
-    total_failures: int = 0
-    """Total number of failures found."""
-
-    def to_dict(self) -> dict[str, Any]:
-        """Returns this as a dictionary."""
-        return asdict(self)
-
-
 def compare_metadata(
     oci_image_path1: Path, oci_image_path2: Path
 ) -> list[MetadataDiff]:
@@ -133,7 +110,7 @@ def load_flags(flags_config: list[dict[str, Any]]) -> list[MetadataFlag]:
 
 def match_flags(
     diffs: list[MetadataDiff], flags: list[MetadataFlag]
-) -> tuple[list[MetadataDiff], MetadataDiffSummary]:
+) -> tuple[list[MetadataDiff], FailureSummary]:
     """
     Matches flags to the given diffs, and returns update diffs with flags, as well as a match summary.
 
@@ -151,7 +128,7 @@ def match_flags(
                 diff.matched_flag = flag
 
     # Create summary of diffs.
-    summary = MetadataDiffSummary()
+    summary = FailureSummary()
     for diff in diffs:
         summary.total_failures += 1
 
