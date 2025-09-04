@@ -34,7 +34,7 @@ from typing import Any
 
 import yaml
 
-from vessel.diff.helpers import matadata_diff
+from vessel.diff.helpers import metadata_diff
 from vessel.diff.helpers.checksum import (
     FileHash,
     generate_filesummary_and_checksum,
@@ -262,7 +262,7 @@ class DiffCommand:
         )
 
         # Compare image's config files.
-        config_diffs = matadata_diff.compare_metadata(
+        config_diffs = metadata_diff.compare_metadata(
             Path(self.oci_image_paths[0]), Path(self.oci_image_paths[1]), []
         )
 

@@ -25,7 +25,10 @@
 
 from pathlib import Path
 
-from vessel.diff.helpers import matadata_diff
+import pytest
+
+from vessel.diff.helpers import metadata_diff
+from vessel.diff.helpers.metadata_diff import MetadataDiff
 from vessel.utils import skopeo
 from vessel.utils.uri import ImageURI
 
@@ -40,12 +43,101 @@ def test_comp(tmp_path: Path):
     test_image_uri = ImageURI(f"docker://{test_image_name}")
     output_path2 = skopeo.skopeo_copy(test_image_uri, str(tmp_path))
 
-    # flags = [MetadataFlag("TEST", "config/sh", "MID")]
-
-    diffs = matadata_diff.compare_metadata(
+    diffs = metadata_diff.compare_metadata(
         Path(output_path1), Path(output_path2), []
     )
     print(f"Diffs: {diffs}")
-    # assert len(diffs) == 2
+    assert len(diffs) == 5
 
-    assert False
+    # assert False
+
+
+@pytest.mark.parametrize(
+    "d1, d2, key, expected_output",
+    [
+        ({"a": 1}, {"b": 2}, "a", MetadataDiff("a", 1, None)),
+        ({"a": 1}, {"b": 2}, "b", MetadataDiff("b", None, 2)),
+        ({"a": 1}, {"a": 2}, "a", MetadataDiff("a", 1, 2)),
+        ({"a": 1}, {"a": 1}, "a", None),
+        ({"a": 1}, {"a": 2}, "c", None),
+    ],
+)
+def test_compare_key(d1, d2, key, expected_output):
+    """Compares a key in two dicts."""
+    output = metadata_diff._compare_key(d1, d2, key)
+    assert output == expected_output
+
+
+@pytest.mark.parametrize(
+    "d1, d2, key, parent, expected_output",
+    [
+        (
+            {"p": {"a": 1}},
+            {"p": {"a": 2}},
+            "a",
+            "p",
+            MetadataDiff("p/a", 1, 2),
+        ),
+        (
+            {"a": 1},
+            {"b": 2},
+            "a",
+            None,
+            MetadataDiff("a", 1, None),
+        ),
+    ],
+)
+def test_compare_full_key(d1, d2, key, parent, expected_output):
+    """Compares a key with potential parent in two dicts."""
+    output = metadata_diff._compare_full_key(d1, d2, key, parent)
+    assert output == expected_output
+
+
+@pytest.mark.parametrize(
+    "d1, d2, key, parent",
+    [
+        ({"p": 1}, {"p": {"a": 2}}, "a", "p"),
+    ],
+)
+def test_compare_full_key_not_nested(d1, d2, key, parent):
+    """Compares a key with potential parent in two dicts."""
+    with pytest.raises(RuntimeError):
+        _ = metadata_diff._compare_full_key(d1, d2, key, parent)
+
+
+@pytest.mark.parametrize(
+    "d1, d2, keys, expected_output",
+    [
+        (
+            {"a": 1, "b": 3},
+            {"b": 2},
+            [],
+            [MetadataDiff("a", 1, None), MetadataDiff("b", 3, 2)],
+        ),
+    ],
+)
+def test_compare_dicts_ref(d1, d2, keys, expected_output):
+    """Compares two dicts."""
+    output = metadata_diff._compare_dicts_ref(d1, d1, d2, keys)
+    assert output == expected_output
+
+
+@pytest.mark.parametrize(
+    "d1, d2, keys, expected_output",
+    [
+        (
+            {"a": 1, "b": 3},
+            {"b": 2, "c": 4},
+            [],
+            [
+                MetadataDiff("a", 1, None),
+                MetadataDiff("b", 3, 2),
+                MetadataDiff("c", None, 4),
+            ],
+        ),
+    ],
+)
+def test_compare_dicts(d1, d2, keys, expected_output):
+    """Compares two dicts."""
+    output = metadata_diff._compare_dicts(d1, d2)
+    assert output == expected_output

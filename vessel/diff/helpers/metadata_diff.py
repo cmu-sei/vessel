@@ -77,35 +77,47 @@ def compare_metadata(
     Returns:
         List of differences between the metadata (config) files of each image.
     """
-    diffs: list[MetadataDiff] = []
-
     # Get data from both configs.
     metadata1 = oci.get_metadata(str(oci_image_path1))
     metadata2 = oci.get_metadata(str(oci_image_path2))
 
-    # Compare dicts, which has to be done twice so we can find keys in the second that are not in the first one.
-    checked_keys: list[str] = []
-    diffs.extend(
-        _compare_dicts(
-            ref_dict=metadata1,
-            dict1=metadata1,
-            dict2=metadata2,
-            checked_keys=checked_keys,
-        )
-    )
-    diffs.extend(
-        _compare_dicts(
-            ref_dict=metadata2,
-            dict1=metadata1,
-            dict2=metadata2,
-            checked_keys=checked_keys,
-        )
-    )
+    diffs = _compare_dicts(metadata1, metadata2)
 
     return [asdict(diff) for diff in diffs]
 
 
 def _compare_dicts(
+    dict1: dict[str, Any], dict2: dict[str, Any]
+) -> list[MetadataDiff]:
+    """
+    Compare dicts, which has to be done twice so we can find keys in the
+    second that are not in the first one.
+    """
+    diffs: list[MetadataDiff] = []
+
+    # Checked keys is needed to avoid comparing keys that are in both dicts twice.
+    checked_keys: list[str] = []
+    diffs.extend(
+        _compare_dicts_ref(
+            ref_dict=dict1,
+            dict1=dict1,
+            dict2=dict2,
+            checked_keys=checked_keys,
+        )
+    )
+    diffs.extend(
+        _compare_dicts_ref(
+            ref_dict=dict2,
+            dict1=dict1,
+            dict2=dict2,
+            checked_keys=checked_keys,
+        )
+    )
+
+    return diffs
+
+
+def _compare_dicts_ref(
     ref_dict: dict[str, Any],
     dict1: dict[str, Any],
     dict2: dict[str, Any],
@@ -169,7 +181,6 @@ def _compare_full_key(
             raise RuntimeError(
                 f"Provided key {key} structured as nested, but subkeys {subdict1} or {subdict2} are not a dict."
             )
-
         return _compare_key(subdict1, subdict2, key, parent_key)
     else:
         # Original key was not nested.
