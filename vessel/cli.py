@@ -60,17 +60,6 @@ def vessel(logging_level: str) -> None:
     nargs=-1,
 )
 @click.option(
-    "-c",
-    "--compare-level",
-    type=click.Choice(["image", "file"]),
-    default="file",
-    show_default=True,
-    help=(
-        "Diff mode selection: 'image' for image tar or file' for final image "
-        "filesystem. Default 'file'"
-    ),
-)
-@click.option(
     "-d",
     "--data-dir",
     type=click.Path(
@@ -99,25 +88,22 @@ def vessel(logging_level: str) -> None:
     ),
 )
 @click.option(
-    "-f",
-    "--file-checksum",
-    type=click.Path(
-        file_okay=False,
-        readable=True,
-        writable=True,
-        resolve_path=True,
-    ),
+    "-m",
+    "--mode",
+    type=click.Choice(["image", "file", "json"]),
+    default="file",
+    show_default=True,
     help=(
-        "Enable this option if you would like to record checksum matches "
-        "and mismatches of the unpacked filesystem."
+        "Select comparison mode: 'image' for tar comparison, "
+        "'file' for unpacked filesystem, "
+        "'json' for diffoscope/checksum JSON comparison."
     ),
 )
 def diff(
     input_files: list[str],
-    compare_level: str,
     data_dir: str,
+    mode: str,
     output_dir: str,
-    file_checksum: bool,
 ) -> None:
     """Unpack container images and compare differences with diffoscope.
 
@@ -125,9 +111,8 @@ def diff(
     """
     success: bool = DiffCommand(
         input_files,
-        compare_level,
         data_dir,
+        mode,
         output_dir,
-        file_checksum,
     ).execute()
     sys.exit(not success)

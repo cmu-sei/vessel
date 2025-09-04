@@ -35,6 +35,12 @@ from typing import Any
 
 import yaml
 
+from vessel.utils.checksum import (
+    generate_filesummary_and_checksum,
+    hash_folder_contents,
+    load_checksum_metadata,
+    write_checksum_metadata,
+)
 from vessel.utils.diffoscope import (
     build_diffoscope_command,
     parse_diffoscope_output,
@@ -50,13 +56,17 @@ logger = getLogger(__name__)
 class DiffCommand:
     """Class that setups up and executes a diff operation."""
 
+    CHECKSUM_METADATA_FILENAME = "checksum_metadata.json"
+    DIFFOSCOPE_OUTPUT_FILENAME = "diffoscope_output.json"
+    SUMMARY_OUTPUT_FILENAME = "summary.json"
+    UNIFIED_DIFF_OUTPUT_FILENAME = "unified_diffs.json"
+
     def __init__(
         self: "DiffCommand",
         input_files: list[str],
-        compare_level: str,
         data_dir: str,
+        mode: str,
         output_dir: str,
-        file_checksum: bool,
     ) -> None:
         """Initializer for a diff operation.
 
@@ -64,17 +74,13 @@ class DiffCommand:
         """
         self.flags: list[Flag] = []
         self.input_files: list[str] = input_files
-        self.compare_level: str = compare_level
+        self.mode: str = mode
         self.data_dir: str = data_dir
         self.output_dir: str = output_dir
-        self.file_checksum: bool = file_checksum
         self.temp_dir: tempfile.TemporaryDirectory[str] | None = None
         self.image_uris: list[ImageURI] = []
-        self.unpacked_image_paths: list[str] = []
-        self.umoci_image_paths: list[str] = []
-        self.diffoscope_output_file_name = "diffoscope_output.json"
-        self.summary_output_file_name = "summary.json"
-        self.unified_diff_output_file_name = "unified_diffs.json"
+        self.oci_image_paths: list[str] = []
+        self.oci_runtime_paths: list[str] = []
 
     def execute(self: "DiffCommand") -> bool:
         """Executes a diff operation.
@@ -85,19 +91,30 @@ class DiffCommand:
         if not self._setup():
             return False
 
-        if len(self.input_files) == 0:
-            logger.error("No inputs provided. Acceptable values are 1 or 2")
-            return False
-
-        if len(self.input_files) == 1:
-            return self.compare_diffoscope_json()
-
-        if len(self.input_files) > 2:
+        if len(self.input_files) < 2:
             logger.error(
-                "Too many inputs provided. Acceptable values are 1 or 2",
+                "At least 2 inputs required. Acceptable values are 2 image paths, "
+                "or 2 JSON files (diffoscope output and checksum metadata)"
             )
             return False
 
+        if len(self.input_files) > 2:
+            logger.error(
+                "Too many inputs provided. Acceptable values are 2 image paths, "
+                "or 2 JSON files (diffoscope output and checksum metadata)"
+            )
+            return False
+
+        if all(f.endswith(".json") for f in self.input_files):
+            if self.mode != "json":
+                logger.error(
+                    "Two JSON files detected but mode is not 'json' "
+                    "Please rerun with -m json"
+                )
+                return False
+            return self._compare_diffoscope_and_checksum_json()
+
+        # Image or file mode
         logger.info("Images to be compared:")
         logger.info("- %s", self.input_files[0])
         logger.info("- %s", self.input_files[1])
@@ -105,20 +122,20 @@ class DiffCommand:
         if not self._unpack_images():
             return False
 
-        if self.compare_level == "image":
+        if self.mode == "image":
             return self._compare_images()
 
-        if get_manifest_digest(
-            self.unpacked_image_paths[0],
-        ) == get_manifest_digest(self.unpacked_image_paths[1]):
+        if get_manifest_digest(self.oci_image_paths[0]) == get_manifest_digest(
+            self.oci_image_paths[1]
+        ):
             logger.info("All layers are identical")
-            self.write_to_files(0, 0, 0, [], [], {})
+            self._write_to_files(0, 0, 0, [], [], {})
             return True
 
-        if self.compare_level == "file":
+        if self.mode == "file":
             return self._compare_files()
 
-        logger.error("Invalid compare level selected.")
+        logger.error("Invalid mode selected. Choose from: image, file, json")
         return False
 
     def _setup(self: "DiffCommand") -> bool:
@@ -181,7 +198,7 @@ class DiffCommand:
             self.image_uris[0].output_identifier = f"{self.image_uris[0].output_identifier}_0"  # noqa: E501 # fmt: skip
             self.image_uris[1].output_identifier = f"{self.image_uris[1].output_identifier}_1"  # noqa: E501 # fmt: skip
 
-        self.unpacked_image_paths = [
+        self.oci_image_paths = [
             skopeo_copy(image_path, self.data_dir)
             for image_path in self.image_uris
         ]
@@ -196,10 +213,10 @@ class DiffCommand:
         """
         cmd = build_diffoscope_command(
             self.output_dir,
-            self.diffoscope_output_file_name,
-            self.unpacked_image_paths[0],
-            self.unpacked_image_paths[1],
-            self.compare_level,
+            self.DIFFOSCOPE_OUTPUT_FILENAME,
+            self.oci_image_paths[0],
+            self.oci_image_paths[1],
+            self.mode,
         )
         try:
             subprocess.run(cmd, check=True)  # noqa: S603
@@ -211,30 +228,19 @@ class DiffCommand:
                 logger.exception("Failed: Diff.compare_images")
                 return False
 
-            with Path(
-                self.output_dir + "/" + self.diffoscope_output_file_name,
-            ).open() as raw_diff_file:
-                diffoscope_json = json.load(raw_diff_file)
+        with Path(
+            self.output_dir + "/" + self.DIFFOSCOPE_OUTPUT_FILENAME,
+        ).open() as raw_diff_file:
+            diffoscope_json = json.load(raw_diff_file)
 
-        (
-            unknown_failures_count,
-            trivial_failures_count,
-            nontrivial_failures_count,
-            diff_list,
-            files_summary,
-            checksum_summary,
-        ) = parse_diffoscope_output(
-            diffoscope_json,
-            self.flags,
-            file_checksum=self.file_checksum,
+        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
+            diffoscope_json, self.flags
         )
-        self.write_to_files(
-            unknown_failures_count,
-            trivial_failures_count,
-            nontrivial_failures_count,
-            diff_list,
-            files_summary,
-            checksum_summary,
+
+        image1_path = Path(self.oci_image_paths[0])
+        image2_path = Path(self.oci_image_paths[1])
+        self._process_and_save_results(
+            image1_path, image2_path, diff_list, unknown, trivial, nontrivial
         )
 
         return True
@@ -249,14 +255,14 @@ class DiffCommand:
             True on success, else False
         """
         for unpack_path, uri in zip(
-            self.unpacked_image_paths,
+            self.oci_image_paths,
             self.image_uris,
             strict=True,
         ):
             umoci_output_path = (
                 f"{self.data_dir}/umoci-unpack-{uri.output_identifier}"
             )
-            self.umoci_image_paths.append(umoci_output_path)
+            self.oci_runtime_paths.append(umoci_output_path)
 
             try:
                 subprocess.run(
@@ -274,10 +280,10 @@ class DiffCommand:
 
         cmd = build_diffoscope_command(
             self.output_dir,
-            self.diffoscope_output_file_name,
-            f"{self.umoci_image_paths[0]}/rootfs",
-            f"{self.umoci_image_paths[1]}/rootfs",
-            self.compare_level,
+            self.DIFFOSCOPE_OUTPUT_FILENAME,
+            f"{self.oci_runtime_paths[0]}/rootfs",
+            f"{self.oci_runtime_paths[1]}/rootfs",
+            self.mode,
         )
         try:
             subprocess.run(cmd, check=True)  # noqa: S603
@@ -290,66 +296,23 @@ class DiffCommand:
                 return False
 
         with Path(
-            self.output_dir + "/" + self.diffoscope_output_file_name,
+            self.output_dir + "/" + self.DIFFOSCOPE_OUTPUT_FILENAME,
         ).open() as raw_diff_file:
             diffoscope_json = json.load(raw_diff_file)
 
-        (
-            unknown_failures_count,
-            trivial_failures_count,
-            nontrivial_failures_count,
-            diff_list,
-            files_summary,
-            checksum_summary,
-        ) = parse_diffoscope_output(
-            diffoscope_json,
-            self.flags,
-            file_checksum=self.file_checksum,
+        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
+            diffoscope_json, self.flags
         )
-        self.write_to_files(
-            unknown_failures_count,
-            trivial_failures_count,
-            nontrivial_failures_count,
-            diff_list,
-            files_summary,
-            checksum_summary,
+
+        image1_path = Path(f"{self.oci_runtime_paths[0]}/rootfs")
+        image2_path = Path(f"{self.oci_runtime_paths[1]}/rootfs")
+        self._process_and_save_results(
+            image1_path, image2_path, diff_list, unknown, trivial, nontrivial
         )
 
         return True
 
-    def compare_diffoscope_json(self: "DiffCommand") -> bool:
-        """Parses diffoscope json when file provided directly.
-
-        Returns:
-            True on success
-        """
-        with Path(self.input_files[0]).open() as raw_diff_file:
-            diffoscope_json = json.load(raw_diff_file)
-
-        (
-            unknown_failures_count,
-            trivial_failures_count,
-            nontrivial_failures_count,
-            diff_list,
-            files_summary,
-            checksum_summary,
-        ) = parse_diffoscope_output(
-            diffoscope_json,
-            self.flags,
-            file_checksum=self.file_checksum,
-        )
-        self.write_to_files(
-            unknown_failures_count,
-            trivial_failures_count,
-            nontrivial_failures_count,
-            diff_list,
-            files_summary,
-            checksum_summary,
-        )
-
-        return True
-
-    def write_to_files(
+    def _write_to_files(
         self: "DiffCommand",
         unknown_failure_count: int,
         trivial_failure_count: int,
@@ -437,12 +400,173 @@ class DiffCommand:
 
         output_dir = self.output_dir + "/"
 
-        with Path(str(output_dir) + self.summary_output_file_name).open(
+        with Path(str(output_dir) + self.SUMMARY_OUTPUT_FILENAME).open(
             "w",
         ) as outfile:
             outfile.write(json.dumps(summary_json, indent=4))
 
-        with Path(str(output_dir) + self.unified_diff_output_file_name).open(
+        with Path(str(output_dir) + self.UNIFIED_DIFF_OUTPUT_FILENAME).open(
             "w",
         ) as outfile:
             outfile.write(json.dumps(unified_diff_dict, indent=4))
+
+    def _compare_diffoscope_and_checksum_json(self) -> bool:
+        """
+        If two JSON files are provided, and one is named checksum_metadata.json,
+        run the comparison and return the result. Otherwise, log an error and return False.
+        """
+        path1, path2 = self.input_files[0], self.input_files[1]
+        file1, file2 = Path(path1).name, Path(path2).name
+
+        if (
+            file1 != self.CHECKSUM_METADATA_FILENAME
+            and file2 != self.CHECKSUM_METADATA_FILENAME
+        ):
+            logger.error(
+                "When providing two JSON files, one must be a checksum_metadata.json file."
+            )
+            return False
+        logger.info("Started json comparison")
+        checksum_json_path = (
+            path1 if file1 == self.CHECKSUM_METADATA_FILENAME else path2
+        )
+        diffoscope_json_path = (
+            path2 if file1 == self.CHECKSUM_METADATA_FILENAME else path1
+        )
+
+        # Load checksum metadata first so we can pass filetype lookups to the parser
+        hashed_files1, hashed_files2, image1_path, image2_path = (
+            load_checksum_metadata(checksum_json_path)
+        )
+        filetype_lookup1 = {k: v.filetype for k, v in hashed_files1.items()}
+        filetype_lookup2 = {k: v.filetype for k, v in hashed_files2.items()}
+
+        with Path(diffoscope_json_path).open() as f:
+            diffoscope_json = json.load(f)
+
+        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
+            diffoscope_json,
+            self.flags,
+            filetype_lookup1=filetype_lookup1,
+            filetype_lookup2=filetype_lookup2,
+        )
+
+        self._summarize_and_write_outputs(
+            diff_list=diff_list,
+            unknown_failure_count=unknown,
+            trivial_failure_count=trivial,
+            nontrivial_failure_count=nontrivial,
+            hashed_files1=hashed_files1,
+            hashed_files2=hashed_files2,
+            image1_path=image1_path,
+            image2_path=image2_path,
+        )
+
+        logger.info("Finished json comparison")
+        return True
+
+    def _hash_and_write_checksum_metadata(
+        self,
+        image1_path: Path,
+        image2_path: Path,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Hash both filesystems and write checksum metadata JSON
+
+        Args:
+            image1_path: Path to first image filesystem
+            image2_path: Path to second image filesystem
+
+        Returns:
+            A tuple (hashed_files1, hashed_files2), where each element is a mapping
+            of file path to hashed file
+        """
+        hashed_files1 = hash_folder_contents(image1_path)
+        hashed_files2 = hash_folder_contents(image2_path)
+
+        metadata_path = str(
+            Path(self.output_dir) / self.CHECKSUM_METADATA_FILENAME
+        )
+
+        write_checksum_metadata(
+            metadata_path,
+            hashed_files1,
+            hashed_files2,
+            image1_path=str(image1_path),
+            image2_path=str(image2_path),
+        )
+        return hashed_files1, hashed_files2
+
+    def _summarize_and_write_outputs(
+        self,
+        diff_list: list[dict[str, Any]],
+        unknown_failure_count: int,
+        trivial_failure_count: int,
+        nontrivial_failure_count: int,
+        hashed_files1: dict[str, Any],
+        hashed_files2: dict[str, Any],
+        image1_path: str,
+        image2_path: str,
+    ) -> None:
+        """Generate checksum summaries and write output
+
+        Args:
+            diff_list: Diffs returned by diffoscope parsing
+            unknown_failure_count: Number of unknown differences
+            trivial_failure_count: Number of trivial differences
+            nontrivial_failure_count: Number of nontrivial differences
+            hashed_files1: Hash map for image 1 (path to metadata)
+            hashed_files2: Hash map for image 2 (path to metadata)
+            image1_path: Path to first image filesystem
+            image2_path: Path to second image filesystem
+        """
+        files_summary, checksum_summary = generate_filesummary_and_checksum(
+            diff_list,
+            hashed_files1=hashed_files1,
+            hashed_files2=hashed_files2,
+            image1_path=image1_path,
+            image2_path=image2_path,
+        )
+
+        self._write_to_files(
+            unknown_failure_count=unknown_failure_count,
+            trivial_failure_count=trivial_failure_count,
+            nontrivial_failure_count=nontrivial_failure_count,
+            diffs=diff_list,
+            files_summary=files_summary,
+            checksum_summary=checksum_summary,
+        )
+
+    def _process_and_save_results(
+        self,
+        image1_path: Path,
+        image2_path: Path,
+        diff_list: list[dict[str, Any]],
+        unknown_failure_count: int,
+        trivial_failure_count: int,
+        nontrivial_failure_count: int,
+    ) -> None:
+        """
+        Hash image directories, save checksum metadata, summarize, and write outputs
+
+        Args:
+            image1_path: Path to first image filesystem
+            image2_path: Path to second image filesystem
+            diff_list: List of detailed differences returned by diffoscope parsing
+            unknown_failure_count: Count of unknown differences
+            trivial_failure_count: Count of trivial differences
+            nontrivial_failure_count: Count of nontrivial differences
+        """
+        hashed_files1, hashed_files2 = self._hash_and_write_checksum_metadata(
+            image1_path, image2_path
+        )
+
+        self._summarize_and_write_outputs(
+            diff_list=diff_list,
+            unknown_failure_count=unknown_failure_count,
+            trivial_failure_count=trivial_failure_count,
+            nontrivial_failure_count=nontrivial_failure_count,
+            hashed_files1=hashed_files1,
+            hashed_files2=hashed_files2,
+            image1_path=str(image1_path),
+            image2_path=str(image2_path),
+        )
