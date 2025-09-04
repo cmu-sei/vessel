@@ -28,7 +28,7 @@
 from __future__ import annotations
 
 import typing
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
@@ -106,7 +106,9 @@ def compare_metadata(
     return _compare_dicts(metadata1, metadata2)
 
 
-def match_flags(diffs: list[MetadataDiff], flags: list[MetadataFlag]) -> tuple[list[MetadataDiff], MetadataDiffSummary]:
+def match_flags(
+    diffs: list[MetadataDiff], flags: list[MetadataFlag]
+) -> tuple[list[MetadataDiff], MetadataDiffSummary]:
     """
     Compares two OCI image metadata (config) files, specifically for required/important fields.
 
@@ -147,7 +149,7 @@ def _compare_dicts(
     # Checked keys is needed to avoid comparing keys that are in both dicts twice.
     checked_keys: list[str] = []
 
-    # We have to check twice, which each dict as ref, to find keys that are in 
+    # We have to check twice, which each dict as ref, to find keys that are in
     # one and not the other, and viceversa.
     diffs.extend(
         _compare_dicts_ref(
