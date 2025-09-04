@@ -39,7 +39,7 @@ from vessel.utils.checksum import (
     generate_filesummary_and_checksum,
     hash_folder_contents,
     load_checksum_metadata,
-    save_checksum_metadata,
+    write_checksum_metadata,
 )
 from vessel.utils.diffoscope import (
     build_diffoscope_command,
@@ -451,26 +451,21 @@ class DiffCommand:
             filetype_lookup2=filetype_lookup2,
         )
 
-        files_summary, checksum_summary = generate_filesummary_and_checksum(
-            diff_list,
+        self._summarize_and_write_outputs(
+            diff_list=diff_list,
+            unknown_failure_count=unknown,
+            trivial_failure_count=trivial,
+            nontrivial_failure_count=nontrivial,
             hashed_files1=hashed_files1,
             hashed_files2=hashed_files2,
             image1_path=image1_path,
             image2_path=image2_path,
         )
-
-        self._write_to_files(
-            unknown,
-            trivial,
-            nontrivial,
-            diff_list,
-            files_summary,
-            checksum_summary,
-        )
+        
         logger.info("Finished json comparison")
         return True
 
-    def _hash_and_save_checksum_metadata(
+    def _hash_and_write_checksum_metadata(
         self,
         image1_path: Path,
         image2_path: Path,
@@ -492,7 +487,7 @@ class DiffCommand:
             Path(self.output_dir) / self.CHECKSUM_METADATA_FILENAME
         )
 
-        save_checksum_metadata(
+        write_checksum_metadata(
             metadata_path,
             hashed_files1,
             hashed_files2,
@@ -561,7 +556,7 @@ class DiffCommand:
             trivial_failure_count: Count of trivial differences
             nontrivial_failure_count: Count of nontrivial differences
         """
-        hashed_files1, hashed_files2 = self._hash_and_save_checksum_metadata(
+        hashed_files1, hashed_files2 = self._hash_and_write_checksum_metadata(
             image1_path, image2_path
         )
 
