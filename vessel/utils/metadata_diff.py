@@ -25,6 +25,8 @@
 
 """Compares two OCI image metadata (config) files for critical changes."""
 
+from __future__ import annotations
+
 import typing
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -49,6 +51,9 @@ class MetadataDiff:
     value2: Optional[Any]
     """The value of the key in the second image."""
 
+    matched_flag: Optional[MetadataFlag] = None
+    """Flags that has been matched to this diff."""
+
 
 @dataclass
 class MetadataFlag:
@@ -64,39 +69,86 @@ class MetadataFlag:
     """The severity being used to treat this case."""
 
 
+@dataclass
+class MetadataDiffSummary:
+    """Represents a summary of failures in OCI image metadata/config."""
+
+    unknown_failures: int = 0
+    """Number of failures that did not match a flag."""
+
+    flagged_failures: int = 0
+    """Number of failures that did match a flag."""
+
+    trivial_failures: int = 0
+    """Number of failures that matched a flag with a severity of as Low."""
+
+    nontrivial_failures: int = 0
+    """Number of failures that matched a flag with a severity different than Low."""
+
+    total_failures: int = 0
+    """Total number of failures found."""
+
+
 def compare_metadata(
-    oci_image_path1: Path, oci_image_path2: Path, flags: list[MetadataFlag]
-) -> list[dict[str, Any]]:
+    oci_image_path1: Path, oci_image_path2: Path
+) -> list[MetadataDiff]:
     """
     Compares two OCI image metadata (config) files, specifically for required/important fields.
 
     Args:
         oci_image_path1, oci_image_path2: The path to the OCI image structured folder for each image.
+
+    Returns:
+        List of differences between the metadata (config) files of each image.
+    """
+    metadata1 = oci.get_metadata(str(oci_image_path1))
+    metadata2 = oci.get_metadata(str(oci_image_path2))
+    return _compare_dicts(metadata1, metadata2)
+
+
+def match_flags(diffs: list[MetadataDiff], flags: list[MetadataFlag]) -> tuple[list[MetadataDiff], MetadataDiffSummary]:
+    """
+    Compares two OCI image metadata (config) files, specifically for required/important fields.
+
+    Args:
         flags: types of issues to look for.
 
     Returns:
         List of differences between the metadata (config) files of each image.
     """
-    # Get data from both configs.
-    metadata1 = oci.get_metadata(str(oci_image_path1))
-    metadata2 = oci.get_metadata(str(oci_image_path2))
+    # Go over all diffs, and for each one, if a flag has a matching key, mark that flag in that diff.
+    for diff in diffs:
+        for flag in flags:
+            if diff.key == flag.key:
+                diff.matched_flag = flag
 
-    diffs = _compare_dicts(metadata1, metadata2)
+    # Create summary of diffs.
+    summary = MetadataDiffSummary()
+    for diff in diffs:
+        summary.total_failures += 1
 
-    return [asdict(diff) for diff in diffs]
+        if not diff.matched_flag:
+            summary.unknown_failures += 1
+        else:
+            if diff.matched_flag.severity == "Low":
+                summary.trivial_failures += 1
+            else:
+                summary.nontrivial_failures += 1
+
+    return diffs, summary
 
 
 def _compare_dicts(
     dict1: dict[str, Any], dict2: dict[str, Any]
 ) -> list[MetadataDiff]:
-    """
-    Compare dicts, which has to be done twice so we can find keys in the
-    second that are not in the first one.
-    """
+    """Compare dicts for differences."""
     diffs: list[MetadataDiff] = []
 
     # Checked keys is needed to avoid comparing keys that are in both dicts twice.
     checked_keys: list[str] = []
+
+    # We have to check twice, which each dict as ref, to find keys that are in 
+    # one and not the other, and viceversa.
     diffs.extend(
         _compare_dicts_ref(
             ref_dict=dict1,
@@ -124,7 +176,7 @@ def _compare_dicts_ref(
     checked_keys: list[str],
 ) -> list[MetadataDiff]:
     """
-    Compares two dictionaries for differences.
+    Compares two dictionaries for differences, using a reference dict as the baseline.
 
     Args:
         ref_dict: one of the two dicts, used to get the keys to be compared.
