@@ -211,39 +211,7 @@ class DiffCommand:
         Returns:
             True on success, else False
         """
-        cmd = build_diffoscope_command(
-            self.output_dir,
-            self.DIFFOSCOPE_OUTPUT_FILENAME,
-            self.oci_image_paths[0],
-            self.oci_image_paths[1],
-            self.mode,
-        )
-        try:
-            subprocess.run(cmd, check=True)  # noqa: S603
-        except subprocess.CalledProcessError as e:
-            if e.returncode == 1:
-                # Diffoscope returns 1 on differences, so this is normal
-                pass
-            else:
-                logger.exception("Failed: Diff.compare_images")
-                return False
-
-        with Path(
-            self.output_dir + "/" + self.DIFFOSCOPE_OUTPUT_FILENAME,
-        ).open() as raw_diff_file:
-            diffoscope_json = json.load(raw_diff_file)
-
-        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
-            diffoscope_json, self.flags
-        )
-
-        image1_path = Path(self.oci_image_paths[0])
-        image2_path = Path(self.oci_image_paths[1])
-        self._process_and_save_results(
-            image1_path, image2_path, diff_list, unknown, trivial, nontrivial
-        )
-
-        return True
+        return self._compare(self.oci_image_paths[0], self.oci_image_paths[1])
 
     def _compare_files(self: "DiffCommand") -> bool:
         """Compare final image filesystem.
@@ -258,11 +226,28 @@ class DiffCommand:
             self.oci_image_paths, self.image_uris, self.data_dir
         )
 
+        return self._compare(
+            f"{self.oci_runtime_paths[0]}/rootfs",
+            f"{self.oci_runtime_paths[2]}/rootfs",
+        )
+
+    def _compare(
+        self: "DiffCommand", image1_path: str, image2_path: str
+    ) -> bool:
+        """Compares the given image folders.
+
+        Args:
+            image1_path, image2_path: paths to folders with files from OCI
+            images, either in image spec or runtime bundles.
+
+        Returns:
+            True on success, else False
+        """
         cmd = build_diffoscope_command(
             self.output_dir,
             self.DIFFOSCOPE_OUTPUT_FILENAME,
-            f"{self.oci_runtime_paths[0]}/rootfs",
-            f"{self.oci_runtime_paths[1]}/rootfs",
+            image1_path,
+            image2_path,
             self.mode,
         )
         try:
@@ -284,10 +269,13 @@ class DiffCommand:
             diffoscope_json, self.flags
         )
 
-        image1_path = Path(f"{self.oci_runtime_paths[0]}/rootfs")
-        image2_path = Path(f"{self.oci_runtime_paths[1]}/rootfs")
         self._process_and_save_results(
-            image1_path, image2_path, diff_list, unknown, trivial, nontrivial
+            Path(image1_path),
+            Path(image2_path),
+            diff_list,
+            unknown,
+            trivial,
+            nontrivial,
         )
 
         return True
