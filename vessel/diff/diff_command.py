@@ -34,7 +34,7 @@ from typing import Any
 
 import yaml
 
-from vessel.utils import umoci
+from vessel.utils import metadata_diff, umoci
 from vessel.utils.checksum import (
     generate_filesummary_and_checksum,
     hash_folder_contents,
@@ -73,6 +73,7 @@ class DiffCommand:
         Processes command-line arguments.
         """
         self.flags: list[Flag] = []
+        self.meta_flags: list[metadata_diff.MetadataFlag] = []
         self.input_files: list[str] = input_files
         self.mode: str = mode
         self.data_dir: str = data_dir
@@ -129,7 +130,7 @@ class DiffCommand:
             self.oci_image_paths[1]
         ):
             logger.info("All layers are identical")
-            self._write_to_files(0, 0, 0, [], [], {})
+            self._write_to_files(0, 0, 0, [], [], [], {})
             return True
 
         if self.mode == "file":
@@ -181,6 +182,9 @@ class DiffCommand:
                         logger.exception("Error with flag: %s", e)
                         return False
                     self.flags.append(temp_flag)
+                self.meta_flags = metadata_diff.load_flags(
+                    config["meta_flags"]
+                )
             except yaml.YAMLError:
                 logger.exception("Error reading the yaml config file.")
                 return False
@@ -285,9 +289,10 @@ class DiffCommand:
         unknown_failure_count: int,
         trivial_failure_count: int,
         nontrivial_failure_count: int,
-        diffs: list,
+        diffs: list[dict[str, Any]],
+        meta_diffs: list[dict[str, Any]],
         files_summary: list[dict[str, Any]],
-        checksum_summary: dict[Any, Any],
+        checksum_summary: dict[str, Any],
     ) -> None:
         """Writes all diff output to files.
 
@@ -300,6 +305,7 @@ class DiffCommand:
             flagged_failure_count: Count of flagged failures
             diffs: List of diffs, each being a dict item returned
                     from Diff.to_slim_dict()
+            meta_diffs: List of diffs between OCI images metadata/configs.
             files_summary: File analysis of trivial/nontrivial failure
             checksum_summary: File checksum comparison result summary
         Returns:
@@ -364,6 +370,7 @@ class DiffCommand:
             },
             "files": files_summary or [],
             "diffs": diffs,
+            "meta_diffs": meta_diffs,
         }
 
         output_dir = self.output_dir + "/"
@@ -421,6 +428,7 @@ class DiffCommand:
 
         self._summarize_and_write_outputs(
             diff_list=diff_list,
+            meta_diffs=[],
             unknown_failure_count=unknown,
             trivial_failure_count=trivial,
             nontrivial_failure_count=nontrivial,
@@ -467,6 +475,7 @@ class DiffCommand:
     def _summarize_and_write_outputs(
         self,
         diff_list: list[dict[str, Any]],
+        meta_diffs: list[dict[str, Any]],
         unknown_failure_count: int,
         trivial_failure_count: int,
         nontrivial_failure_count: int,
@@ -479,6 +488,7 @@ class DiffCommand:
 
         Args:
             diff_list: Diffs returned by diffoscope parsing
+            meta_diffs: Diffs returned by metadata/config comparison
             unknown_failure_count: Number of unknown differences
             trivial_failure_count: Number of trivial differences
             nontrivial_failure_count: Number of nontrivial differences
@@ -500,6 +510,7 @@ class DiffCommand:
             trivial_failure_count=trivial_failure_count,
             nontrivial_failure_count=nontrivial_failure_count,
             diffs=diff_list,
+            meta_diffs=meta_diffs,
             files_summary=files_summary,
             checksum_summary=checksum_summary,
         )
@@ -514,7 +525,7 @@ class DiffCommand:
         nontrivial_failure_count: int,
     ) -> None:
         """
-        Hash image directories, save checksum metadata, summarize, and write outputs
+        Hash image directories, save checksum metadata, calculate metadata diff, summarize, and write outputs
 
         Args:
             image1_path: Path to first image filesystem
@@ -528,8 +539,19 @@ class DiffCommand:
             image1_path, image2_path
         )
 
+        meta_diffs = metadata_diff.compare_metadata(image1_path, image2_path)
+        meta_diffs, meta_summary = metadata_diff.match_flags(
+            meta_diffs, self.meta_flags
+        )
+
+        # Update totals with metadata/config failures.
+        unknown_failure_count += meta_summary.unknown_failures
+        trivial_failure_count += meta_summary.trivial_failures
+        nontrivial_failure_count += meta_summary.nontrivial_failures
+
         self._summarize_and_write_outputs(
             diff_list=diff_list,
+            meta_diffs=[diff.to_dict() for diff in meta_diffs],
             unknown_failure_count=unknown_failure_count,
             trivial_failure_count=trivial_failure_count,
             nontrivial_failure_count=nontrivial_failure_count,

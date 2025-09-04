@@ -28,7 +28,7 @@
 from __future__ import annotations
 
 import typing
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Optional
 
@@ -54,6 +54,10 @@ class MetadataDiff:
     matched_flag: Optional[MetadataFlag] = None
     """Flags that has been matched to this diff."""
 
+    def to_dict(self) -> dict[str, Any]:
+        """Returns this diff as a dictionary."""
+        return asdict(self)
+
 
 @dataclass
 class MetadataFlag:
@@ -67,6 +71,10 @@ class MetadataFlag:
 
     severity: str
     """The severity being used to treat this case."""
+
+    def to_dict(self) -> dict[str, Any]:
+        """Returns this as a dictionary."""
+        return asdict(self)
 
 
 @dataclass
@@ -88,6 +96,10 @@ class MetadataDiffSummary:
     total_failures: int = 0
     """Total number of failures found."""
 
+    def to_dict(self) -> dict[str, Any]:
+        """Returns this as a dictionary."""
+        return asdict(self)
+
 
 def compare_metadata(
     oci_image_path1: Path, oci_image_path2: Path
@@ -104,6 +116,19 @@ def compare_metadata(
     metadata1 = oci.get_metadata(str(oci_image_path1))
     metadata2 = oci.get_metadata(str(oci_image_path2))
     return _compare_dicts(metadata1, metadata2)
+
+
+def load_flags(flags_config: list[dict[str, Any]]) -> list[MetadataFlag]:
+    """Loads metadata flags from a loaded config."""
+    flags: list[MetadataFlag] = []
+    for flag_info in flags_config:
+        flag = MetadataFlag(
+            category_id=flag_info["category_id"],
+            key=flag_info["key"],
+            severity=flag_info["severity"],
+        )
+        flags.append(flag)
+    return flags
 
 
 def match_flags(
