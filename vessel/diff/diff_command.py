@@ -182,9 +182,7 @@ class DiffCommand:
                         logger.exception("Error with flag: %s", e)
                         return False
                     self.flags.append(temp_flag)
-                self.meta_flags = metadata_diff.load_flags(
-                    config["meta_flags"]
-                )
+                self.meta_flags = metadata_diff.load_flags(config["metaflags"])
             except yaml.YAMLError:
                 logger.exception("Error reading the yaml config file.")
                 return False
@@ -232,7 +230,7 @@ class DiffCommand:
 
         return self._compare(
             f"{self.oci_runtime_paths[0]}/rootfs",
-            f"{self.oci_runtime_paths[2]}/rootfs",
+            f"{self.oci_runtime_paths[1]}/rootfs",
         )
 
     def _compare(
@@ -539,7 +537,9 @@ class DiffCommand:
             image1_path, image2_path
         )
 
-        meta_diffs = metadata_diff.compare_metadata(image1_path, image2_path)
+        meta_diffs = metadata_diff.compare_metadata(
+            Path(self.oci_image_paths[0]), Path(self.oci_image_paths[1])
+        )
         meta_diffs, meta_summary = metadata_diff.match_flags(
             meta_diffs, self.meta_flags
         )

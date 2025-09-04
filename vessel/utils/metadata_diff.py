@@ -123,7 +123,7 @@ def load_flags(flags_config: list[dict[str, Any]]) -> list[MetadataFlag]:
     flags: list[MetadataFlag] = []
     for flag_info in flags_config:
         flag = MetadataFlag(
-            category_id=flag_info["category_id"],
+            category_id=flag_info["id"],
             key=flag_info["key"],
             severity=flag_info["severity"],
         )
