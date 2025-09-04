@@ -312,23 +312,23 @@ flags:
 
 metaflags:
   - id: 'CTIM001'
-    key: "created"
+    key: 'created'
     severity: 'Low'
   - id: 'CENV001'
-    key: "author"
+    key: 'author'
     severity: 'Low'
   - id: 'CTIM002'
-    key: "history"
+    key: 'history'
     severity: 'Low'
   - id: 'CENV001'
-    key: "config/Env"
+    key: 'config/Env'
     severity: 'High'
   - id: 'CENV002'
-    key: "config/Entrypoint"
+    key: 'config/Entrypoint'
     severity: 'High'
   - id: 'CENV003'
-    key: "config/Cmd"
+    key: 'config/Cmd'
     severity: 'High'
   - id: 'CENV003'
-    key: "config/WorkingDir"
+    key: 'config/WorkingDir'
     severity: 'High'
