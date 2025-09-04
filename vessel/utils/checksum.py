@@ -125,7 +125,7 @@ def make_checksum_dict(
     }
 
 
-def save_checksum_metadata(
+def write_checksum_metadata(
     path, hashed_files1, hashed_files2, image1_path=None, image2_path=None
 ):
     data = {
