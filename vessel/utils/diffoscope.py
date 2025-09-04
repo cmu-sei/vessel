@@ -32,8 +32,8 @@ from typing import Any
 
 import magic
 
-from vessel.diff.helpers.flag import Flag
-from vessel.diff.helpers.unified_diff import (
+from vessel.utils.flag import Flag
+from vessel.utils.unified_diff import (
     Diff,
     failures_from_difflines,
     intervals_to_str,

@@ -27,8 +27,8 @@ from pathlib import Path
 
 import pytest
 
-from vessel.diff.helpers import metadata_diff
-from vessel.diff.helpers.metadata_diff import MetadataDiff
+from vessel.utils import metadata_diff
+from vessel.utils.metadata_diff import MetadataDiff
 from vessel.utils import skopeo
 from vessel.utils.uri import ImageURI
 
@@ -43,9 +43,7 @@ def test_comp(tmp_path: Path):
     test_image_uri = ImageURI(f"docker://{test_image_name}")
     output_path2 = skopeo.skopeo_copy(test_image_uri, str(tmp_path))
 
-    diffs = metadata_diff.compare_metadata(
-        Path(output_path1), Path(output_path2), []
-    )
+    diffs = metadata_diff.compare_metadata(Path(output_path1), Path(output_path2))
     print(f"Diffs: {diffs}")
     assert len(diffs) == 5
 

@@ -32,7 +32,7 @@ from typing import Any, Optional
 
 import portion  # type: ignore
 
-from vessel.diff.helpers.flag import Flag
+from vessel.utils.flag import Flag
 
 logger = getLogger(__name__)
 

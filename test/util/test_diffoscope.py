@@ -27,8 +27,8 @@
 
 import pytest
 
-from test.diff.fixture import get_test_diffoscope_output, get_test_flag
-from vessel.diff.helpers.diffoscope import (
+from test.fixture import get_test_diffoscope_output, get_test_flag
+from vessel.utils.diffoscope import (
     build_diff_lookup,
     build_diffoscope_command,
     parse_diffoscope_output,

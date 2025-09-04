@@ -27,8 +27,8 @@
 import portion
 import pytest
 
-from test.diff.fixture import get_test_flag
-from vessel.diff.helpers.unified_diff import (
+from test.fixture import get_test_flag
+from vessel.utils.unified_diff import (
     Diff,
     DiffLine,
     align_diff_lines,

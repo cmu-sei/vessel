@@ -29,7 +29,7 @@ import re
 
 import pytest
 
-from vessel.diff.helpers.checksum import (
+from vessel.utils.checksum import (
     FileHash,
     classify_checksum_mismatches,
     generate_filesummary_and_checksum,
