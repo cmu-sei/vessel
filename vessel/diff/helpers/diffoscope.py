@@ -374,8 +374,10 @@ def parse_diffoscope_output(
             if (
                 child["source1"][0] != "/"
                 or child["source2"][0] != "/"
-                or umociRegex.search(child["source1"])
-                or umociRegex.search(child["source2"])
+                or (
+                    umociRegex.search(child["source1"])
+                    and umociRegex.search(child["source2"])
+                )
             ):
                 child_return = parse_diffoscope_output(
                     child,
