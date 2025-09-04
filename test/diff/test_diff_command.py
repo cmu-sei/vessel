@@ -57,12 +57,12 @@ def test_write_to_files_and_unified_diffs(tmp_path):
 
     # Pass explicit counts into write_to_files so we can assert the JSON output has the same count
     # Set unknown to 1, trivial to 2, and nontrivial to 3
-    diff_command.write_to_files(
+    diff_command._write_to_files(
         1, 2, 3, diffs, files_summary, checksum_summary
     )
 
-    summary_file = tmp_path / diff_command.summary_output_file_name
-    unified_file = tmp_path / diff_command.unified_diff_output_file_name
+    summary_file = tmp_path / diff_command.SUMMARY_OUTPUT_FILENAME
+    unified_file = tmp_path / diff_command.UNIFIED_DIFF_OUTPUT_FILENAME
 
     summary_json = json.loads(summary_file.read_text())
     unified_json = json.loads(unified_file.read_text())
@@ -95,7 +95,7 @@ def test_write_to_files_and_unified_diffs(tmp_path):
 
 
 @patch("vessel.diff.diff_command.hash_folder_contents")
-@patch("vessel.diff.diff_command.save_checksum_metadata")
+@patch("vessel.diff.diff_command.write_checksum_metadata")
 @patch("vessel.diff.diff_command.generate_filesummary_and_checksum")
 def test_process_and_save_results_invokes_dependencies(
     mock_generate, mock_save, mock_hash, tmp_path
@@ -112,16 +112,16 @@ def test_process_and_save_results_invokes_dependencies(
     checksum_summary = {"checksum_summary": 1}
     mock_generate.return_value = (files_summary, checksum_summary)
 
-    diff_command = DiffCommand([], "file", str(tmp_path), str(tmp_path))
-    diff_command.write_to_files = MagicMock()
+    diff_command = DiffCommand([], str(tmp_path), "file", str(tmp_path))
+    diff_command._write_to_files = MagicMock()
 
-    diff_command.process_and_save_results(
-        rootfs_path1=tmp_path,
-        rootfs_path2=tmp_path,
-        diff_list=["dummy_diff"],
-        unknown=1,
-        trivial=2,
-        nontrivial=3,
+    diff_command._process_and_save_results(
+        image1_path=tmp_path,
+        image2_path=tmp_path,
+        diff_list=[{"dummy": "diff"}],
+        unknown_failure_count=1,
+        trivial_failure_count=2,
+        nontrivial_failure_count=3,
     )
 
     # Assert hash_folder_contents should be used for both images
@@ -137,16 +137,23 @@ def test_process_and_save_results_invokes_dependencies(
     # Assert generate_filesummary_and_checksum should receive the same hashed dicts,
     # and the first positional arg should be the passed diff_list
     gen_args, gen_kwargs = mock_generate.call_args
-    assert gen_args[0] == ["dummy_diff"]
+    assert gen_args[0] == [{"dummy": "diff"}]
     assert gen_kwargs["hashed_files1"] is hashed_files_image1
     assert gen_kwargs["hashed_files2"] is hashed_files_image2
     assert gen_kwargs["image1_path"] == str(tmp_path)
     assert gen_kwargs["image2_path"] == str(tmp_path)
 
     # Assert write_to_files called with the counts we passed and generated summaries
-    diff_command.write_to_files.assert_called_once_with(
-        1, 2, 3, ["dummy_diff"], files_summary, checksum_summary
-    )
+    diff_command._write_to_files.assert_called_once()
+    _, kwargs = diff_command._write_to_files.call_args
+    assert kwargs == {
+        "unknown_failure_count": 1,
+        "trivial_failure_count": 2,
+        "nontrivial_failure_count": 3,
+        "diffs": [{"dummy": "diff"}],
+        "files_summary": files_summary,
+        "checksum_summary": checksum_summary,
+    }
 
 
 def test_compare_diffoscope_and_checksum_json_success(tmp_path):
@@ -163,8 +170,8 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
 
     diff_command = DiffCommand(
         input_files=[str(diffoscope_path), str(checksum_path)],
-        compare_level="file",
         data_dir=str(tmp_path),
+        mode="json",
         output_dir=str(tmp_path),
     )
 
@@ -186,7 +193,7 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
         patch(
             "vessel.diff.diff_command.generate_filesummary_and_checksum"
         ) as mock_generate,
-        patch.object(diff_command, "write_to_files") as mock_write,
+        patch.object(diff_command, "_write_to_files") as mock_write,
     ):
         mock_load.return_value = (
             hashed_files1,
@@ -194,13 +201,13 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
             "img1_path",
             "img2_path",
         )
-        mock_parse.return_value = (1, 2, 3, ["dummy_diffs"])
+        mock_parse.return_value = (1, 2, 3, [{"dummy": "diff"}])
         mock_generate.return_value = (
             ["files_summary"],
             {"checksum_summary": 1},
         )
 
-        result = diff_command.compare_diffoscope_and_checksum_json()
+        result = diff_command._compare_diffoscope_and_checksum_json()
         assert result is True
 
         # Assert load was called on the checksum path
@@ -217,23 +224,22 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
 
         # Assert generate_filesummary_and_checksum received the hashed maps and image path
         gen_args, gen_kwargs = mock_generate.call_args
-        assert gen_args[0] == ["dummy_diffs"]
+        assert gen_args[0] == [{"dummy": "diff"}]
         assert gen_kwargs["hashed_files1"] == hashed_files1
         assert gen_kwargs["hashed_files2"] == hashed_files2
         assert gen_kwargs["image1_path"] == "img1_path"
         assert gen_kwargs["image2_path"] == "img2_path"
 
-        # Assert write_to_files received the exact outputs from parse and generate
-        write_args, write_kwargs = mock_write.call_args
-        assert write_args == (
-            1,  # unknown
-            2,  # trivial
-            3,  # nontrivial
-            ["dummy_diffs"],  # diff_list
-            ["files_summary"],  # files_summary
-            {"checksum_summary": 1},  # checksum_summary
-        )
-        assert write_kwargs == {}
+        mock_write.assert_called_once()
+        _, kwargs = mock_write.call_args
+        assert kwargs == {
+            "unknown_failure_count": 1,
+            "trivial_failure_count": 2,
+            "nontrivial_failure_count": 3,
+            "diffs": [{"dummy": "diff"}],
+            "files_summary": ["files_summary"],
+            "checksum_summary": {"checksum_summary": 1},
+        }
 
 
 def test_compare_diffoscope_and_checksum_json_rejects_bad_pair(
@@ -248,12 +254,12 @@ def test_compare_diffoscope_and_checksum_json_rejects_bad_pair(
 
     diff_command = DiffCommand(
         input_files=[str(diffoscope_path), str(another_json_path)],
-        compare_level="file",
         data_dir=str(tmp_path),
+        mode="json",
         output_dir=str(tmp_path),
     )
 
-    result = diff_command.compare_diffoscope_and_checksum_json()
+    result = diff_command._compare_diffoscope_and_checksum_json()
     assert result is False
     # Make sure the error message is correct
     assert any(
