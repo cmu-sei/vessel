@@ -119,7 +119,7 @@ class DiffCommand:
         logger.info("- %s", self.input_files[0])
         logger.info("- %s", self.input_files[1])
 
-        if not self._unpack_images():
+        if not self._convert_to_oci():
             return False
 
         if self.mode == "image":
@@ -187,8 +187,8 @@ class DiffCommand:
 
         return True
 
-    def _unpack_images(self: "DiffCommand") -> bool:
-        """Unpacks images to data folder with skopeo."""
+    def _convert_to_oci(self: "DiffCommand") -> bool:
+        """Converts images to an OCI data folder with skopeo."""
         self.image_uris = [
             ImageURI(container_transport)
             for container_transport in self.input_files
