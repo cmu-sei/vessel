@@ -27,7 +27,6 @@
 
 import json
 import subprocess
-import sys
 import tempfile
 from logging import getLogger
 from pathlib import Path
@@ -35,6 +34,7 @@ from typing import Any
 
 import yaml
 
+from vessel.utils import umoci
 from vessel.utils.checksum import (
     generate_filesummary_and_checksum,
     hash_folder_contents,
@@ -254,29 +254,9 @@ class DiffCommand:
         Returns:
             True on success, else False
         """
-        for unpack_path, uri in zip(
-            self.oci_image_paths,
-            self.image_uris,
-            strict=True,
-        ):
-            umoci_output_path = (
-                f"{self.data_dir}/umoci-unpack-{uri.output_identifier}"
-            )
-            self.oci_runtime_paths.append(umoci_output_path)
-
-            try:
-                subprocess.run(
-                    [  # noqa: S603
-                        "/usr/bin/umoci",
-                        "unpack",
-                        "--image",
-                        f"{unpack_path}:{uri.tag}",
-                        umoci_output_path,
-                    ],
-                    check=True,
-                )
-            except subprocess.CalledProcessError:
-                sys.exit(1)
+        self.oci_runtime_paths = umoci.umoci_unpack(
+            self.oci_image_paths, self.image_uris, self.data_dir
+        )
 
         cmd = build_diffoscope_command(
             self.output_dir,
