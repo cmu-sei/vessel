@@ -25,6 +25,7 @@
 
 """Compares two OCI image metadata (config) files for critical changes."""
 
+import typing
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -33,20 +34,6 @@ from vessel.utils import oci
 
 KEY_SEPARATOR = "/"
 """Separator used to show nested keys."""
-
-# Critical keys to be compared.
-ARCH_KEY = "architecture"
-OS_KEY = "os"
-CONFIG_KEY = "config"
-CONFIG_SUBKEYS = [
-    "User",
-    "ExposedPorts",
-    "Env",
-    "Entrypoint",
-    "Cmd",
-    "Volumes",
-    "WorkingDir",
-]
 
 
 @dataclass
@@ -90,42 +77,91 @@ def compare_metadata(
     Returns:
         List of differences between the metadata (config) files of each image.
     """
+    diffs: list[MetadataDiff] = []
 
+    # Get data from both configs.
     metadata1 = oci.get_metadata(str(oci_image_path1))
     metadata2 = oci.get_metadata(str(oci_image_path2))
 
-    import deepdiff
-    diff = deepdiff.DeepDiff(metadata1, metadata2, view="tree")
-    print(diff.pretty())
-    import json
-    print(diff.to_json())
-
-    # Go over all flags and check those keys' values.
-    diffs: list[MetadataDiff] = []
-    for flag in flags:
-        diff = _compare_full_key(metadata1, metadata2, flag.key)
-        if diff:
-            diffs.append(diff)
+    # Compare dicts, which has to be done twice so we can find keys in the second that are not in the first one.
+    checked_keys: list[str] = []
+    diffs.extend(
+        _compare_dicts(
+            ref_dict=metadata1,
+            dict1=metadata1,
+            dict2=metadata2,
+            checked_keys=checked_keys,
+        )
+    )
+    diffs.extend(
+        _compare_dicts(
+            ref_dict=metadata2,
+            dict1=metadata1,
+            dict2=metadata2,
+            checked_keys=checked_keys,
+        )
+    )
 
     return [asdict(diff) for diff in diffs]
+
+
+def _compare_dicts(
+    ref_dict: dict[str, Any],
+    dict1: dict[str, Any],
+    dict2: dict[str, Any],
+    checked_keys: list[str],
+) -> list[MetadataDiff]:
+    """
+    Compares two dictionaries for differences.
+
+    Args:
+        ref_dict: one of the two dicts, used to get the keys to be compared.
+        dict1, dict2: the two dictionaries to compare.
+        checked_keys: list of keys already checked (to avoid comparing again between two dicts).
+    Returns:
+        List of MetaDiff differences between the dicts.
+    """
+    diffs: list[MetadataDiff] = []
+    for key, value in ref_dict.items():
+        # If key has already been checked, ignore; if not, add to list.
+        if key in checked_keys:
+            continue
+        else:
+            checked_keys.append(key)
+
+        # Compare keys, but if it is a dict, delve into it.
+        if isinstance(value, dict):
+            subdict = typing.cast(dict[str, Any], value)
+            for sub_key in subdict:
+                # For each sub key in the dict, compare, remembering its parent.
+                diff = _compare_full_key(dict1, dict2, sub_key, parent_key=key)
+                if diff:
+                    diffs.append(diff)
+        else:
+            # Compare values and existence directly, add if there are any diffs.
+            diff = _compare_key(dict1, dict2, key)
+            if diff:
+                diffs.append(diff)
+    return diffs
 
 
 def _compare_full_key(
     dict1: dict[str, Any],
     dict2: dict[str, Any],
     key: str,
+    parent_key: Optional[str] = None,
 ) -> Optional[MetadataDiff]:
-    """Compares two dicts and generates a list of differences in keys/value pairs."""
+    """
+    Compares two dicts for a given key, which may include a nested path.
 
-    # Valid OCI image spec keys need to have at most one level of nesting.
-    if key.count(KEY_SEPARATOR) > 1:
-        raise RuntimeError(f"Key is malformed: {key}")
-
-    key_parts = key.split(KEY_SEPARATOR)
-    if len(key_parts) > 1:
-        parent_key = key_parts[0]
-        child_key = key_parts[1]
-
+    Args:
+        dict1, dict2: the two dicts where the key/value will be compared.
+        key: the key to compare.
+        parent_key: an optional key to the parent dict where the key/value pair will be.
+    Return:
+        A MetaDiff indicating the difference, or None if no diff or not present.
+    """
+    if parent_key:
         # Get subdicts and check they are valid.
         subdict1 = dict1.get(parent_key, {})
         subdict2 = dict2.get(parent_key, {})
@@ -134,14 +170,17 @@ def _compare_full_key(
                 f"Provided key {key} structured as nested, but subkeys {subdict1} or {subdict2} are not a dict."
             )
 
-        return _compare_key(subdict1, subdict2, child_key, full_key=key)
+        return _compare_key(subdict1, subdict2, key, parent_key)
     else:
         # Original key was not nested.
-        return _compare_key(dict1, dict2, key, full_key=key)
+        return _compare_key(dict1, dict2, key)
 
 
 def _compare_key(
-    dict1: dict[str, Any], dict2: dict[str, Any], key: str, full_key: str
+    dict1: dict[str, Any],
+    dict2: dict[str, Any],
+    key: str,
+    parent_key: Optional[str] = None,
 ) -> Optional[MetadataDiff]:
     """
     Compares two dicts for the given key and generates a diff of the key/value pair,
@@ -150,8 +189,7 @@ def _compare_key(
     Args:
         dict1, dict2: the two dicts where the key/value will be compared.
         key: the key to compare.
-        full_key: the full path to the key we are comparing.
-
+        parent_key: the parent key where the key is nested in, if any.
     Return:
         A MetaDiff indicating the difference, or None if no diff or not present.
     """
@@ -161,6 +199,9 @@ def _compare_key(
 
     value1 = dict1.get(key)
     value2 = dict2.get(key)
+
+    # Build the full key for reference.
+    full_key = f"{parent_key}{KEY_SEPARATOR}{key}" if parent_key else key
 
     # If key is in only one of the dicts, the diff is that value vs None.
     if key in dict1 and key not in dict2:
