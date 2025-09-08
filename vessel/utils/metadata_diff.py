@@ -145,60 +145,22 @@ def match_flags(
 def _compare_dicts(
     dict1: dict[str, Any], dict2: dict[str, Any]
 ) -> list[MetadataDiff]:
-    """Compare dicts for differences."""
-    diffs: list[MetadataDiff] = []
-
-    # Checked keys is needed to avoid comparing keys that are in both dicts twice.
-    checked_keys: list[str] = []
-
-    # We have to check twice, which each dict as ref, to find keys that are in
-    # one and not the other, and viceversa.
-    diffs.extend(
-        _compare_dicts_ref(
-            ref_dict=dict1,
-            dict1=dict1,
-            dict2=dict2,
-            checked_keys=checked_keys,
-        )
-    )
-    diffs.extend(
-        _compare_dicts_ref(
-            ref_dict=dict2,
-            dict1=dict1,
-            dict2=dict2,
-            checked_keys=checked_keys,
-        )
-    )
-
-    return diffs
-
-
-def _compare_dicts_ref(
-    ref_dict: dict[str, Any],
-    dict1: dict[str, Any],
-    dict2: dict[str, Any],
-    checked_keys: list[str],
-) -> list[MetadataDiff]:
     """
-    Compares two dictionaries for differences, using a reference dict as the baseline.
+    Compare dicts for differences.
 
     Args:
-        ref_dict: one of the two dicts, used to get the keys to be compared.
         dict1, dict2: the two dictionaries to compare.
-        checked_keys: list of keys already checked (to avoid comparing again between two dicts).
     Returns:
         List of MetaDiff differences between the dicts.
     """
-    diffs: list[MetadataDiff] = []
-    for key, value in ref_dict.items():
-        # If key has already been checked, ignore; if not, add to list.
-        if key in checked_keys:
-            continue
-        else:
-            checked_keys.append(key)
+    # First we need to combine the keys of both dicts so we can ensure we check for keys that are in both dicts.
+    key_dict = _combine_dict_keys(dict1, dict2)
 
+    # Now we go over all keys, and make the diffs.
+    diffs: list[MetadataDiff] = []
+    for key, value in key_dict.items():
         # Compare keys, but if it is a dict, delve into it.
-        if isinstance(value, dict):
+        if len(value) > 0:
             subdict = typing.cast(dict[str, Any], value)
             for sub_key in subdict:
                 # For each sub key in the dict, compare, remembering its parent.
@@ -211,6 +173,24 @@ def _compare_dicts_ref(
             if diff:
                 diffs.append(diff)
     return diffs
+
+
+def _combine_dict_keys(
+    dict1: dict[str, Any], dict2: dict[str, Any]
+) -> dict[str, dict[str, bool]]:
+    """Combines the keys of two dicts, into another one. Does so recursively into on nested level."""
+    combined: dict[str, dict[str, bool]] = {}
+
+    for curr_dict in [dict1, dict2]:
+        for key, value in curr_dict.items():
+            if key not in combined:
+                combined[key] = {}
+            if isinstance(value, dict):
+                for subkey in value.keys():
+                    if subkey not in combined[key]:
+                        combined[key][subkey] = True
+
+    return combined
 
 
 def _compare_full_key(

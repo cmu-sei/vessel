@@ -129,38 +129,30 @@ def test_compare_full_key_not_nested(d1, d2, key, parent):
 
 
 @pytest.mark.parametrize(
-    "d1, d2, keys, expected_output",
-    [
-        (
-            {"a": 1, "b": 3},
-            {"b": 2},
-            [],
-            [MetadataDiff("a", 1, None), MetadataDiff("b", 3, 2)],
-        ),
-    ],
-)
-def test_compare_dicts_ref(d1, d2, keys, expected_output):
-    """Compares two dicts."""
-    output = metadata_diff._compare_dicts_ref(d1, d1, d2, keys)
-    assert output == expected_output
-
-
-@pytest.mark.parametrize(
-    "d1, d2, keys, expected_output",
+    "d1, d2, expected_output",
     [
         (
             {"a": 1, "b": 3},
             {"b": 2, "c": 4},
-            [],
             [
                 MetadataDiff("a", 1, None),
                 MetadataDiff("b", 3, 2),
                 MetadataDiff("c", None, 4),
             ],
         ),
+        (
+            {"a": 1, "b": 3},
+            {"b": 2},
+            [MetadataDiff("a", 1, None), MetadataDiff("b", 3, 2)],
+        ),
+        (
+            {"a": {"a1": 1}},
+            {"a": {"a2": 1}},
+            [MetadataDiff("a/a1", 1, None), MetadataDiff("a/a2", None, 1)],
+        ),
     ],
 )
-def test_compare_dicts(d1, d2, keys, expected_output):
+def test_compare_dicts(d1, d2, expected_output):
     """Compares two dicts."""
     output = metadata_diff._compare_dicts(d1, d2)
     assert output == expected_output
