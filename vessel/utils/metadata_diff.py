@@ -142,7 +142,7 @@ def match_flags(
     summary = FailureSummary(
         unknown_failures, trivial_failures, nontrivial_failures
     )
-    
+
     return diffs, summary
 
 
