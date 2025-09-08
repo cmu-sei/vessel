@@ -198,6 +198,65 @@ class DiffCommand:
 
         return True
 
+    def _compare_diffoscope_and_checksum_json(self) -> bool:
+        """
+        If two JSON files are provided, and one is named checksum_metadata.json,
+        run the comparison and return the result. Otherwise, log an error and return False.
+        """
+        path1, path2 = self.input_files[0], self.input_files[1]
+        file1, file2 = Path(path1).name, Path(path2).name
+
+        if (
+            file1 != self.CHECKSUM_METADATA_FILENAME
+            and file2 != self.CHECKSUM_METADATA_FILENAME
+        ):
+            logger.error(
+                "When providing two JSON files, one must be a checksum_metadata.json file."
+            )
+            return False
+
+        checksum_json_path = (
+            path1 if file1 == self.CHECKSUM_METADATA_FILENAME else path2
+        )
+        diffoscope_json_path = (
+            path2 if file1 == self.CHECKSUM_METADATA_FILENAME else path1
+        )
+
+        # Load checksum metadata first so we can pass filetype lookups to the parser
+        hashed_files1, hashed_files2, image1_path, image2_path = (
+            load_checksum_metadata(checksum_json_path)
+        )
+        filetype_lookup1 = {k: v.filetype for k, v in hashed_files1.items()}
+        filetype_lookup2 = {k: v.filetype for k, v in hashed_files2.items()}
+
+        with Path(diffoscope_json_path).open() as f:
+            diffoscope_json = json.load(f)
+
+        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
+            diffoscope_json,
+            self.flags,
+            filetype_lookup1=filetype_lookup1,
+            filetype_lookup2=filetype_lookup2,
+        )
+
+        file_failure_count = FailureSummary.calculate_file_failure_summary(
+            unknown, trivial, nontrivial
+        )
+
+        self._summarize_and_write_outputs(
+            diff_list=diff_list,
+            meta_diffs=[],
+            total_failure_summary=file_failure_count,
+            file_failure_summary=file_failure_count,
+            meta_summary=FailureSummary(),
+            hashed_files1=hashed_files1,
+            hashed_files2=hashed_files2,
+            image1_path=image1_path,
+            image2_path=image2_path,
+        )
+
+        return True
+
     def _convert_to_oci(self: "DiffCommand") -> bool:
         """Converts images to an OCI data folder with skopeo."""
         self.image_uris = [
@@ -290,6 +349,138 @@ class DiffCommand:
         )
 
         return True
+
+    def _process_and_save_results(
+        self,
+        image1_path: Path,
+        image2_path: Path,
+        diff_list: list[dict[str, Any]],
+        unknown_failure_count: int,
+        trivial_failure_count: int,
+        nontrivial_failure_count: int,
+    ) -> None:
+        """
+        Hash image directories, save checksum metadata, calculate metadata diff, summarize, and write outputs
+
+        Args:
+            image1_path: Path to first image filesystem
+            image2_path: Path to second image filesystem
+            diff_list: List of detailed differences returned by diffoscope parsing
+            unknown_failure_count: Count of unknown differences
+            trivial_failure_count: Count of trivial differences
+            nontrivial_failure_count: Count of nontrivial differences
+        """
+        hashed_files1, hashed_files2 = self._hash_and_write_checksum_metadata(
+            image1_path, image2_path
+        )
+
+        file_failure_summary = FailureSummary.calculate_file_failure_summary(
+            unknown_failure_count,
+            trivial_failure_count,
+            nontrivial_failure_count,
+        )
+
+        meta_diffs = metadata_diff.compare_metadata(
+            Path(self.oci_image_paths[0]), Path(self.oci_image_paths[1])
+        )
+        meta_diffs, meta_summary = metadata_diff.match_flags(
+            meta_diffs, self.meta_flags
+        )
+
+        # Update totals with metadata/config failures.
+        total_failure_summary = FailureSummary.calculate_file_failure_summary(
+            unknown_failure_count=file_failure_summary.unknown_failures
+            + meta_summary.unknown_failures,
+            trivial_failure_count=file_failure_summary.trivial_failures
+            + meta_summary.trivial_failures,
+            nontrivial_failure_count=file_failure_summary.nontrivial_failures
+            + meta_summary.nontrivial_failures,
+        )
+        self._summarize_and_write_outputs(
+            diff_list=diff_list,
+            meta_diffs=[diff.to_dict() for diff in meta_diffs],
+            total_failure_summary=total_failure_summary,
+            file_failure_summary=file_failure_summary,
+            meta_summary=meta_summary,
+            hashed_files1=hashed_files1,
+            hashed_files2=hashed_files2,
+            image1_path=str(image1_path),
+            image2_path=str(image2_path),
+        )
+
+    def _hash_and_write_checksum_metadata(
+        self,
+        image1_path: Path,
+        image2_path: Path,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Hash both filesystems and write checksum metadata JSON
+
+        Args:
+            image1_path: Path to first image filesystem
+            image2_path: Path to second image filesystem
+
+        Returns:
+            A tuple (hashed_files1, hashed_files2), where each element is a mapping
+            of file path to hashed file
+        """
+        hashed_files1 = hash_folder_contents(image1_path)
+        hashed_files2 = hash_folder_contents(image2_path)
+
+        metadata_path = str(
+            Path(self.output_dir) / self.CHECKSUM_METADATA_FILENAME
+        )
+
+        write_checksum_metadata(
+            metadata_path,
+            hashed_files1,
+            hashed_files2,
+            image1_path=str(image1_path),
+            image2_path=str(image2_path),
+        )
+        return hashed_files1, hashed_files2
+
+    def _summarize_and_write_outputs(
+        self,
+        diff_list: list[dict[str, Any]],
+        meta_diffs: list[dict[str, Any]],
+        total_failure_summary: FailureSummary,
+        file_failure_summary: FailureSummary,
+        meta_summary: FailureSummary,
+        hashed_files1: dict[str, Any],
+        hashed_files2: dict[str, Any],
+        image1_path: str,
+        image2_path: str,
+    ) -> None:
+        """Generate checksum summaries and write output
+
+        Args:
+            diff_list: Diffs returned by diffoscope parsing
+            meta_diffs: Diffs returned by metadata/config comparison
+            total_failure_summary: Summary of all failures in comparison
+            file_failure_summary: Summary of failures in file comparison
+            meta_failure_summary: Summary of failures in metadata/config comparison
+            hashed_files1: Hash map for image 1 (path to metadata)
+            hashed_files2: Hash map for image 2 (path to metadata)
+            image1_path: Path to first image filesystem
+            image2_path: Path to second image filesystem
+        """
+        files_summary, checksum_summary = generate_filesummary_and_checksum(
+            diff_list,
+            hashed_files1=hashed_files1,
+            hashed_files2=hashed_files2,
+            image1_path=image1_path,
+            image2_path=image2_path,
+        )
+
+        self._write_to_files(
+            total_failure_summary=total_failure_summary,
+            file_failure_summary=file_failure_summary,
+            meta_failure_summary=meta_summary,
+            diffs=diff_list,
+            meta_diffs=meta_diffs,
+            files_summary=files_summary,
+            checksum_summary=checksum_summary,
+        )
 
     def _write_to_files(
         self: "DiffCommand",
@@ -384,195 +575,3 @@ class DiffCommand:
             "w",
         ) as outfile:
             outfile.write(json.dumps(unified_diff_dict, indent=4))
-
-    def _compare_diffoscope_and_checksum_json(self) -> bool:
-        """
-        If two JSON files are provided, and one is named checksum_metadata.json,
-        run the comparison and return the result. Otherwise, log an error and return False.
-        """
-        path1, path2 = self.input_files[0], self.input_files[1]
-        file1, file2 = Path(path1).name, Path(path2).name
-
-        if (
-            file1 != self.CHECKSUM_METADATA_FILENAME
-            and file2 != self.CHECKSUM_METADATA_FILENAME
-        ):
-            logger.error(
-                "When providing two JSON files, one must be a checksum_metadata.json file."
-            )
-            return False
-        logger.info("Started json comparison")
-        checksum_json_path = (
-            path1 if file1 == self.CHECKSUM_METADATA_FILENAME else path2
-        )
-        diffoscope_json_path = (
-            path2 if file1 == self.CHECKSUM_METADATA_FILENAME else path1
-        )
-
-        # Load checksum metadata first so we can pass filetype lookups to the parser
-        hashed_files1, hashed_files2, image1_path, image2_path = (
-            load_checksum_metadata(checksum_json_path)
-        )
-        filetype_lookup1 = {k: v.filetype for k, v in hashed_files1.items()}
-        filetype_lookup2 = {k: v.filetype for k, v in hashed_files2.items()}
-
-        with Path(diffoscope_json_path).open() as f:
-            diffoscope_json = json.load(f)
-
-        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
-            diffoscope_json,
-            self.flags,
-            filetype_lookup1=filetype_lookup1,
-            filetype_lookup2=filetype_lookup2,
-        )
-
-        file_failure_count = FailureSummary.calculate_file_failure_summary(
-            unknown, trivial, nontrivial
-        )
-
-        self._summarize_and_write_outputs(
-            diff_list=diff_list,
-            meta_diffs=[],
-            total_failure_summary=file_failure_count,
-            file_failure_summary=file_failure_count,
-            meta_summary=FailureSummary(),
-            hashed_files1=hashed_files1,
-            hashed_files2=hashed_files2,
-            image1_path=image1_path,
-            image2_path=image2_path,
-        )
-
-        logger.info("Finished json comparison")
-        return True
-
-    def _hash_and_write_checksum_metadata(
-        self,
-        image1_path: Path,
-        image2_path: Path,
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
-        """Hash both filesystems and write checksum metadata JSON
-
-        Args:
-            image1_path: Path to first image filesystem
-            image2_path: Path to second image filesystem
-
-        Returns:
-            A tuple (hashed_files1, hashed_files2), where each element is a mapping
-            of file path to hashed file
-        """
-        hashed_files1 = hash_folder_contents(image1_path)
-        hashed_files2 = hash_folder_contents(image2_path)
-
-        metadata_path = str(
-            Path(self.output_dir) / self.CHECKSUM_METADATA_FILENAME
-        )
-
-        write_checksum_metadata(
-            metadata_path,
-            hashed_files1,
-            hashed_files2,
-            image1_path=str(image1_path),
-            image2_path=str(image2_path),
-        )
-        return hashed_files1, hashed_files2
-
-    def _summarize_and_write_outputs(
-        self,
-        diff_list: list[dict[str, Any]],
-        meta_diffs: list[dict[str, Any]],
-        total_failure_summary: FailureSummary,
-        file_failure_summary: FailureSummary,
-        meta_summary: FailureSummary,
-        hashed_files1: dict[str, Any],
-        hashed_files2: dict[str, Any],
-        image1_path: str,
-        image2_path: str,
-    ) -> None:
-        """Generate checksum summaries and write output
-
-        Args:
-            diff_list: Diffs returned by diffoscope parsing
-            meta_diffs: Diffs returned by metadata/config comparison
-            total_failure_summary: Summary of all failures in comparison
-            file_failure_summary: Summary of failures in file comparison
-            meta_failure_summary: Summary of failures in metadata/config comparison
-            hashed_files1: Hash map for image 1 (path to metadata)
-            hashed_files2: Hash map for image 2 (path to metadata)
-            image1_path: Path to first image filesystem
-            image2_path: Path to second image filesystem
-        """
-        files_summary, checksum_summary = generate_filesummary_and_checksum(
-            diff_list,
-            hashed_files1=hashed_files1,
-            hashed_files2=hashed_files2,
-            image1_path=image1_path,
-            image2_path=image2_path,
-        )
-
-        self._write_to_files(
-            total_failure_summary=total_failure_summary,
-            file_failure_summary=file_failure_summary,
-            meta_failure_summary=meta_summary,
-            diffs=diff_list,
-            meta_diffs=meta_diffs,
-            files_summary=files_summary,
-            checksum_summary=checksum_summary,
-        )
-
-    def _process_and_save_results(
-        self,
-        image1_path: Path,
-        image2_path: Path,
-        diff_list: list[dict[str, Any]],
-        unknown_failure_count: int,
-        trivial_failure_count: int,
-        nontrivial_failure_count: int,
-    ) -> None:
-        """
-        Hash image directories, save checksum metadata, calculate metadata diff, summarize, and write outputs
-
-        Args:
-            image1_path: Path to first image filesystem
-            image2_path: Path to second image filesystem
-            diff_list: List of detailed differences returned by diffoscope parsing
-            unknown_failure_count: Count of unknown differences
-            trivial_failure_count: Count of trivial differences
-            nontrivial_failure_count: Count of nontrivial differences
-        """
-        hashed_files1, hashed_files2 = self._hash_and_write_checksum_metadata(
-            image1_path, image2_path
-        )
-
-        file_failure_summary = FailureSummary.calculate_file_failure_summary(
-            unknown_failure_count,
-            trivial_failure_count,
-            nontrivial_failure_count,
-        )
-
-        meta_diffs = metadata_diff.compare_metadata(
-            Path(self.oci_image_paths[0]), Path(self.oci_image_paths[1])
-        )
-        meta_diffs, meta_summary = metadata_diff.match_flags(
-            meta_diffs, self.meta_flags
-        )
-
-        # Update totals with metadata/config failures.
-        total_failure_summary = FailureSummary.calculate_file_failure_summary(
-            unknown_failure_count=file_failure_summary.unknown_failures
-            + meta_summary.unknown_failures,
-            trivial_failure_count=file_failure_summary.trivial_failures
-            + meta_summary.trivial_failures,
-            nontrivial_failure_count=file_failure_summary.nontrivial_failures
-            + meta_summary.nontrivial_failures,
-        )
-        self._summarize_and_write_outputs(
-            diff_list=diff_list,
-            meta_diffs=[diff.to_dict() for diff in meta_diffs],
-            total_failure_summary=total_failure_summary,
-            file_failure_summary=file_failure_summary,
-            meta_summary=meta_summary,
-            hashed_files1=hashed_files1,
-            hashed_files2=hashed_files2,
-            image1_path=str(image1_path),
-            image2_path=str(image2_path),
-        )
