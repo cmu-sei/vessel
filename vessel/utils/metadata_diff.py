@@ -62,7 +62,7 @@ class MetadataDiff:
 
 @dataclass
 class MetadataFlag:
-    """Represents a type of issue, and the ket it is being associated to."""
+    """Represents a type of issue, and the key it is being associated to."""
 
     category_id: str
     """The id of the category this flag is covering."""
