@@ -61,7 +61,6 @@ RUN apt-get update && \
     xmlbeans=4.0.0-2 \
     xxd=2:9.0.1378-2+deb12u2 \
     python3-guestfs=1:1.48.6-2  \
-    ca-certificates=20230311 \
     pipx=1.1.0-1 \
     libpython3-dev=3.11.2-1+b1 \
   && apt-get clean \
