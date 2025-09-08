@@ -63,12 +63,16 @@ class FailureSummary:
         self.trivial_failures = trivial_failure_count
         self.nontrivial_failures = nontrivial_failure_count
 
-        # Calculate the two derived values.
+        # Calculate the aggregated values as well.
+        self.calculate_aggregated_values()
+
+    def calculate_aggregated_values(self) -> None:
+        """Calculates and sets the aggregated values from the three basic ones."""
         self.flagged_failures = (
-            trivial_failure_count + nontrivial_failure_count
+            self.trivial_failures + self.nontrivial_failures
         )
         self.total_failures = (
-            unknown_failure_count
-            + trivial_failure_count
-            + nontrivial_failure_count
+            self.unknown_failures
+            + self.trivial_failures
+            + self.nontrivial_failures
         )

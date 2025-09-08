@@ -115,7 +115,7 @@ def match_flags(
     Matches flags to the given diffs, and returns update diffs with flags, as well as a match summary.
 
     Args:
-        diffs: list of diffs to mathc with the flags.
+        diffs: list of diffs to match with the flags.
         flags: types of issues to look for, to be matched on the diffs.
 
     Returns:
@@ -128,20 +128,16 @@ def match_flags(
                 diff.matched_flag = flag
 
     # Create summary of diffs.
-    unknown_failures = 0
-    trivial_failures = 0
-    nontrivial_failures = 0
+    summary = FailureSummary()
     for diff in diffs:
         if not diff.matched_flag:
-            unknown_failures += 1
+            summary.unknown_failures += 1
         else:
             if diff.matched_flag.severity == "Low":
-                trivial_failures += 1
+                summary.trivial_failures += 1
             else:
-                nontrivial_failures += 1
-    summary = FailureSummary(
-        unknown_failures, trivial_failures, nontrivial_failures
-    )
+                summary.nontrivial_failures += 1
+    summary.calculate_aggregated_values()
 
     return diffs, summary
 
