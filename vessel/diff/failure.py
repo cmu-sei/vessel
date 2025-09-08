@@ -52,18 +52,23 @@ class FailureSummary:
         """Returns this as a dictionary."""
         return asdict(self)
 
-    @staticmethod
-    def calculate_file_failure_summary(
-        unknown_failure_count: int,
-        trivial_failure_count: int,
-        nontrivial_failure_count: int,
-    ) -> FailureSummary:
-        return FailureSummary(
-            unknown_failures=unknown_failure_count,
-            trivial_failures=trivial_failure_count,
-            nontrivial_failures=nontrivial_failure_count,
-            flagged_failures=trivial_failure_count + nontrivial_failure_count,
-            total_failures=unknown_failure_count
+    def __init__(
+        self,
+        unknown_failure_count: int = 0,
+        trivial_failure_count: int = 0,
+        nontrivial_failure_count: int = 0,
+    ):
+        """Constructor, gets 3 independent values (unknown, trivial, nontrivial), aggregates the rest."""
+        self.unknown_failures = unknown_failure_count
+        self.trivial_failures = trivial_failure_count
+        self.nontrivial_failures = nontrivial_failure_count
+
+        # Calculate the two derived values.
+        self.flagged_failures = (
+            trivial_failure_count + nontrivial_failure_count
+        )
+        self.total_failures = (
+            unknown_failure_count
             + trivial_failure_count
-            + nontrivial_failure_count,
+            + nontrivial_failure_count
         )

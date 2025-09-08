@@ -128,19 +128,21 @@ def match_flags(
                 diff.matched_flag = flag
 
     # Create summary of diffs.
-    summary = FailureSummary()
+    unknown_failures = 0
+    trivial_failures = 0
+    nontrivial_failures = 0
     for diff in diffs:
-        summary.total_failures += 1
-
         if not diff.matched_flag:
-            summary.unknown_failures += 1
+            unknown_failures += 1
         else:
-            summary.flagged_failures += 1
             if diff.matched_flag.severity == "Low":
-                summary.trivial_failures += 1
+                trivial_failures += 1
             else:
-                summary.nontrivial_failures += 1
-
+                nontrivial_failures += 1
+    summary = FailureSummary(
+        unknown_failures, trivial_failures, nontrivial_failures
+    )
+    
     return diffs, summary
 
 

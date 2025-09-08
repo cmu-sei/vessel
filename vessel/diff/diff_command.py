@@ -239,9 +239,7 @@ class DiffCommand:
             filetype_lookup2=filetype_lookup2,
         )
 
-        file_failure_count = FailureSummary.calculate_file_failure_summary(
-            unknown, trivial, nontrivial
-        )
+        file_failure_count = FailureSummary(unknown, trivial, nontrivial)
 
         self._summarize_and_write_outputs(
             diff_list=diff_list,
@@ -374,7 +372,7 @@ class DiffCommand:
             image1_path, image2_path
         )
 
-        file_failure_summary = FailureSummary.calculate_file_failure_summary(
+        file_failure_summary = FailureSummary(
             unknown_failure_count,
             trivial_failure_count,
             nontrivial_failure_count,
@@ -388,7 +386,7 @@ class DiffCommand:
         )
 
         # Update totals with metadata/config failures.
-        total_failure_summary = FailureSummary.calculate_file_failure_summary(
+        total_failure_summary = FailureSummary(
             unknown_failure_count=file_failure_summary.unknown_failures
             + meta_summary.unknown_failures,
             trivial_failure_count=file_failure_summary.trivial_failures
