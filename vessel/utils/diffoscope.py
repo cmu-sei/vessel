@@ -411,10 +411,14 @@ class DiffoscopeParser:
         self: "DiffoscopeParser",
         diffoscope_json: dict,
         flags: list[Flag],
+        filetype_lookup1: dict[str, str] | None = None,
+        filetype_lookup2: dict[str, str] | None = None,
     ):
         """ """
         self.diffoscope_json: dict = diffoscope_json
         self.flags: list[Flag] = flags
+        self.filetype_lookup1 = filetype_lookup1
+        self.filetype_lookup2 = filetype_lookup2
 
         self.unknown_failure_count: int = 0
         self.trivial_failure_count: int = 0
@@ -512,7 +516,7 @@ class DiffoscopeParser:
                     else None
                 )
                 if minus_unmatched_str != plus_unmatched_str:
-                    unknown_failures_count += 1
+                    self.unknown_failure_count += 1
                     diff.unknown_failures.append(
                         make_failure_dict(
                             minus_line if minus_line else None,
@@ -547,26 +551,46 @@ class DiffoscopeParser:
             ):
                 flag_matches = False
 
-            # Check if filetype matches flag
-            if (
-                flag_matches
-                and Path(diff.source1).is_file()
-                and Path(diff.source2).is_file()
-            ):
-                file_type_1 = magic.from_file(
-                    diff.source1,
-                )
-                file_type_2 = magic.from_file(
-                    diff.source2,
-                )
+            #  - If both files exist locally, use magic library for data type.
+            #  - Else, use types from the metadata.
+            if flag_matches:
+                source_1_exists = Path(diff.source1).is_file()
+                source_2_exists = Path(diff.source2).is_file()
+                if source_1_exists and source_2_exists:
+                    file_type_1 = magic.from_file(diff.source1)
+                    file_type_2 = magic.from_file(diff.source2)
+                    if not flag.regex["filetype"].search(
+                        file_type_1
+                    ) or not flag.regex["filetype"].search(file_type_2):
+                        flag_matches = False
+                else:
+                    # Local file does not exist: try checksum metadata lookups.
+                    if (
+                        self.filetype_lookup1 is not None
+                        and self.filetype_lookup2 is not None
+                    ):
+                        file_type_1 = self.filetype_lookup1.get(
+                            diff.source1, ""
+                        )
+                        file_type_2 = self.filetype_lookup2.get(
+                            diff.source2, ""
+                        )
 
-                if not flag.regex["filetype"].search(
-                    file_type_1,
-                ) or not flag.regex["filetype"].search(file_type_2):
-                    flag_matches = False
+                        if file_type_1 and file_type_2:
+                            if not flag.regex["filetype"].search(
+                                file_type_1
+                            ) or not flag.regex["filetype"].search(
+                                file_type_2
+                            ):
+                                flag_matches = False
+                    else:
+                        # We want to keep the flag match as it is if no look up dict was passed
+                        pass
 
             # Check if command matches flag
-            if flag_matches and not flag.regex["command"].search(diff.command):
+            if flag_matches and not flag.regex["command"].search(
+                diff.command
+            ):
                 flag_matches = False
 
             # Check if comment matches flag
@@ -624,8 +648,12 @@ class DiffoscopeParser:
                     flag["id"] for flag in diff.flagged_failures
                 ]:
                     for failure in flagged_failure_list:
-                        failure["metadata"] = getattr(flag, "metadata", False)
-                        failure["severity"] = getattr(flag, "severity", "Low")
+                        failure["metadata"] = getattr(
+                            flag, "metadata", False
+                        )
+                        failure["severity"] = getattr(
+                            flag, "severity", "Low"
+                        )
                         if getattr(flag, "severity") == "Low":
                             self.trivial_failure_count += 1
                         else:

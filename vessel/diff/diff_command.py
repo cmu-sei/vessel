@@ -44,7 +44,7 @@ from vessel.utils.checksum import (
 )
 from vessel.utils.diffoscope import (
     build_diffoscope_command,
-    parse_diffoscope_output,
+    DiffoscopeParser,
 )
 from vessel.utils.flag import Flag
 from vessel.utils.oci import get_manifest_digest
@@ -232,17 +232,13 @@ class DiffCommand:
         with Path(diffoscope_json_path).open() as f:
             diffoscope_json = json.load(f)
 
-        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
-            diffoscope_json,
-            self.flags,
-            filetype_lookup1=filetype_lookup1,
-            filetype_lookup2=filetype_lookup2,
-        )
+        parser = DiffoscopeParser(diffoscope_json, self.flags, filetype_lookup1, filetype_lookup2)
+        parser.execute()
 
-        file_failure_count = FailureSummary(unknown, trivial, nontrivial)
+        file_failure_count = FailureSummary(parser.unknown_failure_count, parser.trivial_failure_count, parser.nontrivial_failure_count)
 
         self._summarize_and_write_outputs(
-            diff_list=diff_list,
+            diff_list=parser.diff_list,
             meta_diffs=[],
             total_failure_summary=file_failure_count,
             file_failure_summary=file_failure_count,
@@ -332,7 +328,7 @@ class DiffCommand:
             self.output_dir + "/" + self.DIFFOSCOPE_OUTPUT_FILENAME,
         ).open() as raw_diff_file:
             diffoscope_json = json.load(raw_diff_file)
-            
+
         parser = DiffoscopeParser(diffoscope_json, self.flags)
         parser.execute()
 
