@@ -27,8 +27,9 @@ from pathlib import Path
 
 import pytest
 
-from vessel.utils import metadata_diff, skopeo
-from vessel.utils.metadata_diff import MetadataDiff, MetadataFlag
+from vessel.diff.helpers import metadata_diff
+from vessel.diff.helpers.metadata_diff import MetadataDiff, MetadataFlag
+from vessel.utils import skopeo
 from vessel.utils.uri import ImageURI
 
 

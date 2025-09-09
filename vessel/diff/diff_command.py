@@ -34,8 +34,10 @@ from typing import Any
 
 import yaml
 
-from vessel.diff.failure import FailureSummary
-from vessel.utils import metadata_diff, umoci
+from vessel.diff.helpers import metadata_diff
+from vessel.diff.helpers.failure import FailureSummary
+from vessel.diff.helpers.metadata_diff import MetadataDiffs
+from vessel.utils import umoci
 from vessel.utils.checksum import (
     generate_filesummary_and_checksum,
     hash_folder_contents,
@@ -47,7 +49,6 @@ from vessel.utils.diffoscope import (
     parse_diffoscope_output,
 )
 from vessel.utils.flag import Flag
-from vessel.utils.metadata_diff import MetadataDiffs
 from vessel.utils.oci import get_manifest_digest
 from vessel.utils.skopeo import skopeo_copy
 from vessel.utils.uri import ImageURI
@@ -116,7 +117,7 @@ class DiffCommand:
                     "Please rerun with -m json"
                 )
                 return False
-            return self._compare_diffoscope_and_checksum_json()
+            return self._compare_json_diff_outputs()
 
         # Image or file mode
         logger.info("Images to be compared:")
@@ -200,9 +201,10 @@ class DiffCommand:
 
         return True
 
-    def _compare_diffoscope_and_checksum_json(self) -> bool:
+    def _compare_json_diff_outputs(self) -> bool:
         """
-        If two JSON files are provided, and one is named checksum_metadata.json,
+        Used for comparing outputs of a previous Vessel diff run without calculating the diff again.
+        If JSON files are provided, and they have the expected names,
         run the comparison and return the result. Otherwise, log an error and return False.
         """
         path1, path2 = self.input_files[0], self.input_files[1]

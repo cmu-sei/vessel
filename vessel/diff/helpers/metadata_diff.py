@@ -32,7 +32,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Optional
 
-from vessel.diff.failure import FailureSummary
+from vessel.diff.helpers.failure import FailureSummary
 from vessel.utils import oci
 
 KEY_SEPARATOR = "/"
