@@ -99,11 +99,22 @@ def vessel(logging_level: str) -> None:
         "'json' for diffoscope/checksum JSON comparison."
     ),
 )
+@click.option(
+    "-p",
+    "--profile",
+    default=False,
+    show_default=True,
+    help=(
+        "When enabled, pass '--profile <output-dir>/profile.txt' to diffoscope "
+        "to record timing stats."
+    ),
+)
 def diff(
     input_files: list[str],
     data_dir: str,
     mode: str,
     output_dir: str,
+    profile: bool,
 ) -> None:
     """Unpack container images and compare differences with diffoscope.
 
@@ -114,5 +125,6 @@ def diff(
         data_dir,
         mode,
         output_dir,
+        profile,
     ).execute()
     sys.exit(not success)

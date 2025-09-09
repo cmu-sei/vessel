@@ -35,12 +35,44 @@ from vessel.utils.diffoscope import (
 )
 
 
-def test_build_diffoscope_command():
+def test_build_diffoscope_command_file_mode() -> None:
     output_dir = "/tmp"
     output_file = "diff.json"
     path1 = "/test_path/file1"
     path2 = "/test_path/file2"
-    exclude_params = [
+
+    # without profile
+    expected_no_profile = [
+        "diffoscope",
+        "--json",
+        f"{output_dir}/{output_file}",
+        "--new-file",
+        path1,
+        path2,
+        "--exclude-directory-metadata",
+        "no",
+        "--exclude-command",
+        r"^readelf.*",
+        "--exclude-command",
+        r"^objdump.*",
+        "--exclude-command",
+        r"^strings.*",
+        "--exclude-command",
+        r"^xxd.*",
+    ]
+    actual_no_profile = build_diffoscope_command(
+        output_dir, output_file, path1, path2, "file", profile_enabled=False
+    )
+    assert actual_no_profile == expected_no_profile
+
+    # with profile
+    expected_with_profile = [
+        "diffoscope",
+        "--json",
+        f"{output_dir}/{output_file}",
+        "--new-file",
+        path1,
+        path2,
         "--exclude-directory-metadata",
         "no",
         "--profile",
@@ -54,35 +86,10 @@ def test_build_diffoscope_command():
         "--exclude-command",
         r"^xxd.*",
     ]
-
-    expected_cmd_file = [
-        "diffoscope",
-        "--json",
-        "/tmp/diff.json",
-        "--new-file",
-        path1,
-        path2,
-    ]
-    expected_cmd_file.extend(exclude_params)
-    assert (
-        build_diffoscope_command(output_dir, output_file, path1, path2, "file")
-        == expected_cmd_file
+    actual_with_profile = build_diffoscope_command(
+        output_dir, output_file, path1, path2, "file", profile_enabled=True
     )
-
-    expected_cmd_image = [
-        "diffoscope",
-        "--json",
-        f"{output_dir}/{output_file}",
-        path1,
-        path2,
-    ]
-    expected_cmd_image.extend(exclude_params)
-    assert (
-        build_diffoscope_command(
-            output_dir, output_file, path1, path2, "image"
-        )
-        == expected_cmd_image
-    )
+    assert actual_with_profile == expected_with_profile
 
 
 @pytest.mark.parametrize(
