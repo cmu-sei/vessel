@@ -225,12 +225,15 @@ class DiffCommand:
         filetype_lookup1 = {k: v.filetype for k, v in hashed_files1.items()}
         filetype_lookup2 = {k: v.filetype for k, v in hashed_files2.items()}
 
+        # Load metadata diffs.
+        meta_diffs = MetadataDiffs.load_from_file(Path(metadata_json_path))
+
         # Call common method to parse diffs and generate output.
         self._process_and_save_results(
             image1_path=Path(image1_path),
             image2_path=Path(image2_path),
             diffoscope_output_path=Path(diffoscope_json_path),
-            meta_diffs=MetadataDiffs(),  # TODO
+            meta_diffs=meta_diffs,
             hashed_files1=hashed_files1,
             hashed_files2=hashed_files2,
             filetype_lookup1=filetype_lookup1,

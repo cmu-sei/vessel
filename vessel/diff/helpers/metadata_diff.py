@@ -27,6 +27,7 @@
 
 from __future__ import annotations
 
+import json
 import typing
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -71,6 +72,21 @@ class MetadataDiffs:
     def to_dict_list(self) -> list[dict[str, Any]]:
         """Returns this diff as a list of dictionaries."""
         return [diff.to_dict() for diff in self.diffs]
+
+    @staticmethod
+    def load_from_file(metadata_output_path: Path) -> MetadataDiffs:
+        """Loads metadata diffs from a JSON file."""
+        with open(metadata_output_path, "r") as file:
+            data = json.load(file)
+
+        diff_list: list[MetadataDiff] = []
+        for diff_data in data:
+            diff = MetadataDiff(
+                diff_data["key"], diff_data["value1"], diff_data["value2"]
+            )
+            diff_list.append(diff)
+
+        return MetadataDiffs(diff_list)
 
 
 @dataclass
