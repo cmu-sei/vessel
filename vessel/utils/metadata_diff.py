@@ -61,6 +61,18 @@ class MetadataDiff:
 
 
 @dataclass
+class MetadataDiffs:
+    """Encapsulates a list of metadata diffs."""
+
+    diffs: list[MetadataDiff] = []
+    """List of diffs in OCI image metadata/config."""
+
+    def to_dict_list(self) -> list[dict[str, Any]]:
+        """Returns this diff as a list of dictionaries."""
+        return [diff.to_dict() for diff in self.diffs]
+
+
+@dataclass
 class MetadataFlag:
     """Represents a type of issue, and the key it is being associated to."""
 
@@ -80,7 +92,7 @@ class MetadataFlag:
 
 def compare_metadata(
     oci_image_path1: Path, oci_image_path2: Path
-) -> list[MetadataDiff]:
+) -> MetadataDiffs:
     """
     Compares two OCI image metadata (config) files, specifically for required/important fields.
 
@@ -92,7 +104,7 @@ def compare_metadata(
     """
     metadata1 = oci.get_metadata(str(oci_image_path1))
     metadata2 = oci.get_metadata(str(oci_image_path2))
-    return _compare_dicts(metadata1, metadata2)
+    return MetadataDiffs(_compare_dicts(metadata1, metadata2))
 
 
 def load_flags(flags_config: list[dict[str, Any]]) -> list[MetadataFlag]:
@@ -109,8 +121,8 @@ def load_flags(flags_config: list[dict[str, Any]]) -> list[MetadataFlag]:
 
 
 def match_flags(
-    diffs: list[MetadataDiff], flags: list[MetadataFlag]
-) -> tuple[list[MetadataDiff], FailureSummary]:
+    diff_list: MetadataDiffs, flags: list[MetadataFlag]
+) -> tuple[MetadataDiffs, FailureSummary]:
     """
     Matches flags to the given diffs, and returns update diffs with flags, as well as a match summary.
 
@@ -122,14 +134,14 @@ def match_flags(
         List of differences updated with their matched flags, as well as a summary of matches.
     """
     # Go over all diffs, and for each one, if a flag has a matching key, mark that flag in that diff.
-    for diff in diffs:
+    for diff in diff_list.diffs:
         for flag in flags:
             if diff.key == flag.key:
                 diff.matched_flag = flag
 
     # Create summary of diffs.
     summary = FailureSummary()
-    for diff in diffs:
+    for diff in diff_list.diffs:
         if not diff.matched_flag:
             summary.unknown_failures += 1
         else:
@@ -139,7 +151,7 @@ def match_flags(
                 summary.nontrivial_failures += 1
     summary.calculate_aggregated_values()
 
-    return diffs, summary
+    return diff_list, summary
 
 
 def _compare_dicts(

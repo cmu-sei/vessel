@@ -47,6 +47,7 @@ from vessel.utils.diffoscope import (
     parse_diffoscope_output,
 )
 from vessel.utils.flag import Flag
+from vessel.utils.metadata_diff import MetadataDiffs
 from vessel.utils.oci import get_manifest_digest
 from vessel.utils.skopeo import skopeo_copy
 from vessel.utils.uri import ImageURI
@@ -61,6 +62,7 @@ class DiffCommand:
     DIFFOSCOPE_OUTPUT_FILENAME = "diffoscope_output.json"
     SUMMARY_OUTPUT_FILENAME = "summary.json"
     UNIFIED_DIFF_OUTPUT_FILENAME = "unified_diffs.json"
+    METADATA_DIFF_OUTPUT_FILENAME = "meta_diffs.json"
 
     def __init__(
         self: "DiffCommand",
@@ -136,7 +138,7 @@ class DiffCommand:
                 FailureSummary(),
                 FailureSummary(),
                 [],
-                [],
+                MetadataDiffs(),
                 [],
                 {},
             )
@@ -243,7 +245,7 @@ class DiffCommand:
 
         self._summarize_and_write_outputs(
             diff_list=diff_list,
-            meta_diffs=[],
+            meta_diffs=MetadataDiffs(),
             total_failure_summary=file_failure_count,
             file_failure_summary=file_failure_count,
             meta_summary=FailureSummary(),
@@ -329,7 +331,8 @@ class DiffCommand:
                 return False
 
         with Path(
-            self.output_dir + "/" + self.DIFFOSCOPE_OUTPUT_FILENAME,
+            self.output_dir,
+            self.DIFFOSCOPE_OUTPUT_FILENAME,
         ).open() as raw_diff_file:
             diffoscope_json = json.load(raw_diff_file)
 
@@ -396,7 +399,7 @@ class DiffCommand:
         )
         self._summarize_and_write_outputs(
             diff_list=diff_list,
-            meta_diffs=[diff.to_dict() for diff in meta_diffs],
+            meta_diffs=meta_diffs,
             total_failure_summary=total_failure_summary,
             file_failure_summary=file_failure_summary,
             meta_summary=meta_summary,
@@ -440,7 +443,7 @@ class DiffCommand:
     def _summarize_and_write_outputs(
         self,
         diff_list: list[dict[str, Any]],
-        meta_diffs: list[dict[str, Any]],
+        meta_diffs: MetadataDiffs,
         total_failure_summary: FailureSummary,
         file_failure_summary: FailureSummary,
         meta_summary: FailureSummary,
@@ -486,7 +489,7 @@ class DiffCommand:
         file_failure_summary: FailureSummary,
         meta_failure_summary: FailureSummary,
         diffs: list[dict[str, Any]],
-        meta_diffs: list[dict[str, Any]],
+        meta_diffs: MetadataDiffs,
         files_summary: list[dict[str, Any]],
         checksum_summary: dict[str, Any],
     ) -> None:
@@ -559,17 +562,20 @@ class DiffCommand:
             },
             "files": files_summary or [],
             "diffs": diffs,
-            "meta_diffs": meta_diffs,
+            "meta_diffs": meta_diffs.to_dict_list(),
         }
 
-        output_dir = self.output_dir + "/"
-
-        with Path(str(output_dir) + self.SUMMARY_OUTPUT_FILENAME).open(
+        with Path(self.output_dir, self.SUMMARY_OUTPUT_FILENAME).open(
             "w",
         ) as outfile:
             outfile.write(json.dumps(summary_json, indent=4))
 
-        with Path(str(output_dir) + self.UNIFIED_DIFF_OUTPUT_FILENAME).open(
+        with Path(self.output_dir, self.UNIFIED_DIFF_OUTPUT_FILENAME).open(
             "w",
         ) as outfile:
             outfile.write(json.dumps(unified_diff_dict, indent=4))
+
+        with Path(self.output_dir, self.METADATA_DIFF_OUTPUT_FILENAME).open(
+            "w",
+        ) as outfile:
+            outfile.write(json.dumps(meta_diffs.to_dict_list(), indent=4))
