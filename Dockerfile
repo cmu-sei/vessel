@@ -12,9 +12,9 @@ RUN apt-get update && \
     skopeo=1.9.3+ds1-1+b10 \
     umoci=0.4.7+ds-3+b7 \
     libmagic-dev=1:5.44-3 \
-    libarchive-dev=3.6.2-1+deb12u2 \
-    libarchive-tools=3.6.2-1+deb12u2 \
-    sudo=1.9.13p3-1+deb12u1 \
+    libarchive-dev=3.6.2-1+deb12u3 \
+    libarchive-tools=3.6.2-1+deb12u3 \
+    sudo-ldap=1.9.13p3-1+deb12u2 \
     p7zip-full=16.02+dfsg-8 \
     r-base=4.2.2.20221110-2 \
     abootimg=0.6-1+b2 \
@@ -31,7 +31,7 @@ RUN apt-get update && \
     coreboot-utils=4.15~dfsg-3 \
     default-jdk-headless=2:1.17-74 \
     device-tree-compiler=1.6.1-4+b1 \
-    ffmpeg=7:5.1.6-0+deb12u1 \
+    ffmpeg=7:5.1.7-0+deb12u1 \
     fontforge-extras=1:20230101~dfsg-1.1~deb12u1 \
     fp-utils=3.2.2+dfsg-20 \
     genisoimage=9:1.1.11-3.4 \
@@ -45,7 +45,7 @@ RUN apt-get update && \
     llvm=1:14.0-55.7~deb12u1 \
     lz4=1.9.4-1 \
     lzip=1.23-5 \
-    mono-utils=6.8.0.105+dfsg-3.3 \
+    mono-utils=6.8.0.105+dfsg-3.3+deb12u1 \
     ocaml-nox=4.13.1-4 \
     odt2txt=0.5-7 \
     oggvideotools=0.9.1-6 \
@@ -54,14 +54,14 @@ RUN apt-get update && \
     procyon-decompiler=0.6.0-1 \
     python3-pdfminer=20221105+dfsg-1 \
     sng=1.1.0-4 \
-    sqlite3=3.40.1-2+deb12u1 \
+    sqlite3=3.40.1-2+deb12u2 \
     u-boot-tools=2023.01+dfsg-2+deb12u1 \
     tcpdump=4.99.3-1 \
     wabt=1.0.32-1 \
     xmlbeans=4.0.0-2 \
     xxd=2:9.0.1378-2+deb12u2 \
     python3-guestfs=1:1.48.6-2  \
-    ca-certificates=20230311 \
+    ca-certificates=20230311+deb12u1 \
     pipx=1.1.0-1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
