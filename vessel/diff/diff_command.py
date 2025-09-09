@@ -59,6 +59,7 @@ logger = getLogger(__name__)
 class DiffCommand:
     """Class that setups up and executes a diff operation."""
 
+    DIFF_CONFIG_FILEPATH = "../config/diff_config.yaml"
     CHECKSUM_METADATA_FILENAME = "checksum_metadata.json"
     DIFFOSCOPE_OUTPUT_FILENAME = "diffoscope_output.json"
     SUMMARY_OUTPUT_FILENAME = "summary.json"
@@ -171,9 +172,10 @@ class DiffCommand:
         else:
             self.output_dir = str(Path.cwd())
 
+        # Load configuration.
         with Path.open(
             Path(Path(__file__).resolve()).parent
-            / "../config/diff_config.yaml",
+            / DiffCommand.DIFF_CONFIG_FILEPATH,
         ) as config_file:
             try:
                 config = yaml.safe_load(config_file)
