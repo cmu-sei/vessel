@@ -244,24 +244,27 @@ class DiffCommand:
 
     def _parse_input_files(self) -> tuple[str, str, str]:
         """Parses the input files to identify which is which."""
-        path1, path2 = self.input_files[0], self.input_files[1]
-        file1, file2 = Path(path1).name, Path(path2).name
+        diffoscope_json_path = ""
+        checksum_json_path = ""
+        metadata_json_path = ""
+
+        for input_file in self.input_files:
+            input_file_name = Path(input_file).name
+            if input_file_name == self.CHECKSUM_METADATA_FILENAME:
+                checksum_json_path = input_file
+            elif input_file_name == self.METADATA_DIFF_OUTPUT_FILENAME:
+                metadata_json_path = input_file
+            else:
+                diffoscope_json_path = input_file
 
         if (
-            file1 != self.CHECKSUM_METADATA_FILENAME
-            and file2 != self.CHECKSUM_METADATA_FILENAME
+            diffoscope_json_path == ""
+            or checksum_json_path == ""
+            or metadata_json_path == ""
         ):
             raise RuntimeError(
-                "When providing two JSON files, one must be a checksum_metadata.json file."
+                "When providing JSON files, three files are needed, and one must be a checksum_metadata.json file, and another a meta_diffs.json file."
             )
-
-        checksum_json_path = (
-            path1 if file1 == self.CHECKSUM_METADATA_FILENAME else path2
-        )
-        diffoscope_json_path = (
-            path2 if file1 == self.CHECKSUM_METADATA_FILENAME else path1
-        )
-        metadata_json_path = ""  # TODO
 
         return diffoscope_json_path, checksum_json_path, metadata_json_path
 
