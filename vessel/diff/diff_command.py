@@ -211,7 +211,7 @@ class DiffCommand:
         """
         # Figure out paths for each type of JSON input file.
         try:
-            diffoscope_json_path, checksum_json_path = (
+            diffoscope_json_path, checksum_json_path, metadata_json_path = (
                 self._parse_input_files()
             )
         except RuntimeError as e:
@@ -230,6 +230,7 @@ class DiffCommand:
             image1_path=Path(image1_path),
             image2_path=Path(image2_path),
             diffoscope_output_path=Path(diffoscope_json_path),
+            meta_diffs=MetadataDiffs(),  # TODO
             hashed_files1=hashed_files1,
             hashed_files2=hashed_files2,
             filetype_lookup1=filetype_lookup1,
@@ -238,7 +239,7 @@ class DiffCommand:
 
         return True
 
-    def _parse_input_files(self) -> tuple[str, str]:
+    def _parse_input_files(self) -> tuple[str, str, str]:
         """Parses the input files to identify which is which."""
         path1, path2 = self.input_files[0], self.input_files[1]
         file1, file2 = Path(path1).name, Path(path2).name
@@ -257,8 +258,9 @@ class DiffCommand:
         diffoscope_json_path = (
             path2 if file1 == self.CHECKSUM_METADATA_FILENAME else path1
         )
+        metadata_json_path = ""  # TODO
 
-        return diffoscope_json_path, checksum_json_path
+        return diffoscope_json_path, checksum_json_path, metadata_json_path
 
     def _convert_to_oci(self: "DiffCommand") -> bool:
         """Converts images to an OCI data folder with skopeo."""
@@ -341,6 +343,11 @@ class DiffCommand:
                 logger.exception("Failed: Diff.compare_files")
                 return False
 
+        # Execute OCI image metadata comparison.
+        meta_diffs = metadata_diff.compare_metadata(
+            Path(self.oci_image_paths[0]), Path(self.oci_image_paths[1])
+        )
+
         # Call common method to parse diffs and generate output.
         diffoscope_output_path = Path(
             self.output_dir,
@@ -350,6 +357,7 @@ class DiffCommand:
             image1_path=image1_path,
             image2_path=image2_path,
             diffoscope_output_path=diffoscope_output_path,
+            meta_diffs=meta_diffs,
             hashed_files1=hashed_files1,
             hashed_files2=hashed_files2,
         )
@@ -392,6 +400,7 @@ class DiffCommand:
         image1_path: Path,
         image2_path: Path,
         diffoscope_output_path: Path,
+        meta_diffs: MetadataDiffs,
         hashed_files1: dict[str, Any],
         hashed_files2: dict[str, Any],
         filetype_lookup1: dict[str, str] | None = None,
@@ -417,10 +426,7 @@ class DiffCommand:
         )
         file_failure_summary = FailureSummary(unknown, trivial, nontrivial)
 
-        # Now compare image metadata for diffs.
-        meta_diffs = metadata_diff.compare_metadata(
-            Path(self.oci_image_paths[0]), Path(self.oci_image_paths[1])
-        )
+        # Now check flags for image metadata diffs.
         meta_diffs, meta_summary = metadata_diff.match_flags(
             meta_diffs, self.meta_flags
         )
