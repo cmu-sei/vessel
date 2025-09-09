@@ -60,12 +60,13 @@ class MetadataDiff:
         return asdict(self)
 
 
-@dataclass
 class MetadataDiffs:
     """Encapsulates a list of metadata diffs."""
 
-    diffs: list[MetadataDiff] = []
-    """List of diffs in OCI image metadata/config."""
+    def __init__(self, diffs: list[MetadataDiff] = []):
+        "Constructor."
+        self.diffs = diffs
+        """List of diffs in OCI image metadata/config."""
 
     def to_dict_list(self) -> list[dict[str, Any]]:
         """Returns this diff as a list of dictionaries."""

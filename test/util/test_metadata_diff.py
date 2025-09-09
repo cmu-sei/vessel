@@ -28,7 +28,11 @@ from pathlib import Path
 import pytest
 
 from vessel.diff.helpers import metadata_diff
-from vessel.diff.helpers.metadata_diff import MetadataDiff, MetadataFlag
+from vessel.diff.helpers.metadata_diff import (
+    MetadataDiff,
+    MetadataDiffs,
+    MetadataFlag,
+)
 from vessel.utils import skopeo
 from vessel.utils.uri import ImageURI
 
@@ -46,8 +50,8 @@ def test_compare_metadata(tmp_path: Path):
     diffs = metadata_diff.compare_metadata(
         Path(output_path1), Path(output_path2)
     )
-    print(f"Diffs: {diffs}")
-    assert len(diffs) == 5
+    print(f"Diffs: {diffs.diffs}")
+    assert len(diffs.diffs) == 5
 
 
 def test_match_flags():
@@ -60,9 +64,11 @@ def test_match_flags():
     ]
     flags = [MetadataFlag("C1", "a", "Low"), MetadataFlag("C2", "b", "High")]
 
-    updated_diffs, summary = metadata_diff.match_flags(diffs, flags)
+    updated_diffs, summary = metadata_diff.match_flags(
+        MetadataDiffs(diffs), flags
+    )
 
-    for diff in updated_diffs:
+    for diff in updated_diffs.diffs:
         if diff.key == "a":
             assert diff.matched_flag == MetadataFlag("C1", "a", "Low")
         elif diff.key == "b":
