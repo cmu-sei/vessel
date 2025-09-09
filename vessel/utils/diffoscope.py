@@ -34,6 +34,7 @@ import magic
 from vessel.utils.flag import Flag
 from vessel.utils.unified_diff import (
     Diff,
+    DiffLine,
     failures_from_difflines,
     intervals_to_str,
     make_failure_dict,
@@ -148,8 +149,7 @@ def parse_diffoscope_output(
                         as sometimes the comments that relate to a child are in
                         the parent detail
     Returns:
-        Count of unknown failures, count of flagged failures, diff list,
-        and overall file analysis summary
+        Count of unknown failures, count of flagged failures, diff list
     """
     trivial_failures_count = 0
     nontrivial_failures_count = 0
@@ -402,3 +402,258 @@ def parse_diffoscope_output(
         nontrivial_failures_count,
         diff_list,
     )
+
+
+class DiffoscopeParser:
+    """Class to parse diffoscope output."""
+
+    def __init__(
+        self: "DiffoscopeParser",
+        diffoscope_json: dict,
+        flags: list[Flag],
+    ):
+        """ """
+        self.diffoscope_json: dict = diffoscope_json
+        self.flags: list[Flag] = flags
+
+        self.unknown_failure_count: int = 0
+        self.trivial_failure_count: int = 0
+        self.nontrivial_failure_count: int = 0
+        self.diff_list = []  # Add typing
+
+    def execute(
+        self: "DiffoscopeParser",
+    ):
+        """ """
+        self._parse_detail(self.diffoscope_json)
+
+        return (
+            self.unknown_failure_count,
+            self.trivial_failure_count,
+            self.nontrivial_failure_count,
+            self.diff_list,
+        )
+
+    def _parse_detail(
+        self: "DiffoscopeParser",
+        detail: dict,
+        parent_source1: str = "",
+        parent_source2: str = "",
+        parent_comments: list[str] | None = None,
+    ):
+        if detail["unified_diff"] is not None:
+            temp_comments = []
+            if "comments" in detail:
+                temp_comments.extend(detail["comments"])
+            if parent_comments:
+                temp_comments.extend(parent_comments)
+
+            diff = Diff(
+                detail["source1"],
+                detail["source2"],
+                parent_source1,
+                parent_source2,
+                temp_comments,
+                detail["unified_diff"],
+            )
+            # Handles case where diff is found with a command such as stat {}.
+            # Diffoscope lists the source of the diff as the command that it used to get
+            # the diff, so the file path must be grabbed from the parent.
+            if not is_path(detail["source1"]) or not is_path(detail["source2"]):
+                diff.command = detail["source1"]
+                diff.source1 = parent_source1
+                diff.source2 = parent_source2
+
+            # Initialize to False to ensure one iteration through the flags.
+            # If it then is found to be binary, the rest of the lines
+            # will not be evaluated to not check binary line by line.
+            # TODO: Is this initialization needed?
+            is_binary = False
+            for minus_line, plus_line in zip(
+                diff.minus_aligned_lines,
+                diff.plus_aligned_lines,
+                strict=False,
+            ):
+                is_binary = bool(detail.get("has_internal_linenos"))
+                self._check_flags(diff, minus_line, plus_line, is_binary)
+
+                # Check so line by line comparison don't happen in binary diffs and
+                # this is after all the flags have been checked so the diff is done
+                # being evaluated
+                if is_binary:
+                    if len(diff.flagged_failures) == 0:
+                        self.unknown_failure_count += 1
+                        diff.unknown_failures.append(
+                            {
+                                "comments": [
+                                    "Flag indiff regex are not ran on binary "
+                                    "unified diff. This file did not match any "
+                                    "flags.",
+                                ],
+                            },
+                        )
+
+                    break
+
+                minus_unmatched_str = (
+                    intervals_to_str(
+                        minus_line.text,
+                        minus_line.unmatched_intervals,
+                    )
+                    if minus_line
+                    else None
+                )
+                plus_unmatched_str = (
+                    intervals_to_str(
+                        plus_line.text,
+                        plus_line.unmatched_intervals,
+                    )
+                    if plus_line
+                    else None
+                )
+                if minus_unmatched_str != plus_unmatched_str:
+                    unknown_failures_count += 1
+                    diff.unknown_failures.append(
+                        make_failure_dict(
+                            minus_line if minus_line else None,
+                            plus_line if plus_line else None,
+                            minus_unmatched_str,
+                            plus_unmatched_str,
+                        ),
+                    )
+
+            self.diff_list.append(diff.to_slim_dict())
+
+        if "details" in detail:
+            self._recurse(detail)
+
+    def _check_flags(
+        self: "DiffoscopeParser",
+        diff: Diff,
+        minus_line: DiffLine,
+        plus_line: DiffLine,
+        is_binary: bool,
+    ):
+        """ """
+        for flag in self.flags:
+            flag_matches = True
+            file_type_1 = ""
+            file_type_2 = ""
+            # Check if filepath matches flag
+            if not flag.regex["filepath"].search(
+                diff.source1,
+            ) or not flag.regex["filepath"].search(
+                diff.source2,
+            ):
+                flag_matches = False
+
+            # Check if filetype matches flag
+            if (
+                flag_matches
+                and Path(diff.source1).is_file()
+                and Path(diff.source2).is_file()
+            ):
+                file_type_1 = magic.from_file(
+                    diff.source1,
+                )
+                file_type_2 = magic.from_file(
+                    diff.source2,
+                )
+
+                if not flag.regex["filetype"].search(
+                    file_type_1,
+                ) or not flag.regex["filetype"].search(file_type_2):
+                    flag_matches = False
+
+            # Check if command matches flag
+            if flag_matches and not flag.regex["command"].search(diff.command):
+                flag_matches = False
+
+            # Check if comment matches flag
+            if flag_matches and (
+                (
+                    diff.comments != []
+                    and not any(
+                        flag.regex["comment"].search(comment) 
+                        for comment in diff.comments
+                    )
+                )
+                or (
+                    diff.comments == []
+                    and flag.regex["comment"] != re.compile(".*")
+                )
+            ):  # fmt: skip
+                flag_matches = False
+
+            # Handle a binary line that matches the flag
+            if (
+                flag_matches
+                and is_binary
+                and flag.regex["indiff"] == re.compile(".*")
+            ):
+                diff.flagged_failures.append(
+                    {
+                        "id": flag.flag_id,
+                        "description": flag.description,
+                        "metadata": getattr(flag, "metadata", False),
+                        "comments": [
+                            "Flag indiff regex are not ran on binary "
+                            "unified diff. However this matched all "
+                            "of the other criteria for this flag.",
+                        ],
+                    },
+                )
+
+            # Handle any non-binary line that matches the flag
+            elif flag_matches:
+                (
+                    flagged_failure_list,
+                    unknown_failure_list,
+                    minus_line.unmatched_intervals,
+                    plus_line.unmatched_intervals,
+                ) = failures_from_difflines(
+                    minus_line,
+                    plus_line,
+                    flag,
+                )
+                # Check to not create duplicate matches on flags that match based on filepath, filetype, command or comment
+                #     and have indiff set to ".*"
+                if flag.regex["indiff"] != re.compile(
+                    ".*"
+                ) or flag.flag_id not in [
+                    flag["id"] for flag in diff.flagged_failures
+                ]:
+                    for failure in flagged_failure_list:
+                        failure["metadata"] = getattr(flag, "metadata", False)
+                        failure["severity"] = getattr(flag, "severity", "Low")
+                        if getattr(flag, "severity") == "Low":
+                            self.trivial_failure_count += 1
+                        else:
+                            self.nontrivial_failure_count += 1
+                    self.unknown_failure_count += len(unknown_failure_list)
+                    diff.flagged_failures.extend(flagged_failure_list)
+                    diff.unknown_failures.extend(unknown_failure_list)
+
+    def _recurse(
+        self: "DiffoscopeParser",
+        detail: dict,
+    ):
+        """ """
+        umociRegex = re.compile(r"/umoci-unpack-")
+
+        for child in detail["details"]:
+            # Ignore anything without the umoci-unpack- path that shouldn't be showing in diffs
+            if (
+                child["source1"][0] != "/"
+                or child["source2"][0] != "/"
+                or (
+                    umociRegex.search(child["source1"])
+                    and umociRegex.search(child["source2"])
+                )
+            ):
+                self._parse_detail(
+                    child,
+                    detail["source1"],
+                    detail["source2"],
+                    detail.get("comments"),
+                )

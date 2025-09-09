@@ -332,18 +332,17 @@ class DiffCommand:
             self.output_dir + "/" + self.DIFFOSCOPE_OUTPUT_FILENAME,
         ).open() as raw_diff_file:
             diffoscope_json = json.load(raw_diff_file)
-
-        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
-            diffoscope_json, self.flags
-        )
+            
+        parser = DiffoscopeParser(diffoscope_json, self.flags)
+        parser.execute()
 
         self._process_and_write_results(
             Path(image1_path),
             Path(image2_path),
-            diff_list,
-            unknown,
-            trivial,
-            nontrivial,
+            parser.diff_list,
+            parser.unknown_failure_count,
+            parser.trivial_failure_count,
+            parser.nontrivial_failure_count,
         )
 
         return True
