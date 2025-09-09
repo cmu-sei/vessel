@@ -337,7 +337,7 @@ class DiffCommand:
             diffoscope_json, self.flags
         )
 
-        self._process_and_save_results(
+        self._process_and_write_results(
             Path(image1_path),
             Path(image2_path),
             diff_list,
@@ -348,7 +348,7 @@ class DiffCommand:
 
         return True
 
-    def _process_and_save_results(
+    def _process_and_write_results(
         self,
         image1_path: Path,
         image2_path: Path,
@@ -358,7 +358,7 @@ class DiffCommand:
         nontrivial_failure_count: int,
     ) -> None:
         """
-        Hash image directories, save checksum metadata, calculate metadata diff, summarize, and write outputs
+        Hash image directories, write checksum metadata, calculate metadata diff, summarize, and write outputs
 
         Args:
             image1_path: Path to first image filesystem
