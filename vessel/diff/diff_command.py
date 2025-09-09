@@ -209,6 +209,37 @@ class DiffCommand:
         If JSON files are provided, and they have the expected names,
         run the comparison and return the result. Otherwise, log an error and return False.
         """
+        # Figure out paths for each type of JSON input file.
+        try:
+            diffoscope_json_path, checksum_json_path = (
+                self._parse_input_files()
+            )
+        except RuntimeError as e:
+            logger.error(str(e))
+            return False
+
+        # Load checksum and get filetype lookups that the parser will need
+        hashed_files1, hashed_files2, image1_path, image2_path = (
+            load_checksum_metadata(checksum_json_path)
+        )
+        filetype_lookup1 = {k: v.filetype for k, v in hashed_files1.items()}
+        filetype_lookup2 = {k: v.filetype for k, v in hashed_files2.items()}
+
+        # Call common method to parse diffs and generate output.
+        self._process_and_save_results(
+            image1_path=Path(image1_path),
+            image2_path=Path(image2_path),
+            diffoscope_output_path=Path(diffoscope_json_path),
+            hashed_files1=hashed_files1,
+            hashed_files2=hashed_files2,
+            filetype_lookup1=filetype_lookup1,
+            filetype_lookup2=filetype_lookup2,
+        )
+
+        return True
+
+    def _parse_input_files(self) -> tuple[str, str]:
+        """Parses the input files to identify which is which."""
         path1, path2 = self.input_files[0], self.input_files[1]
         file1, file2 = Path(path1).name, Path(path2).name
 
@@ -216,10 +247,9 @@ class DiffCommand:
             file1 != self.CHECKSUM_METADATA_FILENAME
             and file2 != self.CHECKSUM_METADATA_FILENAME
         ):
-            logger.error(
+            raise RuntimeError(
                 "When providing two JSON files, one must be a checksum_metadata.json file."
             )
-            return False
 
         checksum_json_path = (
             path1 if file1 == self.CHECKSUM_METADATA_FILENAME else path2
@@ -228,38 +258,7 @@ class DiffCommand:
             path2 if file1 == self.CHECKSUM_METADATA_FILENAME else path1
         )
 
-        # Load checksum metadata first so we can pass filetype lookups to the parser
-        hashed_files1, hashed_files2, image1_path, image2_path = (
-            load_checksum_metadata(checksum_json_path)
-        )
-        filetype_lookup1 = {k: v.filetype for k, v in hashed_files1.items()}
-        filetype_lookup2 = {k: v.filetype for k, v in hashed_files2.items()}
-
-        with Path(diffoscope_json_path).open() as f:
-            diffoscope_json = json.load(f)
-
-        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
-            diffoscope_json,
-            self.flags,
-            filetype_lookup1=filetype_lookup1,
-            filetype_lookup2=filetype_lookup2,
-        )
-
-        file_failure_count = FailureSummary(unknown, trivial, nontrivial)
-
-        self._summarize_and_write_outputs(
-            diff_list=diff_list,
-            meta_diffs=MetadataDiffs(),
-            total_failure_summary=file_failure_count,
-            file_failure_summary=file_failure_count,
-            meta_summary=FailureSummary(),
-            hashed_files1=hashed_files1,
-            hashed_files2=hashed_files2,
-            image1_path=image1_path,
-            image2_path=image2_path,
-        )
-
-        return True
+        return diffoscope_json_path, checksum_json_path
 
     def _convert_to_oci(self: "DiffCommand") -> bool:
         """Converts images to an OCI data folder with skopeo."""
@@ -285,7 +284,9 @@ class DiffCommand:
         Returns:
             True on success, else False
         """
-        return self._compare(self.oci_image_paths[0], self.oci_image_paths[1])
+        return self._compare(
+            Path(self.oci_image_paths[0]), Path(self.oci_image_paths[1])
+        )
 
     def _compare_files(self: "DiffCommand") -> bool:
         """Compare final image filesystem.
@@ -301,12 +302,12 @@ class DiffCommand:
         )
 
         return self._compare(
-            f"{self.oci_runtime_paths[0]}/rootfs",
-            f"{self.oci_runtime_paths[1]}/rootfs",
+            Path(f"{self.oci_runtime_paths[0]}/rootfs"),
+            Path(f"{self.oci_runtime_paths[1]}/rootfs"),
         )
 
     def _compare(
-        self: "DiffCommand", image1_path: str, image2_path: str
+        self: "DiffCommand", image1_path: Path, image2_path: Path
     ) -> bool:
         """Compares the given image folders.
 
@@ -317,11 +318,17 @@ class DiffCommand:
         Returns:
             True on success, else False
         """
+        # First hash files.
+        hashed_files1, hashed_files2 = self._hash_and_write_checksum_metadata(
+            image1_path, image2_path
+        )
+
+        # Execute diffoscope.
         cmd = build_diffoscope_command(
             self.output_dir,
             self.DIFFOSCOPE_OUTPUT_FILENAME,
-            image1_path,
-            image2_path,
+            str(image1_path),
+            str(image2_path),
             self.mode,
         )
         try:
@@ -334,84 +341,20 @@ class DiffCommand:
                 logger.exception("Failed: Diff.compare_files")
                 return False
 
-        with Path(
+        # Call common method to parse diffs and generate output.
+        diffoscope_output_path = Path(
             self.output_dir,
             self.DIFFOSCOPE_OUTPUT_FILENAME,
-        ).open() as raw_diff_file:
-            diffoscope_json = json.load(raw_diff_file)
-
-        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
-            diffoscope_json, self.flags
         )
-
         self._process_and_save_results(
-            Path(image1_path),
-            Path(image2_path),
-            diff_list,
-            unknown,
-            trivial,
-            nontrivial,
+            image1_path=image1_path,
+            image2_path=image2_path,
+            diffoscope_output_path=diffoscope_output_path,
+            hashed_files1=hashed_files1,
+            hashed_files2=hashed_files2,
         )
 
         return True
-
-    def _process_and_save_results(
-        self,
-        image1_path: Path,
-        image2_path: Path,
-        diff_list: list[dict[str, Any]],
-        unknown_failure_count: int,
-        trivial_failure_count: int,
-        nontrivial_failure_count: int,
-    ) -> None:
-        """
-        Hash image directories, save checksum metadata, calculate metadata diff, summarize, and write outputs
-
-        Args:
-            image1_path: Path to first image filesystem
-            image2_path: Path to second image filesystem
-            diff_list: List of detailed differences returned by diffoscope parsing
-            unknown_failure_count: Count of unknown differences
-            trivial_failure_count: Count of trivial differences
-            nontrivial_failure_count: Count of nontrivial differences
-        """
-        hashed_files1, hashed_files2 = self._hash_and_write_checksum_metadata(
-            image1_path, image2_path
-        )
-
-        file_failure_summary = FailureSummary(
-            unknown_failure_count,
-            trivial_failure_count,
-            nontrivial_failure_count,
-        )
-
-        meta_diffs = metadata_diff.compare_metadata(
-            Path(self.oci_image_paths[0]), Path(self.oci_image_paths[1])
-        )
-        meta_diffs, meta_summary = metadata_diff.match_flags(
-            meta_diffs, self.meta_flags
-        )
-
-        # Update totals with metadata/config failures.
-        total_failure_summary = FailureSummary(
-            unknown_failure_count=file_failure_summary.unknown_failures
-            + meta_summary.unknown_failures,
-            trivial_failure_count=file_failure_summary.trivial_failures
-            + meta_summary.trivial_failures,
-            nontrivial_failure_count=file_failure_summary.nontrivial_failures
-            + meta_summary.nontrivial_failures,
-        )
-        self._summarize_and_write_outputs(
-            diff_list=diff_list,
-            meta_diffs=meta_diffs,
-            total_failure_summary=total_failure_summary,
-            file_failure_summary=file_failure_summary,
-            meta_summary=meta_summary,
-            hashed_files1=hashed_files1,
-            hashed_files2=hashed_files2,
-            image1_path=str(image1_path),
-            image2_path=str(image2_path),
-        )
 
     def _hash_and_write_checksum_metadata(
         self,
@@ -431,12 +374,12 @@ class DiffCommand:
         hashed_files1 = hash_folder_contents(image1_path)
         hashed_files2 = hash_folder_contents(image2_path)
 
-        metadata_path = str(
+        checksum_path = str(
             Path(self.output_dir) / self.CHECKSUM_METADATA_FILENAME
         )
 
         write_checksum_metadata(
-            metadata_path,
+            checksum_path,
             hashed_files1,
             hashed_files2,
             image1_path=str(image1_path),
@@ -444,39 +387,64 @@ class DiffCommand:
         )
         return hashed_files1, hashed_files2
 
-    def _summarize_and_write_outputs(
+    def _process_and_save_results(
         self,
-        diff_list: list[dict[str, Any]],
-        meta_diffs: MetadataDiffs,
-        total_failure_summary: FailureSummary,
-        file_failure_summary: FailureSummary,
-        meta_summary: FailureSummary,
+        image1_path: Path,
+        image2_path: Path,
+        diffoscope_output_path: Path,
         hashed_files1: dict[str, Any],
         hashed_files2: dict[str, Any],
-        image1_path: str,
-        image2_path: str,
+        filetype_lookup1: dict[str, str] | None = None,
+        filetype_lookup2: dict[str, str] | None = None,
     ) -> None:
-        """Generate checksum summaries and write output
+        """
+        Parses both diffoscope and metadata/config diffs, creates summaries and writes outputs.
 
         Args:
-            diff_list: Diffs returned by diffoscope parsing
-            meta_diffs: Diffs returned by metadata/config comparison
-            total_failure_summary: Summary of all failures in comparison
-            file_failure_summary: Summary of failures in file comparison
-            meta_failure_summary: Summary of failures in metadata/config comparison
-            hashed_files1: Hash map for image 1 (path to metadata)
-            hashed_files2: Hash map for image 2 (path to metadata)
-            image1_path: Path to first image filesystem
-            image2_path: Path to second image filesystem
+            image1_path, image2_path: Path to first and second image filesystem
+            diffoscope_output_path: The path to diffoscope output JSON
+            hashed_files1, hashed_files2: Hashes file info for both images
+            filetype_lookup1, filetype_lookup2: Filetype info for both images
         """
+        # First load diffoscope output and parse it for diffs.
+        with diffoscope_output_path.open() as raw_diff_file:
+            diffoscope_json = json.load(raw_diff_file)
+        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
+            diffoscope_json,
+            self.flags,
+            filetype_lookup1=filetype_lookup1,
+            filetype_lookup2=filetype_lookup2,
+        )
+        file_failure_summary = FailureSummary(unknown, trivial, nontrivial)
+
+        # Now compare image metadata for diffs.
+        meta_diffs = metadata_diff.compare_metadata(
+            Path(self.oci_image_paths[0]), Path(self.oci_image_paths[1])
+        )
+        meta_diffs, meta_summary = metadata_diff.match_flags(
+            meta_diffs, self.meta_flags
+        )
+
+        # Create totals with metadata/config failures.
+        total_failure_summary = FailureSummary(
+            unknown_failure_count=file_failure_summary.unknown_failures
+            + meta_summary.unknown_failures,
+            trivial_failure_count=file_failure_summary.trivial_failures
+            + meta_summary.trivial_failures,
+            nontrivial_failure_count=file_failure_summary.nontrivial_failures
+            + meta_summary.nontrivial_failures,
+        )
+
+        # Create summaries for hashes and checksum.
         files_summary, checksum_summary = generate_filesummary_and_checksum(
             diff_list,
             hashed_files1=hashed_files1,
             hashed_files2=hashed_files2,
-            image1_path=image1_path,
-            image2_path=image2_path,
+            image1_path=str(image1_path),
+            image2_path=str(image2_path),
         )
 
+        # Write outputs to files.
         self._write_to_files(
             total_failure_summary=total_failure_summary,
             file_failure_summary=file_failure_summary,
