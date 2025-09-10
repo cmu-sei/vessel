@@ -40,49 +40,43 @@ def test_build_diffoscope_command():
     output_file = "diff.json"
     path1 = "/test_path/file1"
     path2 = "/test_path/file2"
-    exclude_params = [
-        "--exclude-directory-metadata",
-        "no",
-        "--profile",
-        f"{output_dir}/profile.txt",
-        "--exclude-command",
-        r"^readelf.*",
-        "--exclude-command",
-        r"^objdump.*",
-        "--exclude-command",
-        r"^strings.*",
-        "--exclude-command",
-        r"^xxd.*",
-    ]
 
-    expected_cmd_file = [
-        "diffoscope",
-        "--json",
-        "/tmp/diff.json",
-        "--new-file",
-        path1,
-        path2,
-    ]
-    expected_cmd_file.extend(exclude_params)
-    assert (
-        build_diffoscope_command(output_dir, output_file, path1, path2, "file")
-        == expected_cmd_file
-    )
-
-    expected_cmd_image = [
-        "diffoscope",
-        "--json",
-        f"{output_dir}/{output_file}",
-        path1,
-        path2,
-    ]
-    expected_cmd_image.extend(exclude_params)
-    assert (
-        build_diffoscope_command(
-            output_dir, output_file, path1, path2, "image"
+    def make_expected_output(profile_enabled):
+        expected = [
+            "diffoscope",
+            "--json",
+            f"{output_dir}/{output_file}",
+            "--new-file",
+            path1,
+            path2,
+            "--exclude-directory-metadata",
+            "no",
+        ]
+        if profile_enabled:
+            expected.extend(["--profile", f"{output_dir}/profile.txt"])
+        expected.extend(
+            [
+                "--exclude-command",
+                r"^readelf.*",
+                "--exclude-command",
+                r"^objdump.*",
+                "--exclude-command",
+                r"^strings.*",
+                "--exclude-command",
+                r"^xxd.*",
+            ]
         )
-        == expected_cmd_image
-    )
+        return expected
+
+    # without profile
+    assert build_diffoscope_command(
+        output_dir, output_file, path1, path2, "file", profile_enabled=False
+    ) == make_expected_output(False)
+
+    # with profile
+    assert build_diffoscope_command(
+        output_dir, output_file, path1, path2, "file", profile_enabled=True
+    ) == make_expected_output(True)
 
 
 @pytest.mark.parametrize(
