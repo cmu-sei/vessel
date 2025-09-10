@@ -259,73 +259,21 @@ class DiffoscopeParser:
         """ """
         for flag in self.flags:
             flag_matches = True
-            file_type_1 = ""
-            file_type_2 = ""
+            
             # Check if filepath matches flag
-            if not flag.regex["filepath"].search(
-                diff.source1,
-            ) or not flag.regex["filepath"].search(
-                diff.source2,
-            ):
-                flag_matches = False
+            flag_matches = self._check_flag_filepath(flag, diff.source1, diff.source2)
 
-            #  - If both files exist locally, use magic library for data type.
-            #  - Else, use types from the metadata.
+            # Check if filetype matches flag
             if flag_matches:
-                source_1_exists = Path(diff.source1).is_file()
-                source_2_exists = Path(diff.source2).is_file()
-                if source_1_exists and source_2_exists:
-                    file_type_1 = magic.from_file(diff.source1)
-                    file_type_2 = magic.from_file(diff.source2)
-                    if not flag.regex["filetype"].search(
-                        file_type_1
-                    ) or not flag.regex["filetype"].search(file_type_2):
-                        flag_matches = False
-                else:
-                    # Local file does not exist: try checksum metadata lookups.
-                    if (
-                        self.filetype_lookup1 is not None
-                        and self.filetype_lookup2 is not None
-                    ):
-                        file_type_1 = self.filetype_lookup1.get(
-                            diff.source1, ""
-                        )
-                        file_type_2 = self.filetype_lookup2.get(
-                            diff.source2, ""
-                        )
-
-                        if file_type_1 and file_type_2:
-                            if not flag.regex["filetype"].search(
-                                file_type_1
-                            ) or not flag.regex["filetype"].search(
-                                file_type_2
-                            ):
-                                flag_matches = False
-                    else:
-                        # We want to keep the flag match as it is if no look up dict was passed
-                        pass
+                flag_matches = self._check_flag_filetype(flag, diff.source1, diff.source2)
 
             # Check if command matches flag
-            if flag_matches and not flag.regex["command"].search(
-                diff.command
-            ):
-                flag_matches = False
+            if flag_matches:
+                flag_matches = self._check_flag_comand(flag, diff.command)
 
             # Check if comment matches flag
-            if flag_matches and (
-                (
-                    diff.comments != []
-                    and not any(
-                        flag.regex["comment"].search(comment) 
-                        for comment in diff.comments
-                    )
-                )
-                or (
-                    diff.comments == []
-                    and flag.regex["comment"] != re.compile(".*")
-                )
-            ):  # fmt: skip
-                flag_matches = False
+            if flag_matches:
+                flag_matches = self._check_flag_comment(flag, diff.comments)
 
             # Handle a binary line that matches the flag
             if (
@@ -379,6 +327,67 @@ class DiffoscopeParser:
                     self.unknown_failure_count += len(unknown_failure_list)
                     diff.flagged_failures.extend(flagged_failure_list)
                     diff.unknown_failures.extend(unknown_failure_list)
+
+    def _check_flag_filepath(self: "DiffoscopeParser", flag: Flag, source1: str, source2: str) -> bool:
+        """ """
+        if not flag.regex["filepath"].search(source1) or not flag.regex["filepath"].search(source2):
+            return False
+        else:
+            return True
+
+    def _check_flag_filetype(self: "DiffoscopeParser", flag: Flag, source1: str, source2: str) -> bool:
+        """
+            If both files exist locally, use magic library for data type.
+            Else, use types from the metadata.
+        """
+        source_1_exists = Path(source1).is_file()
+        source_2_exists = Path(source2).is_file()
+        if source_1_exists and source_2_exists:
+            file_type_1 = magic.from_file(source1)
+            file_type_2 = magic.from_file(source2)
+            if not flag.regex["filetype"].search(
+                file_type_1
+            ) or not flag.regex["filetype"].search(file_type_2):
+                return False
+        else:
+            # Local file does not exist: try checksum metadata lookups.
+            if (
+                self.filetype_lookup1 is not None
+                and self.filetype_lookup2 is not None
+            ):
+                file_type_1 = self.filetype_lookup1.get(
+                    source1, ""
+                )
+                file_type_2 = self.filetype_lookup2.get(
+                    source2, ""
+                )
+
+                if file_type_1 and file_type_2:
+                    if not flag.regex["filetype"].search(
+                        file_type_1
+                    ) or not flag.regex["filetype"].search(
+                        file_type_2
+                    ):
+                        return False
+        
+        return True
+        
+    def _check_flag_comand(self: "DiffoscopeParser", flag: Flag, command: str) -> bool:
+        """ """
+        if not flag.regex["command"].search(command):
+            return False
+        else:
+            return True
+        
+    def _check_flag_comment(self: "DiffoscopeParser", flag: Flag, comments: list) -> bool:
+        if comments != [] and not any(flag.regex["comment"].search(comment) for comment in comments):
+            return False
+        elif comments == [] and flag.regex["comment"] != re.compile(".*"):
+            return False
+        else:
+            return True
+    
+
 
     def _recurse(
         self: "DiffoscopeParser",
