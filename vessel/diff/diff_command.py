@@ -413,13 +413,10 @@ class DiffCommand:
         # First load diffoscope output and parse it for diffs.
         with diffoscope_output_path.open() as raw_diff_file:
             diffoscope_json = json.load(raw_diff_file)
-        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
-            diffoscope_json,
-            self.flags,
-            filetype_lookup1=filetype_lookup1,
-            filetype_lookup2=filetype_lookup2,
-        )
-        file_failure_summary = FailureSummary(unknown, trivial, nontrivial)
+
+        parser = DiffoscopeParser(diffoscope_json, self.flags, filetype_lookup1, filetype_lookup2)
+        parser.execute()
+        file_failure_summary = FailureSummary(parser.unknown_failure_count, parser.trivial_failure_count, parser.nontrivial_failure_count)
 
         # Now check flags for image metadata diffs.
         meta_diffs, meta_summary = metadata_diff.match_flags(
@@ -438,7 +435,7 @@ class DiffCommand:
 
         # Create summaries for hashes and checksum.
         files_summary, checksum_summary = generate_filesummary_and_checksum(
-            diff_list,
+            parser.diff_list,
             hashed_files1=hashed_files1,
             hashed_files2=hashed_files2,
             image1_path=str(image1_path),
@@ -450,7 +447,7 @@ class DiffCommand:
             total_failure_summary=total_failure_summary,
             file_failure_summary=file_failure_summary,
             meta_failure_summary=meta_summary,
-            diffs=diff_list,
+            diffs=parser.diff_list,
             meta_diffs=meta_diffs,
             files_summary=files_summary,
             checksum_summary=checksum_summary,
