@@ -100,21 +100,21 @@ class DiffCommand:
         if len(self.input_files) < 2:
             logger.error(
                 "At least 2 inputs required. Acceptable values are 2 image paths, "
-                "or 2 JSON files (diffoscope output and checksum metadata)"
+                "or 3 JSON files (diffoscope output and checksum metadata)"
             )
             return False
 
-        if len(self.input_files) > 2:
+        if len(self.input_files) > 3:
             logger.error(
                 "Too many inputs provided. Acceptable values are 2 image paths, "
-                "or 2 JSON files (diffoscope output and checksum metadata)"
+                "or 3 JSON files (diffoscope output and checksum metadata)"
             )
             return False
 
         if all(f.endswith(".json") for f in self.input_files):
             if self.mode != "json":
                 logger.error(
-                    "Two JSON files detected but mode is not 'json' "
+                    "JSON files detected but mode is not 'json' "
                     "Please rerun with -m json"
                 )
                 return False
