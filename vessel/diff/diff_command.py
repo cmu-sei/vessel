@@ -100,14 +100,14 @@ class DiffCommand:
         if len(self.input_files) < 2:
             logger.error(
                 "At least 2 inputs required. Acceptable values are 2 image paths, "
-                "or 3 JSON files (diffoscope output and checksum metadata)"
+                f"or 3 JSON files ({self.DIFFOSCOPE_OUTPUT_FILENAME}, {self.CHECKSUM_METADATA_FILENAME} and {self.METADATA_DIFF_OUTPUT_FILENAME})"
             )
             return False
 
         if len(self.input_files) > 3:
             logger.error(
                 "Too many inputs provided. Acceptable values are 2 image paths, "
-                "or 3 JSON files (diffoscope output and checksum metadata)"
+                f"or 3 JSON files ({self.DIFFOSCOPE_OUTPUT_FILENAME}, {self.CHECKSUM_METADATA_FILENAME} and {self.METADATA_DIFF_OUTPUT_FILENAME})"
             )
             return False
 
@@ -250,12 +250,12 @@ class DiffCommand:
 
         for input_file in self.input_files:
             input_file_name = Path(input_file).name
-            if input_file_name == self.CHECKSUM_METADATA_FILENAME:
+            if input_file_name == self.DIFFOSCOPE_OUTPUT_FILENAME:
+                diffoscope_json_path = input_file
+            elif input_file_name == self.CHECKSUM_METADATA_FILENAME:
                 checksum_json_path = input_file
             elif input_file_name == self.METADATA_DIFF_OUTPUT_FILENAME:
                 metadata_json_path = input_file
-            else:
-                diffoscope_json_path = input_file
 
         if (
             diffoscope_json_path == ""
@@ -263,7 +263,7 @@ class DiffCommand:
             or metadata_json_path == ""
         ):
             raise RuntimeError(
-                "When providing JSON files, three files are needed, and one must be a checksum_metadata.json file, and another a meta_diffs.json file."
+                f"Three files are needed for the JSON comparison mode: {self.DIFFOSCOPE_OUTPUT_FILENAME}, {self.CHECKSUM_METADATA_FILENAME} and {self.METADATA_DIFF_OUTPUT_FILENAME}"
             )
 
         return diffoscope_json_path, checksum_json_path, metadata_json_path
