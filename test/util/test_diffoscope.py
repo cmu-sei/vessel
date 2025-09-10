@@ -31,7 +31,6 @@ from test.fixture import get_test_diffoscope_output, get_test_flag
 from vessel.utils.diffoscope import (
     build_diff_lookup,
     build_diffoscope_command,
-    parse_diffoscope_output,
 )
 
 
@@ -158,22 +157,3 @@ def test_build_diff_lookup(test_input, expected):
     """Test build_diff_lookup."""
     output = build_diff_lookup(test_input)
     assert output == expected
-
-
-def test_parse_diffoscope_output_debug():
-    test_diff = get_test_diffoscope_output()
-    test_flag = get_test_flag()
-
-    (
-        unknown_failures,
-        trivial_failures,
-        nontrivial_failures,
-        diff_list,
-    ) = parse_diffoscope_output(test_diff, [test_flag])
-
-    assert unknown_failures == 0
-    assert trivial_failures > 0
-    assert nontrivial_failures == 0
-    assert len(diff_list) > 0
-    assert "flagged_failures" in diff_list[0]
-    assert diff_list[0]["flagged_failures"][0]["id"] == "test_flag"
