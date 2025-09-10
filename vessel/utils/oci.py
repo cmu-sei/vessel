@@ -33,19 +33,19 @@ from vessel.utils import skopeo
 from vessel.utils.uri import ImageURI
 
 
-def get_manifest_digest(unpacked_path: str) -> str:
+def get_manifest_digest(oci_image_path: str) -> str:
     """Return a manifest digest from a runtime bundle OCI dir.
 
     From a given a runtime bundle OCI directory, reads the index file
     and returns the manifest hash.
 
     Args:
-        unpacked_path: The path to the unpacked OCI image.
+        oci_image_path: The path to the folder with the OCI image.
 
     Returns:
         Manifest hash as str
     """
-    with Path(f"{unpacked_path}/index.json").open() as index_file:
+    with Path(f"{oci_image_path}/index.json").open() as index_file:
         index_json = json.load(index_file)
 
     # TODO: If there are ever multiple manifests, ensure this selects the

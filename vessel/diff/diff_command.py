@@ -37,7 +37,7 @@ import yaml
 from vessel.diff.helpers import metadata_diff
 from vessel.diff.helpers.failure import FailureSummary
 from vessel.diff.helpers.metadata_diff import MetadataDiffs
-from vessel.utils import umoci
+from vessel.utils import oci, umoci
 from vessel.utils.checksum import (
     generate_filesummary_and_checksum,
     hash_folder_contents,
@@ -49,7 +49,6 @@ from vessel.utils.diffoscope import (
     parse_diffoscope_output,
 )
 from vessel.utils.flag import Flag
-from vessel.utils.oci import get_manifest_digest
 from vessel.utils.skopeo import skopeo_copy
 from vessel.utils.uri import ImageURI
 
@@ -94,65 +93,59 @@ class DiffCommand:
         Returns:
             True on success, else False
         """
-        if not self._setup():
-            return False
+        try:
+            self._setup()
 
-        if len(self.input_files) < 2:
-            logger.error(
-                "At least 2 inputs required. Acceptable values are 2 image paths, "
-                f"or 3 JSON files ({self.DIFFOSCOPE_OUTPUT_FILENAME}, {self.CHECKSUM_METADATA_FILENAME} and {self.METADATA_DIFF_OUTPUT_FILENAME})"
+            if self.mode == "json":
+                return self._compare_json_diff_outputs()
+            elif self.mode == "image" or self.mode == "file":
+                if all(f.endswith(".json") for f in self.input_files):
+                    raise RuntimeError(
+                        "JSON files detected but mode is not 'json' "
+                        "Please rerun with -m json"
+                    )
+
+                if len(self.input_files) != 2:
+                    raise RuntimeError(
+                        "Two image paths are required for image or file mode."
+                    )
+
+                logger.info("Images to be compared:")
+                logger.info("- %s", self.input_files[0])
+                logger.info("- %s", self.input_files[1])
+
+                self._convert_to_oci()
+
+                # Quick check to avoid detailed image comparison if manifests are the same.
+                if oci.get_manifest_digest(
+                    self.oci_image_paths[0]
+                ) == oci.get_manifest_digest(self.oci_image_paths[1]):
+                    logger.info("Both images are identical")
+                    self._write_to_files(
+                        FailureSummary(),
+                        FailureSummary(),
+                        FailureSummary(),
+                        [],
+                        MetadataDiffs(),
+                        [],
+                        {},
+                    )
+                    return True
+
+                if self.mode == "image":
+                    return self._compare_images()
+                elif self.mode == "file":
+                    return self._compare_files()
+
+            # If we get here, invalid mode was provided.
+            raise RuntimeError(
+                "Invalid mode selected. Choose from: image, file, json"
             )
+        except RuntimeError as e:
+            logger.error(str(e))
             return False
 
-        if len(self.input_files) > 3:
-            logger.error(
-                "Too many inputs provided. Acceptable values are 2 image paths, "
-                f"or 3 JSON files ({self.DIFFOSCOPE_OUTPUT_FILENAME}, {self.CHECKSUM_METADATA_FILENAME} and {self.METADATA_DIFF_OUTPUT_FILENAME})"
-            )
-            return False
-
-        if all(f.endswith(".json") for f in self.input_files):
-            if self.mode != "json":
-                logger.error(
-                    "JSON files detected but mode is not 'json' "
-                    "Please rerun with -m json"
-                )
-                return False
-            return self._compare_json_diff_outputs()
-
-        # Image or file mode
-        logger.info("Images to be compared:")
-        logger.info("- %s", self.input_files[0])
-        logger.info("- %s", self.input_files[1])
-
-        if not self._convert_to_oci():
-            return False
-
-        if self.mode == "image":
-            return self._compare_images()
-
-        if get_manifest_digest(self.oci_image_paths[0]) == get_manifest_digest(
-            self.oci_image_paths[1]
-        ):
-            logger.info("All layers are identical")
-            self._write_to_files(
-                FailureSummary(),
-                FailureSummary(),
-                FailureSummary(),
-                [],
-                MetadataDiffs(),
-                [],
-                {},
-            )
-            return True
-
-        if self.mode == "file":
-            return self._compare_files()
-
-        logger.error("Invalid mode selected. Choose from: image, file, json")
-        return False
-
-    def _setup(self: "DiffCommand") -> bool:
+    def _setup(self: "DiffCommand"):
         """Sets up a diff operation.
 
         - If necessary, creates a temporary directory for intermediate results.
@@ -198,10 +191,7 @@ class DiffCommand:
                     self.flags.append(temp_flag)
                 self.meta_flags = metadata_diff.load_flags(config["metaflags"])
             except yaml.YAMLError:
-                logger.exception("Error reading the yaml config file.")
-                return False
-
-        return True
+                raise RuntimeError("Error reading the yaml config file.")
 
     def _compare_json_diff_outputs(self) -> bool:
         """
@@ -210,13 +200,9 @@ class DiffCommand:
         run the comparison and return the result. Otherwise, log an error and return False.
         """
         # Figure out paths for each type of JSON input file.
-        try:
-            diffoscope_json_path, checksum_json_path, metadata_json_path = (
-                self._parse_input_files()
-            )
-        except RuntimeError as e:
-            logger.error(str(e))
-            return False
+        diffoscope_json_path, checksum_json_path, metadata_json_path = (
+            self._parse_json_input_files()
+        )
 
         # Load checksum and get filetype lookups that the parser will need
         hashed_files1, hashed_files2, image1_path, image2_path = (
@@ -242,8 +228,13 @@ class DiffCommand:
 
         return True
 
-    def _parse_input_files(self) -> tuple[str, str, str]:
-        """Parses the input files to identify which is which."""
+    def _parse_json_input_files(self) -> tuple[str, str, str]:
+        """Parses the JSON input files to identify which is which."""
+        if len(self.input_files) != 3:
+            raise RuntimeError(
+                f"Three JSON files are needed for JSON comparison mode ({self.DIFFOSCOPE_OUTPUT_FILENAME}, {self.CHECKSUM_METADATA_FILENAME} and {self.METADATA_DIFF_OUTPUT_FILENAME})"
+            )
+
         diffoscope_json_path = ""
         checksum_json_path = ""
         metadata_json_path = ""
@@ -263,12 +254,12 @@ class DiffCommand:
             or metadata_json_path == ""
         ):
             raise RuntimeError(
-                f"Three files are needed for the JSON comparison mode: {self.DIFFOSCOPE_OUTPUT_FILENAME}, {self.CHECKSUM_METADATA_FILENAME} and {self.METADATA_DIFF_OUTPUT_FILENAME}"
+                f"At least one of the JSON input files did not have its expected names. The following names need to be used: {self.DIFFOSCOPE_OUTPUT_FILENAME}, {self.CHECKSUM_METADATA_FILENAME} and {self.METADATA_DIFF_OUTPUT_FILENAME}"
             )
 
         return diffoscope_json_path, checksum_json_path, metadata_json_path
 
-    def _convert_to_oci(self: "DiffCommand") -> bool:
+    def _convert_to_oci(self: "DiffCommand"):
         """Converts images to an OCI data folder with skopeo."""
         self.image_uris = [
             ImageURI(container_transport)
@@ -284,14 +275,13 @@ class DiffCommand:
             for image_path in self.image_uris
         ]
 
-        return True
-
     def _compare_images(self: "DiffCommand") -> bool:
         """Compares two images directly.
 
         Returns:
             True on success, else False
         """
+
         return self._compare(
             Path(self.oci_image_paths[0]), Path(self.oci_image_paths[1])
         )
