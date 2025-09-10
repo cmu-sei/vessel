@@ -41,7 +41,7 @@ def test_build_diffoscope_command():
     path1 = "/test_path/file1"
     path2 = "/test_path/file2"
 
-    def make_expected(profile_enabled: bool) -> list[str]:
+    def make_expected_output(profile_enabled):
         expected = [
             "diffoscope",
             "--json",
@@ -71,12 +71,12 @@ def test_build_diffoscope_command():
     # without profile
     assert build_diffoscope_command(
         output_dir, output_file, path1, path2, "file", profile_enabled=False
-    ) == make_expected(False)
+    ) == make_expected_output(False)
 
     # with profile
     assert build_diffoscope_command(
         output_dir, output_file, path1, path2, "file", profile_enabled=True
-    ) == make_expected(True)
+    ) == make_expected_output(True)
 
 
 @pytest.mark.parametrize(
