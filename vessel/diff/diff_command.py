@@ -145,14 +145,11 @@ class DiffCommand:
             logger.error(str(e))
             return False
 
-    def _setup(self: "DiffCommand"):
+    def _setup(self: "DiffCommand") -> None:
         """Sets up a diff operation.
 
         - If necessary, creates a temporary directory for intermediate results.
         - Reads in the flags
-
-        Returns:
-            True on success, else False
         """
         if self.data_dir:
             Path(self.data_dir).mkdir(parents=True, exist_ok=True)
@@ -186,12 +183,11 @@ class DiffCommand:
                             flag["indiff"],
                         )
                     except ValueError as e:
-                        logger.exception("Error with flag: %s", e)
-                        return False
+                        raise RuntimeError("Error with flag: %s", e)
                     self.flags.append(temp_flag)
                 self.meta_flags = metadata_diff.load_flags(config["metaflags"])
-            except yaml.YAMLError:
-                raise RuntimeError("Error reading the yaml config file.")
+            except yaml.YAMLError as e:
+                raise RuntimeError("Error reading the yaml config file.", e)
 
     def _compare_json_diff_outputs(self) -> bool:
         """
