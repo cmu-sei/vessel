@@ -415,7 +415,6 @@ class DiffCommand:
             diffoscope_json = json.load(raw_diff_file)
 
         parser = DiffoscopeParser(diffoscope_json, self.flags, filetype_lookup1, filetype_lookup2)
-        parser.execute()
         file_failure_summary = FailureSummary(parser.unknown_failure_count, parser.trivial_failure_count, parser.nontrivial_failure_count)
 
         # Now check flags for image metadata diffs.

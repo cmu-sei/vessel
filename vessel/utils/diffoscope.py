@@ -143,18 +143,7 @@ class DiffoscopeParser:
         self.nontrivial_failure_count: int = 0
         self.diff_list = []  # Add typing
 
-    def execute(
-        self: "DiffoscopeParser",
-    ):
-        """ """
         self._parse_detail(self.diffoscope_json)
-
-        return (
-            self.unknown_failure_count,
-            self.trivial_failure_count,
-            self.nontrivial_failure_count,
-            self.diff_list,
-        )
 
     def _parse_detail(
         self: "DiffoscopeParser",
@@ -256,7 +245,9 @@ class DiffoscopeParser:
         plus_line: DiffLine,
         is_binary: bool,
     ):
-        """ """
+        """
+            Make this return the diff? Right now its all side effects
+        """
         for flag in self.flags:
             flag_matches = True
             
@@ -381,9 +372,7 @@ class DiffoscopeParser:
             return False
         else:
             return True
-    
-
-
+        
     def _recurse(
         self: "DiffoscopeParser",
         detail: dict,
