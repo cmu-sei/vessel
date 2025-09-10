@@ -67,6 +67,7 @@ class DiffCommand:
         data_dir: str,
         mode: str,
         output_dir: str,
+        profile_enabled: bool,
     ) -> None:
         """Initializer for a diff operation.
 
@@ -81,6 +82,7 @@ class DiffCommand:
         self.image_uris: list[ImageURI] = []
         self.oci_image_paths: list[str] = []
         self.oci_runtime_paths: list[str] = []
+        self.profile_enabled: bool = profile_enabled
 
     def execute(self: "DiffCommand") -> bool:
         """Executes a diff operation.
@@ -217,6 +219,7 @@ class DiffCommand:
             self.oci_image_paths[0],
             self.oci_image_paths[1],
             self.mode,
+            self.profile_enabled,
         )
         try:
             subprocess.run(cmd, check=True)  # noqa: S603
@@ -284,6 +287,7 @@ class DiffCommand:
             f"{self.oci_runtime_paths[0]}/rootfs",
             f"{self.oci_runtime_paths[1]}/rootfs",
             self.mode,
+            self.profile_enabled,
         )
         try:
             subprocess.run(cmd, check=True)  # noqa: S603
