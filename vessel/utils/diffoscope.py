@@ -293,7 +293,6 @@ class DiffoscopeParser:
                         ],
                     },
                 )
-
             # Handle any non-binary line that matches the flag
             elif flag_matches:
                 (
@@ -314,13 +313,9 @@ class DiffoscopeParser:
                     flag["id"] for flag in diff.flagged_failures
                 ]:
                     for failure in flagged_failure_list:
-                        failure["metadata"] = getattr(
-                            flag, "metadata", False
-                        )
-                        failure["severity"] = getattr(
-                            flag, "severity", "Low"
-                        )
-                        if getattr(flag, "severity") == "Low":
+                        failure["metadata"] = flag.metadata
+                        failure["severity"] = flag.severity
+                        if flag.severity == "Low":
                             self.trivial_failure_count += 1
                         else:
                             self.nontrivial_failure_count += 1
