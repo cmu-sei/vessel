@@ -25,9 +25,10 @@
 
 """Unit test for diffoscope util functions"""
 
+from pathlib import Path
+
 import pytest
 
-from pathlib import Path
 from vessel.utils.diffoscope import (
     build_diff_lookup,
     build_diffoscope_command,
@@ -164,10 +165,7 @@ def test_build_diff_lookup(test_input, expected):
     "test_input, expected",
     [
         # Valid absolute path as Path
-        (
-            Path("/srv/local/test"),
-            True
-        ),
+        (Path("/srv/local/test"), True),
         # Valid absoute path as string
         (
             "/srv/local/test",
@@ -188,7 +186,7 @@ def test_build_diff_lookup(test_input, expected):
             "not a path",
             False,
         ),
-    ]
+    ],
 )
 def test_is_abs_path(test_input, expected):
     """Test is_abs_path."""

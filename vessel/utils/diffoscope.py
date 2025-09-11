@@ -123,7 +123,7 @@ def is_abs_path(source: str | Path) -> bool:
 
 
 class DiffoscopeParser:
-    """Class to parse diffoscope output."""
+    """Class to parse Diffoscope output."""
 
     def __init__(
         self: "DiffoscopeParser",
@@ -131,8 +131,21 @@ class DiffoscopeParser:
         flags: list[Flag],
         filetype_lookup1: dict[str, str] | None = None,
         filetype_lookup2: dict[str, str] | None = None,
-    ):
-        """ """
+    ) -> None:
+        """Initializer for Diffoscope parser.
+
+        Initializes class varaibles and then executes parsing. Parses Diffoscope JSON and
+        flags failures using flags. After execution, class variables will be populated for
+        unknown, trivial and nontrivial failure counts and list of calculated diffs.
+
+        Args:
+            diffoscope_json: JSON from diffoscope representing all differences of two containers
+            flags: List of flags used to flag failures as known failures
+            filetype_lookup1: Optional lookup for filetypes of all files in source1. Used when
+                in JSON mode and files being compared are not guaranteed to be accessible.
+            filetype_lookup2: Optional lookup for filetypes of all files in source2. Used when
+                in JSON mode and files being compared are not guaranteed to be accessible.
+        """
         self.diffoscope_json: dict = diffoscope_json
         self.flags: list[Flag] = flags
         self.filetype_lookup1 = filetype_lookup1
@@ -141,7 +154,7 @@ class DiffoscopeParser:
         self.unknown_failure_count: int = 0
         self.trivial_failure_count: int = 0
         self.nontrivial_failure_count: int = 0
-        self.diff_list = []  # Add typing
+        self.diff_list: list[dict[str, Any]] = []
 
         self._recurse(self.diffoscope_json)
 
@@ -152,6 +165,18 @@ class DiffoscopeParser:
         parent_source2: str = "",
         parent_comments: list[str] | None = None,
     ):
+        """Parse one detail (one file difference) of the Diffoscope JSON.
+
+        Checks the detail against all flags and appends the resulting diff
+        to self.diff_list.
+
+        Args:
+            detail: Detail to be parsed
+            parent_source1: Source1 of parent, used to populate source1 when diff is found with a command
+            parent_source2: Source2 of parent, used to populate source2 when diff is found with a command
+            parent_comments: Comments in parent, appended to comments for this diff
+
+        """
         temp_comments = []
         if "comments" in detail:
             temp_comments.extend(detail["comments"])
@@ -167,7 +192,9 @@ class DiffoscopeParser:
         # Handles case where diff is found with a command such as stat {}.
         # Diffoscope lists the source of the diff as the command that it used to get
         # the diff, so the file path must be grabbed from the parent.
-        if not is_abs_path(detail["source1"]) or not is_abs_path(detail["source2"]):
+        if not is_abs_path(detail["source1"]) or not is_abs_path(
+            detail["source2"]
+        ):
             diff.command = detail["source1"]
             diff.source1 = parent_source1
             diff.source2 = parent_source2
@@ -237,22 +264,34 @@ class DiffoscopeParser:
         plus_line: DiffLine,
         is_binary: bool,
     ):
-        """
-            Make this return the diff? Right now its all side effects
+        """Check a diff against all flags and update diff based on matches or non matches.
+
+        Take in a diff, iterate through all of the flags and check if each matches the diff and
+        the minus and plus lines of the idffwhile updating the failure counts, and the lists of
+        failures in the diff parameter object.
+
+        Args:
+            diff: Diff object to be checked
+            minus_line: Line of the minus file in the unified diff to be checked
+            plus_line: Line of the plus file in the unified diff to be checked
         """
         for flag in self.flags:
             flag_matches = True
-            
+
             # Check if filepath matches flag
-            flag_matches = self._check_flag_filepath(flag, diff.source1, diff.source2)
+            flag_matches = self._check_flag_filepath(
+                flag, diff.source1, diff.source2
+            )
 
             # Check if filetype matches flag
             if flag_matches:
-                flag_matches = self._check_flag_filetype(flag, diff.source1, diff.source2)
+                flag_matches = self._check_flag_filetype(
+                    flag, diff.source1, diff.source2
+                )
 
             # Check if command matches flag
             if flag_matches:
-                flag_matches = self._check_flag_comand(flag, diff.command)
+                flag_matches = self._check_flag_command(flag, diff.command)
 
             # Check if comment matches flag
             if flag_matches:
@@ -306,17 +345,35 @@ class DiffoscopeParser:
                     diff.flagged_failures.extend(flagged_failure_list)
                     diff.unknown_failures.extend(unknown_failure_list)
 
-    def _check_flag_filepath(self: "DiffoscopeParser", flag: Flag, source1: str, source2: str) -> bool:
-        """ """
-        if not flag.regex["filepath"].search(source1) or not flag.regex["filepath"].search(source2):
+    def _check_flag_filepath(
+        self: "DiffoscopeParser", flag: Flag, source1: str, source2: str
+    ) -> bool:
+        """Check diff sources against filepath regex of flag.
+
+        Args:
+            flag: Flag to check against
+            source1: String representing filepath to source1
+            source2: String representing filepath to source2
+        """
+        if not flag.regex["filepath"].search(source1) or not flag.regex[
+            "filepath"
+        ].search(source2):
             return False
         else:
             return True
 
-    def _check_flag_filetype(self: "DiffoscopeParser", flag: Flag, source1: str, source2: str) -> bool:
-        """
-            If both files exist locally, use magic library for data type.
-            Else, use types from the metadata.
+    def _check_flag_filetype(
+        self: "DiffoscopeParser", flag: Flag, source1: str, source2: str
+    ) -> bool:
+        """Check diff sources against filetype regex of flag.
+
+        Perform check of source filetypes. If both files exist locally, use
+        magic library for data type otherwise use types from the metadata.
+
+        Args:
+            flag: Flag to check against
+            source1: String representing filepath to source1
+            source2: String representing filepath to source2
         """
         source_1_exists = Path(source1).is_file()
         source_2_exists = Path(source2).is_file()
@@ -333,38 +390,51 @@ class DiffoscopeParser:
                 self.filetype_lookup1 is not None
                 and self.filetype_lookup2 is not None
             ):
-                file_type_1 = self.filetype_lookup1.get(
-                    source1, ""
-                )
-                file_type_2 = self.filetype_lookup2.get(
-                    source2, ""
-                )
+                file_type_1 = self.filetype_lookup1.get(source1, "")
+                file_type_2 = self.filetype_lookup2.get(source2, "")
 
                 if file_type_1 and file_type_2:
                     if not flag.regex["filetype"].search(
                         file_type_1
-                    ) or not flag.regex["filetype"].search(
-                        file_type_2
-                    ):
+                    ) or not flag.regex["filetype"].search(file_type_2):
                         return False
-        
+
         return True
-        
-    def _check_flag_comand(self: "DiffoscopeParser", flag: Flag, command: str) -> bool:
-        """ """
+
+    def _check_flag_command(
+        self: "DiffoscopeParser", flag: Flag, command: str
+    ) -> bool:
+        """Check diff command against command regex of flag.
+
+        Command of the diff will be populated if the diff was found by diffoscope
+        using a command such as stat {}.
+
+        Args:
+            flag: Flag to check against
+            command: Command used to find diff
+        """
         if not flag.regex["command"].search(command):
             return False
         else:
             return True
-        
-    def _check_flag_comment(self: "DiffoscopeParser", flag: Flag, comments: list) -> bool:
-        if comments != [] and not any(flag.regex["comment"].search(comment) for comment in comments):
+
+    def _check_flag_comment(
+        self: "DiffoscopeParser", flag: Flag, comments: list
+    ) -> bool:
+        """Check diff comments against comment regex of flag.
+
+        Checks if any comment of the command matches, or if the comment list is 
+        empty and the regex is set to accept any value.
+        """
+        if comments != [] and not any(
+            flag.regex["comment"].search(comment) for comment in comments
+        ):
             return False
         elif comments == [] and flag.regex["comment"] != re.compile(".*"):
             return False
         else:
             return True
-        
+
     def _recurse(
         self: "DiffoscopeParser",
         detail: dict,
@@ -372,11 +442,13 @@ class DiffoscopeParser:
         parent_source2: str = "",
         parent_comments: list[str] | None = None,
     ):
-        """ """
+        """Handle recursion through all details in diffoscope JSON object."""
         umociRegex = re.compile(r"/umoci-unpack-")
 
         if detail["unified_diff"] is not None:
-            self._parse_detail(detail, parent_source1, parent_source2, parent_comments)
+            self._parse_detail(
+                detail, parent_source1, parent_source2, parent_comments
+            )
 
         if "details" in detail:
             for child in detail["details"]:
@@ -389,4 +461,9 @@ class DiffoscopeParser:
                         and umociRegex.search(child["source2"])
                     )
                 ):
-                    self._recurse(child, detail["source1"], detail["source2"], detail.get("comments", None))
+                    self._recurse(
+                        child,
+                        detail["source1"],
+                        detail["source2"],
+                        detail.get("comments", None),
+                    )

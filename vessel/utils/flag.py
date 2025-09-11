@@ -57,7 +57,7 @@ class Flag:
         self.regex_str["comment"] = comment
         self.regex_str["indiff"] = indiff
         self.regex: dict[str, Pattern] = {}
-        
+
         self.compile()
 
     def compile(self) -> None:

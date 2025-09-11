@@ -45,8 +45,8 @@ from vessel.utils.checksum import (
     write_checksum_metadata,
 )
 from vessel.utils.diffoscope import (
-    build_diffoscope_command,
     DiffoscopeParser,
+    build_diffoscope_command,
 )
 from vessel.utils.flag import Flag
 from vessel.utils.skopeo import skopeo_copy
@@ -401,8 +401,7 @@ class DiffCommand:
         filetype_lookup1: dict[str, str] | None = None,
         filetype_lookup2: dict[str, str] | None = None,
     ) -> None:
-        """
-        Parses both diffoscope and metadata/config diffs, creates summaries and writes outputs.
+        """Parses both diffoscope and metadata/config diffs, creates summaries and writes outputs.
 
         Args:
             image1_path, image2_path: Path to first and second image filesystem
@@ -414,8 +413,14 @@ class DiffCommand:
         with diffoscope_output_path.open() as raw_diff_file:
             diffoscope_json = json.load(raw_diff_file)
 
-        parser = DiffoscopeParser(diffoscope_json, self.flags, filetype_lookup1, filetype_lookup2)
-        file_failure_summary = FailureSummary(parser.unknown_failure_count, parser.trivial_failure_count, parser.nontrivial_failure_count)
+        parser = DiffoscopeParser(
+            diffoscope_json, self.flags, filetype_lookup1, filetype_lookup2
+        )
+        file_failure_summary = FailureSummary(
+            parser.unknown_failure_count,
+            parser.trivial_failure_count,
+            parser.nontrivial_failure_count,
+        )
 
         # Now check flags for image metadata diffs.
         meta_diffs, meta_summary = metadata_diff.match_flags(
