@@ -27,10 +27,11 @@
 
 import pytest
 
-from test.fixture import get_test_diffoscope_output, get_test_flag
+from pathlib import Path
 from vessel.utils.diffoscope import (
     build_diff_lookup,
     build_diffoscope_command,
+    is_abs_path,
 )
 
 
@@ -157,3 +158,38 @@ def test_build_diff_lookup(test_input, expected):
     """Test build_diff_lookup."""
     output = build_diff_lookup(test_input)
     assert output == expected
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        # Valid absolute path as Path
+        (
+            Path("/srv/local/test"),
+            True
+        ),
+        # Valid absoute path as string
+        (
+            "/srv/local/test",
+            True,
+        ),
+        # Non-absolute path as Path
+        (
+            Path("srv/local/test"),
+            False,
+        ),
+        # Non-absolute path as string
+        (
+            "srv/local/test",
+            False,
+        ),
+        # Random string
+        (
+            "not a path",
+            False,
+        ),
+    ]
+)
+def test_is_abs_path(test_input, expected):
+    """Test is_abs_path."""
+    assert is_abs_path(test_input) == expected
