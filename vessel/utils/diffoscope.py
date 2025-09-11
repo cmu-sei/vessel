@@ -175,8 +175,6 @@ class DiffoscopeParser:
         # Initialize to False to ensure one iteration through the flags.
         # If it then is found to be binary, the rest of the lines
         # will not be evaluated to not check binary line by line.
-        # TODO: Is this initialization needed?
-        is_binary = False
         for minus_line, plus_line in zip(
             diff.minus_aligned_lines,
             diff.plus_aligned_lines,
