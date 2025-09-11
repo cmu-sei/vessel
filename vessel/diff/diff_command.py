@@ -213,7 +213,7 @@ class DiffCommand:
         meta_diffs = MetadataDiffs.load_from_file(Path(metadata_json_path))
 
         # Call common method to parse diffs and generate output.
-        self._process_and_save_results(
+        self._process_and_write_results(
             image1_path=Path(image1_path),
             image2_path=Path(image2_path),
             diffoscope_output_path=Path(diffoscope_json_path),
@@ -348,7 +348,7 @@ class DiffCommand:
             self.output_dir,
             self.DIFFOSCOPE_OUTPUT_FILENAME,
         )
-        self._process_and_save_results(
+        self._process_and_write_results(
             image1_path=image1_path,
             image2_path=image2_path,
             diffoscope_output_path=diffoscope_output_path,
@@ -390,7 +390,7 @@ class DiffCommand:
         )
         return hashed_files1, hashed_files2
 
-    def _process_and_save_results(
+    def _process_and_write_results(
         self,
         image1_path: Path,
         image2_path: Path,
