@@ -158,6 +158,39 @@ class DiffoscopeParser:
 
         self._recurse(self.diffoscope_json)
 
+    def _recurse(
+        self: "DiffoscopeParser",
+        detail: dict,
+        parent_source1: str = "",
+        parent_source2: str = "",
+        parent_comments: list[str] | None = None,
+    ):
+        """Handle recursion through all details in diffoscope JSON object."""
+        umociRegex = re.compile(r"/umoci-unpack-")
+
+        if detail["unified_diff"] is not None:
+            self._parse_detail(
+                detail, parent_source1, parent_source2, parent_comments
+            )
+
+        if "details" in detail:
+            for child in detail["details"]:
+                # Ignore anything without the umoci-unpack- path that shouldn't be showing in diffs
+                if (
+                    child["source1"][0] != "/"
+                    or child["source2"][0] != "/"
+                    or (
+                        umociRegex.search(child["source1"])
+                        and umociRegex.search(child["source2"])
+                    )
+                ):
+                    self._recurse(
+                        child,
+                        detail["source1"],
+                        detail["source2"],
+                        detail.get("comments", None),
+                    )
+
     def _parse_detail(
         self: "DiffoscopeParser",
         detail: dict,
@@ -434,36 +467,3 @@ class DiffoscopeParser:
             return False
         else:
             return True
-
-    def _recurse(
-        self: "DiffoscopeParser",
-        detail: dict,
-        parent_source1: str = "",
-        parent_source2: str = "",
-        parent_comments: list[str] | None = None,
-    ):
-        """Handle recursion through all details in diffoscope JSON object."""
-        umociRegex = re.compile(r"/umoci-unpack-")
-
-        if detail["unified_diff"] is not None:
-            self._parse_detail(
-                detail, parent_source1, parent_source2, parent_comments
-            )
-
-        if "details" in detail:
-            for child in detail["details"]:
-                # Ignore anything without the umoci-unpack- path that shouldn't be showing in diffs
-                if (
-                    child["source1"][0] != "/"
-                    or child["source2"][0] != "/"
-                    or (
-                        umociRegex.search(child["source1"])
-                        and umociRegex.search(child["source2"])
-                    )
-                ):
-                    self._recurse(
-                        child,
-                        detail["source1"],
-                        detail["source2"],
-                        detail.get("comments", None),
-                    )
