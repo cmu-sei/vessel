@@ -456,7 +456,7 @@ class DiffoscopeParser:
     ) -> bool:
         """Check diff comments against comment regex of flag.
 
-        Checks if any comment of the command matches, or if the comment list is 
+        Checks if any comment of the command matches, or if the comment list is
         empty and the regex is set to accept any value.
         """
         if comments != [] and not any(
