@@ -14,7 +14,7 @@ RUN apt-get update && \
     libmagic-dev=1:5.44-3 \
     libarchive-dev=3.6.2-1+deb12u3 \
     libarchive-tools=3.6.2-1+deb12u3 \
-    sudo-ldap=1.9.13p3-1+deb12u2 \
+    sudo=1.9.13p3-1+deb12u2 \
     p7zip-full=16.02+dfsg-8 \
     r-base=4.2.2.20221110-2 \
     abootimg=0.6-1+b2 \
@@ -61,8 +61,8 @@ RUN apt-get update && \
     xmlbeans=4.0.0-2 \
     xxd=2:9.0.1378-2+deb12u2 \
     python3-guestfs=1:1.48.6-2  \
-    ca-certificates=20230311+deb12u1 \
     pipx=1.1.0-1 \
+    libpython3-dev=3.11.2-1+b1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 

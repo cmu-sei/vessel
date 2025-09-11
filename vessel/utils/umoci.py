@@ -23,77 +23,64 @@
 #
 # DM24-1321
 
-"""Utility skopeo funcitons."""
+"""Utility umoci funcitons."""
 
-import json
 import subprocess
 import sys
 from logging import getLogger
-from typing import Any
 
 from vessel.utils.uri import ImageURI
 
 logger = getLogger(__name__)
 
 
-def skopeo_copy(image_uri: ImageURI, output_path: str) -> str:
-    """Skopeo copies image to specific directory.
-
-    Uses skopeo copy to take images from image path and then
-    copies it into the output path in the oci format.
-
-    Args:
-        image_uri: Path of the image
-        output_path: Path to copy the image to
-
-    Returns:
-        Path to the directory containing the oci image
+def umoci_unpack(
+    oci_image_paths: list[str], image_uris: list[ImageURI], data_dir: str
+) -> list[str]:
     """
-    dest_path = f"{output_path}/{image_uri.output_identifier}"
-
-    run_skopeo(
-        "copy",
-        args=[
-            image_uri.container_transport,
-            f"oci:{dest_path}:{image_uri.tag}",
-        ],
-    )
-
-    return dest_path
-
-
-def skopeo_get_config(image_uri: ImageURI) -> dict[str, Any]:
-    """Uses skopeo to get the metadata/config file of an OCI image.
+    Executes umoci to unpack an OCI image into an OCI runtime bundle with a unified file system.
 
     Args:
-        image_uri: Path of the image
-
-    Returns:
-        A dictionary with the metadata fields.
-    """
-
-    # Run skopeo inspect to get the config.
-    result = run_skopeo("inspect", args=["--config", f"{image_uri}"])
-
-    # Load as a dict and return.
-    return json.loads(result.stdout)
-
-
-def run_skopeo(
-    command: str, args: list[str]
-) -> subprocess.CompletedProcess[str]:
-    """Executes the given Skopeo command.
-
-    Args:
-        command: The skopeo command to run.
-        args: Arguments for skopeo.
+        oci_image_paths: A list of paths to OCI image folders.
+        image_uris: The URI where the OCI image was obtained from.
+        data_dir: The base folder where we are working on.
 
     Returns:
         The results of the command execution.
     """
-    skopeo_runtime = "/usr/bin/skopeo"
+    oci_runtime_paths: list[str] = []
+
+    for unpack_path, uri in zip(
+        oci_image_paths,
+        image_uris,
+        strict=True,
+    ):
+        umoci_output_path = f"{data_dir}/umoci-unpack-{uri.output_identifier}"
+        oci_runtime_paths.append(umoci_output_path)
+
+        run_umoci(
+            "unpack",
+            ["--image", f"{unpack_path}:{uri.tag}", umoci_output_path],
+        )
+
+    return oci_runtime_paths
+
+
+def run_umoci(
+    command: str, args: list[str]
+) -> subprocess.CompletedProcess[str]:
+    """Executes the given umoci command.
+
+    Args:
+        command: The umoci command to run.
+        args: Arguments for umoci.
+
+    Returns:
+        The results of the command execution.
+    """
+    runtime = "/usr/bin/umoci"
     try:
-        command_list = [skopeo_runtime, command]
+        command_list = [runtime, command]
         for arg in args:
             command_list.append(f"{arg}")
 
