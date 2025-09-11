@@ -143,7 +143,7 @@ class DiffoscopeParser:
         self.nontrivial_failure_count: int = 0
         self.diff_list = []  # Add typing
 
-        self._parse_detail(self.diffoscope_json)
+        self._recurse(self.diffoscope_json)
 
     def _parse_detail(
         self: "DiffoscopeParser",
@@ -152,91 +152,85 @@ class DiffoscopeParser:
         parent_source2: str = "",
         parent_comments: list[str] | None = None,
     ):
-        if detail["unified_diff"] is not None:
-            temp_comments = []
-            if "comments" in detail:
-                temp_comments.extend(detail["comments"])
-            if parent_comments:
-                temp_comments.extend(parent_comments)
+        temp_comments = []
+        if "comments" in detail:
+            temp_comments.extend(detail["comments"])
+        if parent_comments:
+            temp_comments.extend(parent_comments)
 
-            diff = Diff(
-                detail["source1"],
-                detail["source2"],
-                parent_source1,
-                parent_source2,
-                temp_comments,
-                detail["unified_diff"],
-            )
-            # Handles case where diff is found with a command such as stat {}.
-            # Diffoscope lists the source of the diff as the command that it used to get
-            # the diff, so the file path must be grabbed from the parent.
-            if not is_abs_path(detail["source1"]) or not is_abs_path(detail["source2"]):
-                diff.command = detail["source1"]
-                diff.source1 = parent_source1
-                diff.source2 = parent_source2
+        diff = Diff(
+            detail["source1"],
+            detail["source2"],
+            temp_comments,
+            detail["unified_diff"],
+        )
+        # Handles case where diff is found with a command such as stat {}.
+        # Diffoscope lists the source of the diff as the command that it used to get
+        # the diff, so the file path must be grabbed from the parent.
+        if not is_abs_path(detail["source1"]) or not is_abs_path(detail["source2"]):
+            diff.command = detail["source1"]
+            diff.source1 = parent_source1
+            diff.source2 = parent_source2
 
-            # Initialize to False to ensure one iteration through the flags.
-            # If it then is found to be binary, the rest of the lines
-            # will not be evaluated to not check binary line by line.
-            # TODO: Is this initialization needed?
-            is_binary = False
-            for minus_line, plus_line in zip(
-                diff.minus_aligned_lines,
-                diff.plus_aligned_lines,
-                strict=False,
-            ):
-                is_binary = bool(detail.get("has_internal_linenos"))
-                self._check_flags(diff, minus_line, plus_line, is_binary)
+        # Initialize to False to ensure one iteration through the flags.
+        # If it then is found to be binary, the rest of the lines
+        # will not be evaluated to not check binary line by line.
+        # TODO: Is this initialization needed?
+        is_binary = False
+        for minus_line, plus_line in zip(
+            diff.minus_aligned_lines,
+            diff.plus_aligned_lines,
+            strict=False,
+        ):
+            is_binary = bool(detail.get("has_internal_linenos"))
+            self._check_flags(diff, minus_line, plus_line, is_binary)
 
-                # Check so line by line comparison don't happen in binary diffs and
-                # this is after all the flags have been checked so the diff is done
-                # being evaluated
-                if is_binary:
-                    if len(diff.flagged_failures) == 0:
-                        self.unknown_failure_count += 1
-                        diff.unknown_failures.append(
-                            {
-                                "comments": [
-                                    "Flag indiff regex are not ran on binary "
-                                    "unified diff. This file did not match any "
-                                    "flags.",
-                                ],
-                            },
-                        )
-
-                    break
-
-                minus_unmatched_str = (
-                    intervals_to_str(
-                        minus_line.text,
-                        minus_line.unmatched_intervals,
-                    )
-                    if minus_line
-                    else None
-                )
-                plus_unmatched_str = (
-                    intervals_to_str(
-                        plus_line.text,
-                        plus_line.unmatched_intervals,
-                    )
-                    if plus_line
-                    else None
-                )
-                if minus_unmatched_str != plus_unmatched_str:
+            # Check so line by line comparison don't happen in binary diffs and
+            # this is after all the flags have been checked so the diff is done
+            # being evaluated
+            if is_binary:
+                if len(diff.flagged_failures) == 0:
                     self.unknown_failure_count += 1
                     diff.unknown_failures.append(
-                        make_failure_dict(
-                            minus_line if minus_line else None,
-                            plus_line if plus_line else None,
-                            minus_unmatched_str,
-                            plus_unmatched_str,
-                        ),
+                        {
+                            "comments": [
+                                "Flag indiff regex are not ran on binary "
+                                "unified diff. This file did not match any "
+                                "flags.",
+                            ],
+                        },
                     )
 
-            self.diff_list.append(diff.to_slim_dict())
+                break
 
-        if "details" in detail:
-            self._recurse(detail)
+            minus_unmatched_str = (
+                intervals_to_str(
+                    minus_line.text,
+                    minus_line.unmatched_intervals,
+                )
+                if minus_line
+                else None
+            )
+            plus_unmatched_str = (
+                intervals_to_str(
+                    plus_line.text,
+                    plus_line.unmatched_intervals,
+                )
+                if plus_line
+                else None
+            )
+            if minus_unmatched_str != plus_unmatched_str:
+                self.unknown_failure_count += 1
+                diff.unknown_failures.append(
+                    make_failure_dict(
+                        minus_line if minus_line else None,
+                        plus_line if plus_line else None,
+                        minus_unmatched_str,
+                        plus_unmatched_str,
+                    ),
+                )
+
+        self.diff_list.append(diff.to_slim_dict())
 
     def _check_flags(
         self: "DiffoscopeParser",
@@ -376,23 +370,25 @@ class DiffoscopeParser:
     def _recurse(
         self: "DiffoscopeParser",
         detail: dict,
+        parent_source1: str = "",
+        parent_source2: str = "",
+        parent_comments: list[str] | None = None,
     ):
         """ """
         umociRegex = re.compile(r"/umoci-unpack-")
 
-        for child in detail["details"]:
-            # Ignore anything without the umoci-unpack- path that shouldn't be showing in diffs
-            if (
-                child["source1"][0] != "/"
-                or child["source2"][0] != "/"
-                or (
-                    umociRegex.search(child["source1"])
-                    and umociRegex.search(child["source2"])
-                )
-            ):
-                self._parse_detail(
-                    child,
-                    detail["source1"],
-                    detail["source2"],
-                    detail.get("comments"),
-                )
+        if detail["unified_diff"] is not None:
+            self._parse_detail(detail, parent_source1, parent_source2, parent_comments)
+
+        if "details" in detail:
+            for child in detail["details"]:
+                # Ignore anything without the umoci-unpack- path that shouldn't be showing in diffs
+                if (
+                    child["source1"][0] != "/"
+                    or child["source2"][0] != "/"
+                    or (
+                        umociRegex.search(child["source1"])
+                        and umociRegex.search(child["source2"])
+                    )
+                ):
+                    self._recurse(child, detail["source1"], detail["source2"], detail.get("comments", None))

@@ -44,16 +44,12 @@ class Diff:
         self: "Diff",
         source1: str,
         source2: str,
-        parent_source1: str,
-        parent_source2: str,
         comments: list,
         raw_unified_diff: str,
     ) -> None:
         """Initializer for Diff class."""
         self.source1 = source1
         self.source2 = source2
-        self.parent_source1 = parent_source1
-        self.parent_source2 = parent_source2
         self.unified_diff: list[str] = raw_unified_diff.splitlines()
         self.comments: list[str] = comments
         self.command: str = ""
