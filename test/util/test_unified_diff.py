@@ -48,8 +48,6 @@ TEST_DIFF_CLASS_OBJECTS = [
         Diff(
             "src1",
             "src2",
-            "par src1",
-            "par src2",
             ["com1", "com2"],
             "@@ -1,2 +1,3 @@\n 1\n-2\n+2!\n+3!\n",
         ),
