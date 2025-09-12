@@ -117,11 +117,6 @@ def build_diff_lookup(
     return lookup
 
 
-def is_abs_path(source: str | Path) -> bool:
-    """Returns true if source string is an absolute path (leading '/')."""
-    return str(source).startswith("/")
-
-
 class DiffoscopeParser:
     """Class to parse Diffoscope output."""
 
@@ -225,9 +220,7 @@ class DiffoscopeParser:
         # Handles case where diff is found with a command such as stat {}.
         # Diffoscope lists the source of the diff as the command that it used to get
         # the diff, so the file path must be grabbed from the parent.
-        if not is_abs_path(detail["source1"]) or not is_abs_path(
-            detail["source2"]
-        ):
+        if not Path(detail["source1"]).is_absolute() or not Path(detail["source2"]).is_absolute():
             diff.command = detail["source1"]
             diff.source1 = parent_source1
             diff.source2 = parent_source2
