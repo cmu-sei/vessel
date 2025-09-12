@@ -52,7 +52,7 @@ def build_diffoscope_command(
     """Generates a command list to execute diffoscope.
 
     Args:
-        output_dir_path: Path to directory that Diffoscope json output will be
+        output_dir_path: Path to directory that Diffoscope JSON output will be
             written to
         output_file_name: File name that will be used for diffoscope output
         path1: The first path to compare
@@ -130,12 +130,12 @@ class DiffoscopeParser:
         """Initializer for Diffoscope parser.
 
         Initializes class varaibles and then executes parsing. Parses Diffoscope JSON and
-        flags failures using flags. After execution, class variables will be populated for
+        flags differences using flags. After execution, class variables will be populated for
         unknown, trivial and nontrivial failure counts and list of calculated diffs.
 
         Args:
             diffoscope_json: JSON from diffoscope representing all differences of two containers
-            flags: List of flags used to flag failures as known failures
+            flags: List of flags used to flag differences as known failures
             filetype_lookup1: Optional lookup for filetypes of all files in source1. Used when
                 in JSON mode and files being compared are not guaranteed to be accessible.
             filetype_lookup2: Optional lookup for filetypes of all files in source2. Used when
@@ -159,8 +159,23 @@ class DiffoscopeParser:
         parent_source1: str = "",
         parent_source2: str = "",
         parent_comments: list[str] | None = None,
-    ):
-        """Handle recursion through all details in diffoscope JSON object."""
+    ) -> None:
+        """Handle recursion through all differences in diffoscope JSON object.
+
+        Recursively navigates through entirety of diffoscope json output
+        parsing the difference details.
+
+        Args:
+            detail: Dict object containing an instance of a difference
+                from diffoscope output
+            parent_source1: Source of difference of parent1 to substitute into
+                source field if the source is a CLI tool and not a file name
+            parent_source2: Source of difference of parent2 to substitute into
+                source field if the source is a CLI tool and not a file name
+            parent_comments: List of comments from the parent object in diffoscope
+                as sometimes the comments that relate to a child are in
+                the parent detail
+        """
         umociRegex = re.compile(r"/umoci-unpack-")
 
         if detail["unified_diff"] is not None:
@@ -220,7 +235,10 @@ class DiffoscopeParser:
         # Handles case where diff is found with a command such as stat {}.
         # Diffoscope lists the source of the diff as the command that it used to get
         # the diff, so the file path must be grabbed from the parent.
-        if not Path(detail["source1"]).is_absolute() or not Path(detail["source2"]).is_absolute():
+        if (
+            not Path(detail["source1"]).is_absolute()
+            or not Path(detail["source2"]).is_absolute()
+        ):
             diff.command = detail["source1"]
             diff.source1 = parent_source1
             diff.source2 = parent_source2
@@ -287,11 +305,11 @@ class DiffoscopeParser:
         plus_line: DiffLine,
         is_binary: bool,
     ):
-        """Check a diff against all flags and update diff based on matches or non matches.
+        """Check a Diff against all flags and update Diff based on matches or non matches.
 
-        Take in a diff, iterate through all of the flags and check if each matches the diff and
-        the minus and plus lines of the diff while updating the failure counts, and the lists of
-        failures in the diff parameter object.
+        Take in a Diff, iterate through all of the flags and check if each matches the difference and
+        the minus and plus lines of the Diff while updating the failure counts, and the lists of
+        failures in the Diff parameter object.
 
         Args:
             diff: Diff object to be checked
@@ -371,7 +389,7 @@ class DiffoscopeParser:
     def _check_flag_filepath(
         self: "DiffoscopeParser", flag: Flag, source1: str, source2: str
     ) -> bool:
-        """Check diff sources against filepath regex of flag.
+        """Check difference sources against filepath regex of flag.
 
         Args:
             flag: Flag to check against
@@ -388,7 +406,7 @@ class DiffoscopeParser:
     def _check_flag_filetype(
         self: "DiffoscopeParser", flag: Flag, source1: str, source2: str
     ) -> bool:
-        """Check diff sources against filetype regex of flag.
+        """Check difference sources against filetype regex of flag.
 
         Perform check of source filetypes. If both files exist locally, use
         magic library for data type otherwise use types from the metadata.
@@ -427,9 +445,9 @@ class DiffoscopeParser:
     def _check_flag_command(
         self: "DiffoscopeParser", flag: Flag, command: str
     ) -> bool:
-        """Check diff command against command regex of flag.
+        """Check difference command against command regex of flag.
 
-        Command of the diff will be populated if the diff was found by diffoscope
+        Command of the difference will be populated if the diff was found by diffoscope
         using a command such as stat {}.
 
         Args:
@@ -444,7 +462,7 @@ class DiffoscopeParser:
     def _check_flag_comment(
         self: "DiffoscopeParser", flag: Flag, comments: list
     ) -> bool:
-        """Check diff comments against comment regex of flag.
+        """Check difference comments against comment regex of flag.
 
         Checks if any comment of the command matches, or if the comment list is
         empty and the regex is set to accept any value.
