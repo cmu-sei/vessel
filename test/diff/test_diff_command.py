@@ -28,13 +28,19 @@
 import json
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from vessel.diff.diff_command import DiffCommand
+from vessel.diff.helpers.failure import FailureSummary
+from vessel.diff.helpers.metadata_diff import MetadataDiffs
 from vessel.utils.checksum import FileHash
 
 
 def test_write_to_files_and_unified_diffs(tmp_path):
     """Verify that write_to_files creates summary, unified diffs, and checksum summary properly"""
-    diff_command = DiffCommand([], "file", str(tmp_path), str(tmp_path))
+    diff_command = DiffCommand(
+        [], "file", str(tmp_path), str(tmp_path), profile_enabled=False
+    )
 
     diffs = [
         {"unified_diff": "diff1", "meta": 123},
@@ -58,7 +64,13 @@ def test_write_to_files_and_unified_diffs(tmp_path):
     # Pass explicit counts into write_to_files so we can assert the JSON output has the same count
     # Set unknown to 1, trivial to 2, and nontrivial to 3
     diff_command._write_to_files(
-        1, 2, 3, diffs, files_summary, checksum_summary
+        FailureSummary(1, 2, 3),
+        FailureSummary(1, 2, 3),
+        FailureSummary(0, 0, 0),
+        diffs,
+        MetadataDiffs(),
+        files_summary,
+        checksum_summary,
     )
 
     summary_file = tmp_path / diff_command.SUMMARY_OUTPUT_FILENAME
@@ -67,14 +79,10 @@ def test_write_to_files_and_unified_diffs(tmp_path):
     summary_json = json.loads(summary_file.read_text())
     unified_json = json.loads(unified_file.read_text())
 
-    failure_summary = summary_json["summary"]["failure_summary"]
+    failure_summary = summary_json["summary"]["total_failure_summary"]
     assert failure_summary["unknown_failures"] == 1
     assert failure_summary["trivial_failures"] == 2
     assert failure_summary["nontrivial_failures"] == 3
-    assert failure_summary["flagged_failures"] == 5  # trivial + nontrivial
-    assert (
-        failure_summary["total_failures"] == 6
-    )  # unknown + trivial + nontrivial
 
     assert len(summary_json["diffs"]) == 2
     assert "1" in unified_json and "2" in unified_json
@@ -94,66 +102,51 @@ def test_write_to_files_and_unified_diffs(tmp_path):
     assert checksum_section["nontrivial_checksum_different_file_count"] == 1
 
 
-@patch("vessel.diff.diff_command.hash_folder_contents")
-@patch("vessel.diff.diff_command.write_checksum_metadata")
+@patch("vessel.diff.diff_command.parse_diffoscope_output")
 @patch("vessel.diff.diff_command.generate_filesummary_and_checksum")
 def test_process_and_save_results_invokes_dependencies(
-    mock_generate, mock_save, mock_hash, tmp_path
+    mock_generate, mock_parse, tmp_path
 ):
     """
-    Verify process_and_save_results hashes, saves metadata, and writes output files
-    Flow tested: hashing -> save metadata -> generate summaries -> write
+    Verify process_and_save_results parses diffoscope, generates summaries, and writes output files
+    Flow tested: parse -> generate summaries -> write
     """
-    hashed_files_image1 = {"file1": object()}
-    hashed_files_image2 = {"file2": object()}
-    mock_hash.side_effect = [hashed_files_image1, hashed_files_image2]
-
     files_summary = ["files_summary"]
     checksum_summary = {"checksum_summary": 1}
     mock_generate.return_value = (files_summary, checksum_summary)
+    mock_parse.return_value = (1, 2, 3, [{"dummy": "diff"}])
 
-    diff_command = DiffCommand([], str(tmp_path), "file", str(tmp_path))
+    diff_command = DiffCommand(
+        [], str(tmp_path), "file", str(tmp_path), profile_enabled=False
+    )
     diff_command._write_to_files = MagicMock()
+
+    diffoscope_output = tmp_path.joinpath("diff.json")
+    diffoscope_output.write_text("{}")
 
     diff_command._process_and_save_results(
         image1_path=tmp_path,
         image2_path=tmp_path,
-        diff_list=[{"dummy": "diff"}],
-        unknown_failure_count=1,
-        trivial_failure_count=2,
-        nontrivial_failure_count=3,
+        diffoscope_output_path=diffoscope_output,
+        meta_diffs=MetadataDiffs(),
+        hashed_files1={"a": "x"},
+        hashed_files2={"b": "y"},
     )
 
-    # Assert hash_folder_contents should be used for both images
-    assert mock_hash.call_count == 2
+    mock_parse.assert_called_once()
+    mock_generate.assert_called_once()
 
-    # Assert save_checksum_metadata should receive the exact hashed dicts
-    save_args, save_kwargs = mock_save.call_args
-    assert save_args[1] is hashed_files_image1
-    assert save_args[2] is hashed_files_image2
-    assert save_kwargs["image1_path"] == str(tmp_path)
-    assert save_kwargs["image2_path"] == str(tmp_path)
-
-    # Assert generate_filesummary_and_checksum should receive the same hashed dicts,
-    # and the first positional arg should be the passed diff_list
-    gen_args, gen_kwargs = mock_generate.call_args
-    assert gen_args[0] == [{"dummy": "diff"}]
-    assert gen_kwargs["hashed_files1"] is hashed_files_image1
-    assert gen_kwargs["hashed_files2"] is hashed_files_image2
-    assert gen_kwargs["image1_path"] == str(tmp_path)
-    assert gen_kwargs["image2_path"] == str(tmp_path)
-
-    # Assert write_to_files called with the counts we passed and generated summaries
     diff_command._write_to_files.assert_called_once()
     _, kwargs = diff_command._write_to_files.call_args
-    assert kwargs == {
-        "unknown_failure_count": 1,
-        "trivial_failure_count": 2,
-        "nontrivial_failure_count": 3,
-        "diffs": [{"dummy": "diff"}],
-        "files_summary": files_summary,
-        "checksum_summary": checksum_summary,
-    }
+    assert kwargs["file_failure_summary"].unknown_failures == 1
+    assert kwargs["file_failure_summary"].trivial_failures == 2
+    assert kwargs["file_failure_summary"].nontrivial_failures == 3
+    assert kwargs["diffs"] == [{"dummy": "diff"}]
+    assert "total_failure_summary" in kwargs
+    assert "file_failure_summary" in kwargs
+    assert "meta_failure_summary" in kwargs
+    assert kwargs["files_summary"] == ["files_summary"]
+    assert kwargs["checksum_summary"] == {"checksum_summary": 1}
 
 
 def test_compare_diffoscope_and_checksum_json_success(tmp_path):
@@ -161,18 +154,24 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
     Verify compare_diffoscope_and_checksum_json passes lookups and writes the expected results
     Flow tested: Load checksum metadata -> Build filetype lookups -> Parse → Generate summaries -> Write
     """
-    diffoscope_path = tmp_path / "diff.json"
+    diffoscope_path = tmp_path / "diffoscope_output.json"
     checksum_path = tmp_path / "checksum_metadata.json"
+    meta_diffs_path = tmp_path / "meta_diffs.json"
 
-    diffoscope_json_content = {"diff": "data"}
-    diffoscope_path.write_text(json.dumps(diffoscope_json_content))
-    checksum_path.write_text(json.dumps({}))
+    diffoscope_path.write_text("{}")
+    checksum_path.write_text("{}")
+    meta_diffs_path.write_text("[]")
 
     diff_command = DiffCommand(
-        input_files=[str(diffoscope_path), str(checksum_path)],
+        input_files=[
+            str(diffoscope_path),
+            str(checksum_path),
+            str(meta_diffs_path),
+        ],
         data_dir=str(tmp_path),
         mode="json",
         output_dir=str(tmp_path),
+        profile_enabled=False,
     )
 
     # Build hashed maps to generate filetype lookup dicts
@@ -207,7 +206,7 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
             {"checksum_summary": 1},
         )
 
-        result = diff_command._compare_diffoscope_and_checksum_json()
+        result = diff_command._compare_json_diff_outputs()
         assert result is True
 
         # Assert load was called on the checksum path
@@ -215,37 +214,27 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
 
         # Assert parse received the diffoscope JSON, current flags, and the lookups built from hashed maps
         parse_args, parse_kwargs = mock_parse.call_args
-        assert parse_args[0] == diffoscope_json_content
         assert parse_args[1] == diff_command.flags
         assert parse_kwargs["filetype_lookup1"] == {"a.txt": "ASCII text"}
         assert parse_kwargs["filetype_lookup2"] == {
             "b.bin": "application/octet-stream"
         }
 
-        # Assert generate_filesummary_and_checksum received the hashed maps and image path
-        gen_args, gen_kwargs = mock_generate.call_args
-        assert gen_args[0] == [{"dummy": "diff"}]
-        assert gen_kwargs["hashed_files1"] == hashed_files1
-        assert gen_kwargs["hashed_files2"] == hashed_files2
-        assert gen_kwargs["image1_path"] == "img1_path"
-        assert gen_kwargs["image2_path"] == "img2_path"
-
+        # _write_to_files should get FailureSummary objects and diffs
         mock_write.assert_called_once()
         _, kwargs = mock_write.call_args
-        assert kwargs == {
-            "unknown_failure_count": 1,
-            "trivial_failure_count": 2,
-            "nontrivial_failure_count": 3,
-            "diffs": [{"dummy": "diff"}],
-            "files_summary": ["files_summary"],
-            "checksum_summary": {"checksum_summary": 1},
-        }
+        assert kwargs["file_failure_summary"].unknown_failures == 1
+        assert kwargs["file_failure_summary"].trivial_failures == 2
+        assert kwargs["file_failure_summary"].nontrivial_failures == 3
+        assert kwargs["diffs"] == [{"dummy": "diff"}]
+        assert kwargs["files_summary"] == ["files_summary"]
+        assert kwargs["checksum_summary"] == {"checksum_summary": 1}
 
 
 def test_compare_diffoscope_and_checksum_json_rejects_bad_pair(
     tmp_path, caplog
 ):
-    """Return False if two JSONs are provided but none is named checksum_metadata.json"""
+    """Return False if JSON files are provided but not the required three"""
     diffoscope_path = tmp_path / "first.json"
     another_json_path = tmp_path / "second.json"
 
@@ -257,13 +246,11 @@ def test_compare_diffoscope_and_checksum_json_rejects_bad_pair(
         data_dir=str(tmp_path),
         mode="json",
         output_dir=str(tmp_path),
+        profile_enabled=False,
     )
 
-    result = diff_command._compare_diffoscope_and_checksum_json()
-    assert result is False
-    # Make sure the error message is correct
-    assert any(
-        rec.getMessage()
-        == "When providing two JSON files, one must be a checksum_metadata.json file."
-        for rec in caplog.records
-    )
+    with pytest.raises(RuntimeError) as excinfo:
+        diff_command._compare_json_diff_outputs()
+
+    # Make sure the error mentions that three JSON files are required
+    assert "Three JSON files are needed" in str(excinfo.value)
