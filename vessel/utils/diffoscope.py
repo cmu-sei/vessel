@@ -297,7 +297,7 @@ class DiffoscopeParser:
         """Check a diff against all flags and update diff based on matches or non matches.
 
         Take in a diff, iterate through all of the flags and check if each matches the diff and
-        the minus and plus lines of the idffwhile updating the failure counts, and the lists of
+        the minus and plus lines of the diff while updating the failure counts, and the lists of
         failures in the diff parameter object.
 
         Args:
