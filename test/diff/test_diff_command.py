@@ -32,12 +32,15 @@ import pytest
 
 from vessel.diff.diff_command import DiffCommand
 from vessel.diff.helpers.failure import FailureSummary
-from vessel.diff.helpers.metadata_diff import MetadataDiffs
+from vessel.diff.helpers.metadata_diff import (
+    MetadataDiff,
+    MetadataDiffs,
+)
 from vessel.utils.checksum import FileHash
 
 
 def test_write_to_files_and_unified_diffs(tmp_path):
-    """Verify that write_to_files creates summary, unified diffs, and checksum summary properly"""
+    """Verify that write_to_files creates summary, unified diffs, checksum summary, and metadata summary properly"""
     diff_command = DiffCommand(
         [], "file", str(tmp_path), str(tmp_path), profile_enabled=False
     )
@@ -61,23 +64,35 @@ def test_write_to_files_and_unified_diffs(tmp_path):
         "only_in_image2": ["third_file", "fourth_file"],
     }
 
-    # Pass explicit counts into write_to_files so we can assert the JSON output has the same count
-    # Set unknown to 1, trivial to 2, and nontrivial to 3
+    meta_diffs = MetadataDiffs(
+        [
+            MetadataDiff(
+                "created", "2023-01-01T00:00:00Z", "2023-01-02T00:00:00Z"
+            ),
+            MetadataDiff(
+                "config/Env", {"hello": "world1"}, {"hello": "world2"}
+            ),
+        ]
+    )
+    meta_summary = FailureSummary(0, 1, 1)
+
     diff_command._write_to_files(
         FailureSummary(1, 2, 3),
         FailureSummary(1, 2, 3),
-        FailureSummary(0, 0, 0),
+        meta_summary,
         diffs,
-        MetadataDiffs(),
+        meta_diffs,
         files_summary,
         checksum_summary,
     )
 
     summary_file = tmp_path / diff_command.SUMMARY_OUTPUT_FILENAME
     unified_file = tmp_path / diff_command.UNIFIED_DIFF_OUTPUT_FILENAME
+    meta_file = tmp_path / diff_command.METADATA_DIFF_OUTPUT_FILENAME
 
     summary_json = json.loads(summary_file.read_text())
     unified_json = json.loads(unified_file.read_text())
+    meta_json = json.loads(meta_file.read_text())
 
     failure_summary = summary_json["summary"]["total_failure_summary"]
     assert failure_summary["unknown_failures"] == 1
@@ -100,6 +115,27 @@ def test_write_to_files_and_unified_diffs(tmp_path):
     assert checksum_section["only_in_image2_file_count"] == 2
     assert checksum_section["trivial_checksum_different_file_count"] == 1
     assert checksum_section["nontrivial_checksum_different_file_count"] == 1
+
+    assert isinstance(meta_json, list)
+    assert {
+        "key": "created",
+        "value1": "2023-01-01T00:00:00Z",
+        "value2": "2023-01-02T00:00:00Z",
+        "matched_flag": None,
+    } in meta_json
+    assert {
+        "key": "config/Env",
+        "value1": {"hello": "world1"},
+        "value2": {"hello": "world2"},
+        "matched_flag": None,
+    } in meta_json
+
+    meta_section = summary_json["summary"]["meta_failure_summary"]
+    assert meta_section["unknown_failures"] == 0
+    assert meta_section["trivial_failures"] == 1
+    assert meta_section["nontrivial_failures"] == 1
+    assert meta_section["flagged_failures"] == 2
+    assert meta_section["total_failures"] == 2
 
 
 @patch("vessel.diff.diff_command.parse_diffoscope_output")
@@ -160,7 +196,22 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
 
     diffoscope_path.write_text("{}")
     checksum_path.write_text("{}")
-    meta_diffs_path.write_text("[]")
+    meta_diffs_path.write_text(
+        json.dumps(
+            [
+                {
+                    "key": "created",
+                    "value1": "2023-01-01T00:00:00Z",
+                    "value2": "2023-01-02T00:00:00Z",
+                },
+                {
+                    "key": "config/Env",
+                    "value1": {"hello": "world1"},
+                    "value2": {"hello": "world2"},
+                },
+            ]
+        )
+    )
 
     diff_command = DiffCommand(
         input_files=[
@@ -192,6 +243,9 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
         patch(
             "vessel.diff.diff_command.generate_filesummary_and_checksum"
         ) as mock_generate,
+        patch(
+            "vessel.diff.diff_command.metadata_diff.match_flags"
+        ) as mock_match,
         patch.object(diff_command, "_write_to_files") as mock_write,
     ):
         mock_load.return_value = (
@@ -205,6 +259,19 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
             ["files_summary"],
             {"checksum_summary": 1},
         )
+
+        meta_diffs = MetadataDiffs(
+            [
+                MetadataDiff(
+                    "created", "2023-01-01T00:00:00Z", "2023-01-02T00:00:00Z"
+                ),
+                MetadataDiff(
+                    "config/Env", {"hello": "world1"}, {"hello": "world2"}
+                ),
+            ]
+        )
+        meta_summary = FailureSummary(0, 1, 1)
+        mock_match.return_value = (meta_diffs, meta_summary)
 
         result = diff_command._compare_json_diff_outputs()
         assert result is True
@@ -229,6 +296,13 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
         assert kwargs["diffs"] == [{"dummy": "diff"}]
         assert kwargs["files_summary"] == ["files_summary"]
         assert kwargs["checksum_summary"] == {"checksum_summary": 1}
+        assert kwargs["meta_failure_summary"].trivial_failures == 1
+        assert kwargs["meta_failure_summary"].nontrivial_failures == 1
+
+        metadata_diffs_arg = kwargs["meta_diffs"]
+        keys = [d.key for d in metadata_diffs_arg.diffs]
+        assert "created" in keys
+        assert "config/Env" in keys
 
 
 def test_compare_diffoscope_and_checksum_json_rejects_bad_pair(
