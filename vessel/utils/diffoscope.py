@@ -46,6 +46,7 @@ def build_diffoscope_command(
     path1: str,
     path2: str,
     mode: str,
+    profile_enabled: bool,
 ) -> list[str]:
     """Generates a command list to execute diffoscope.
 
@@ -56,6 +57,7 @@ def build_diffoscope_command(
         path1: The first path to compare
         path2: The second path to compare
         mode: Comparison mode ("image" or "file")
+        profile_enabled: If True, append '--profile <output_dir_path>/profile.txt'
 
     Returns:
         Commands list to execute diffoscope.
@@ -68,7 +70,8 @@ def build_diffoscope_command(
 
     cmd.extend([path1, path2])
     cmd.extend(["--exclude-directory-metadata", "no"])
-    cmd.extend(["--profile", f"{output_dir_path}/profile.txt"])
+    if profile_enabled:
+        cmd.extend(["--profile", f"{output_dir_path}/profile.txt"])
     exclude_patterns = [
         r"^readelf.*",
         r"^objdump.*",
@@ -372,8 +375,10 @@ def parse_diffoscope_output(
             if (
                 child["source1"][0] != "/"
                 or child["source2"][0] != "/"
-                or umociRegex.search(child["source1"])
-                or umociRegex.search(child["source2"])
+                or (
+                    umociRegex.search(child["source1"])
+                    and umociRegex.search(child["source2"])
+                )
             ):
                 child_return = parse_diffoscope_output(
                     child,

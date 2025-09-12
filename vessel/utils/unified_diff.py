@@ -67,7 +67,7 @@ class Diff:
             self.unified_diff,
         )
 
-    def to_slim_dict(self: "Diff") -> dict:
+    def to_slim_dict(self: "Diff") -> dict[str, Any]:
         """Returns diff object as a dict.
 
         Returns a dict object only containing parts of the diff that are
