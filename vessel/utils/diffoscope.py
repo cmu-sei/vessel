@@ -232,15 +232,12 @@ class DiffoscopeParser:
             diff.source1 = parent_source1
             diff.source2 = parent_source2
 
-        # Initialize to False to ensure one iteration through the flags.
-        # If it then is found to be binary, the rest of the lines
-        # will not be evaluated to not check binary line by line.
+        is_binary = bool(detail.get("has_internal_linenos"))
         for minus_line, plus_line in zip(
             diff.minus_aligned_lines,
             diff.plus_aligned_lines,
             strict=False,
         ):
-            is_binary = bool(detail.get("has_internal_linenos"))
             self._check_flags(diff, minus_line, plus_line, is_binary)
 
             # Check so line by line comparison don't happen in binary diffs and
