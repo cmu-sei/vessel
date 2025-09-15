@@ -32,6 +32,7 @@ from typing import Any, Optional
 
 import portion  # type: ignore
 
+from vessel.diff.helpers.diffline import DiffLine
 from vessel.utils.flag import Flag
 
 logger = getLogger(__name__)
@@ -85,34 +86,6 @@ class Diff:
             dict_obj["unknown_failures"] = [failure.to_dict() for failure in self.unknown_failures]
 
         return dict_obj
-
-
-class DiffLine:
-    """Class to hold data while processing a line in a unified diff."""
-
-    def __init__(
-        self: "DiffLine",
-        text: str,
-        diff_line_number: Optional[int] = None,
-        file_line_number: Optional[int] = None,
-    ) -> None:
-        """Initializer for DiffLine class."""
-        self.text = text
-        self.diff_line_number = diff_line_number
-        self.file_line_number = file_line_number
-        # Interval object containing the range of self.text that
-        #   have not been matched by any of the flag['indiff'] regex
-        self.unmatched_intervals = portion.closed(0, len(self.text) - 1)
-
-    def __eq__(self, other: object):
-        if isinstance(other, DiffLine):
-            return (
-                self.text == other.text
-                and self.diff_line_number == other.diff_line_number
-                and self.file_line_number == self.file_line_number
-                and self.unmatched_intervals == other.unmatched_intervals
-            )
-        return False
 
 
 def equal_entry_list(

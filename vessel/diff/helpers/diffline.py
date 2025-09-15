@@ -1,0 +1,56 @@
+# Vessel Diff Tool
+#
+# Copyright 2024 Carnegie Mellon University.
+#
+# NO WARRANTY. THIS CARNEGIE MELLON UNIVERSITY AND SOFTWARE ENGINEERING
+# INSTITUTE MATERIAL IS FURNISHED ON AN "AS-IS" BASIS. CARNEGIE MELLON
+# UNIVERSITY MAKES NO WARRANTIES OF ANY KIND, EITHER EXPRESSED OR IMPLIED,
+# AS TO ANY MATTER INCLUDING, BUT NOT LIMITED TO, WARRANTY OF FITNESS
+# FOR PURPOSE OR MERCHANTABILITY, EXCLUSIVITY, OR RESULTS OBTAINED FROM
+# USE OF THE MATERIAL. CARNEGIE MELLON UNIVERSITY DOES NOT MAKE ANY
+# WARRANTY OF ANY KIND WITH RESPECT TO FREEDOM FROM PATENT, TRADEMARK,
+# OR COPYRIGHT INFRINGEMENT.
+#
+# Licensed under a MIT (SEI)-style license, please see license.txt
+# or contact permission@sei.cmu.edu for full terms.
+#
+# [DISTRIBUTION STATEMENT A] This material has been approved for public
+# release and unlimited distribution.  Please see Copyright notice
+# for non-US Government use and distribution.
+#
+# This Software includes and/or makes use of Third-Party Software
+# each subject to its own license.
+#
+# DM24-1321
+
+from typing import Optional
+
+import portion
+
+
+class DiffLine:
+    """Class to hold data while processing a line in a unified diff."""
+
+    def __init__(
+        self: "DiffLine",
+        text: str,
+        diff_line_number: Optional[int] = None,
+        file_line_number: Optional[int] = None,
+    ) -> None:
+        """Initializer for DiffLine class."""
+        self.text = text
+        self.diff_line_number = diff_line_number
+        self.file_line_number = file_line_number
+        # Interval object containing the range of self.text that
+        #   have not been matched by any of the flag['indiff'] regex
+        self.unmatched_intervals = portion.closed(0, len(self.text) - 1)
+
+    def __eq__(self, other: object):
+        if isinstance(other, DiffLine):
+            return (
+                self.text == other.text
+                and self.diff_line_number == other.diff_line_number
+                and self.file_line_number == self.file_line_number
+                and self.unmatched_intervals == other.unmatched_intervals
+            )
+        return False

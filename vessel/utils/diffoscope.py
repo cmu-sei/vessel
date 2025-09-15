@@ -31,6 +31,7 @@ from typing import Any, Optional
 
 import magic
 
+from vessel.diff.helpers.diffline import DiffLine
 from vessel.utils.flag import Flag
 from vessel.utils.unified_diff import (
     Diff,

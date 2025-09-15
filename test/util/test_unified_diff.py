@@ -27,10 +27,11 @@
 import portion
 import pytest
 
+from vessel.diff.helpers.diffline import DiffLine
+
 from test.fixture import get_test_flag
 from vessel.utils.unified_diff import (
     Diff,
-    DiffLine,
     align_diff_lines,
     equal_entry_list,
     failures_from_difflines,
