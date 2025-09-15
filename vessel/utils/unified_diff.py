@@ -33,6 +33,7 @@ from typing import Any, Optional
 import portion  # type: ignore
 
 from vessel.diff.helpers.diffline import DiffLine
+from vessel.diff.helpers.failure import Failure
 from vessel.diff.helpers.flag import Flag
 
 logger = getLogger(__name__)
@@ -81,9 +82,9 @@ class Diff:
             dict_obj["comments"] = self.comments
         dict_obj["unified_diff"] = self.unified_diff
         if self.flagged_failures:
-            dict_obj["flagged_failures"] = [failure.to_dict() for failure in self.flagged_failures]
+            dict_obj["flagged_failures"] = [failure for failure in self.flagged_failures]
         if self.unknown_failures:
-            dict_obj["unknown_failures"] = [failure.to_dict() for failure in self.unknown_failures]
+            dict_obj["unknown_failures"] = [failure for failure in self.unknown_failures]
 
         return dict_obj
 
