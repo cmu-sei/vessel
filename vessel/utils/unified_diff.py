@@ -38,7 +38,7 @@ logger = getLogger(__name__)
 
 
 class Diff:
-    """Class to hold all the data used when parsing a unified diff."""
+    """Class to hold all the data used when parsing a diffoscope detail."""
 
     def __init__(
         self: "Diff",

@@ -30,7 +30,7 @@ import subprocess
 import tempfile
 from logging import getLogger
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import yaml
 
@@ -83,7 +83,7 @@ class DiffCommand:
         self.mode: str = mode
         self.data_dir: str = data_dir
         self.output_dir: str = output_dir
-        self.temp_dir: tempfile.TemporaryDirectory[str] | None = None
+        self.temp_dir: Optional[tempfile.TemporaryDirectory[str]] = None
         self.image_uris: list[ImageURI] = []
         self.oci_image_paths: list[str] = []
         self.oci_runtime_paths: list[str] = []
@@ -398,8 +398,8 @@ class DiffCommand:
         meta_diffs: MetadataDiffs,
         hashed_files1: dict[str, Any],
         hashed_files2: dict[str, Any],
-        filetype_lookup1: dict[str, str] | None = None,
-        filetype_lookup2: dict[str, str] | None = None,
+        filetype_lookup1: Optional[dict[str, str]] = None,
+        filetype_lookup2: Optional[dict[str, str]] = None,
     ) -> None:
         """Parses both diffoscope and metadata/config diffs, creates summaries and writes outputs.
 

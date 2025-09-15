@@ -27,7 +27,7 @@
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import magic
 
@@ -124,8 +124,8 @@ class DiffoscopeParser:
         self: "DiffoscopeParser",
         diffoscope_json: dict,
         flags: list[Flag],
-        filetype_lookup1: dict[str, str] | None = None,
-        filetype_lookup2: dict[str, str] | None = None,
+        filetype_lookup1: Optional[dict[str, str]] = None,
+        filetype_lookup2: Optional[dict[str, str]] = None,
     ) -> None:
         """Initializer for Diffoscope parser.
 
@@ -158,7 +158,7 @@ class DiffoscopeParser:
         detail: dict,
         parent_source1: str = "",
         parent_source2: str = "",
-        parent_comments: list[str] | None = None,
+        parent_comments: Optional[list[str]] = None,
     ) -> None:
         """Handle recursion through all differences in diffoscope JSON object.
 
@@ -206,7 +206,7 @@ class DiffoscopeParser:
         detail: dict,
         parent_source1: str = "",
         parent_source2: str = "",
-        parent_comments: list[str] | None = None,
+        parent_comments: Optional[list[str]] = None,
     ):
         """Parse one detail (one file difference) of the Diffoscope JSON.
 

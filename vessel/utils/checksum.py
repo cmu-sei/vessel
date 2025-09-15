@@ -166,6 +166,7 @@ def summarize_checksums(
     files that are only in one of the two paths.
 
     Args:
+        diff_lookup: Dict mapping file pairs to diff result dicts.
         folder_path1: Path to first folder
         hashed_files1: Dict containing FileHash for each file in folder_path1 with filepath as key
         folder_path2: Path to second folder
