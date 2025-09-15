@@ -247,10 +247,12 @@ class DiffoscopeParser:
             file_diff.plus_aligned_lines,
             strict=False,
         ):
-            failure_summary = check_flags(self.flags, self.filetype_lookup1, self.filetype_lookup2, file_diff, minus_line, plus_line, is_binary)
+            failure_summary, flagged_failure_list, unknown_failure_list = check_flags(self.flags, self.filetype_lookup1, self.filetype_lookup2, file_diff, minus_line, plus_line, is_binary)
             self.trivial_failure_count += failure_summary.trivial_failures
             self.nontrivial_failure_count += failure_summary.nontrivial_failures
             self.unknown_failure_count += failure_summary.unknown_failures
+            file_diff.flagged_failures = flagged_failure_list
+            file_diff.unknown_failures = unknown_failure_list
 
             # Check so line by line comparison don't happen in binary diffs and
             # this is after all the flags have been checked so the diff is done

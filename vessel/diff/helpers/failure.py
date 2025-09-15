@@ -36,6 +36,8 @@ from vessel.diff.helpers.flag import Flag
 class FailureSummary:
     """Represents a summary of failures in OCI image."""
 
+    # TODO: Make these unknown_failure_count, then adjust the to_dict to output as it is now
+
     unknown_failures: int = 0
     """Number of failures that did not match a flag."""
 

@@ -40,45 +40,54 @@ def check_flags(
     flags: list[Flag],
     filetype_lookup1,
     filetype_lookup2,
-    diff: FileDiff,
+    file_diff: FileDiff,
     minus_line: DiffLine,
     plus_line: DiffLine,
     is_binary: bool,
-):
-    """Check a Diff against all flags and update Diff based on matches or non matches.
+) -> tuple[FailureSummary, list, list]: # TODO List typing
+    """Check a FileDiff against all Flags and return summary, and list of flagged and unknown failures.
 
-    Take in a Diff, iterate through all of the flags and check if each matches the difference and
-    the minus and plus lines of the Diff while updating the failure counts, and the lists of
-    failures in the Diff parameter object.
+    Take in a FileDiff, iterate through all of the Flags and check if each matches the difference and
+    the minus and plus lines of the FileDiff while updating the failure counts, and the lists of
+    failures in the FileDiff parameter object.
 
     Args:
-        diff: Diff object to be checked
+        flags: List of Flags to be checked against
+        file_diff: FileDiff object to be checked
+        filetype_lookup1: TODO
+        filetype_lookpu2: TODO
         minus_line: Line of the minus file in the unified diff to be checked
         plus_line: Line of the plus file in the unified diff to be checked
+        is_binary: Boolean to determine if the FileDiff is from a binary file or not
+    
+    Returns:
+        Failure
     """
     failure_summary = FailureSummary()
+    flagged_failure_list = [] # list[Failure] TODO
+    unknown_failure_list = [] # list[Failure] TODO
 
     for flag in flags:
         flag_matches = True
 
         # Check if filepath matches flag
         flag_matches = _check_flag_filepath(
-            flag, diff.source1, diff.source2
+            flag, file_diff.source1, file_diff.source2
         )
 
         # Check if filetype matches flag
         if flag_matches:
             flag_matches = _check_flag_filetype(
-                flag, filetype_lookup1, filetype_lookup2, diff.source1, diff.source2
+                flag, filetype_lookup1, filetype_lookup2, file_diff.source1, file_diff.source2
             )
 
         # Check if command matches flag
         if flag_matches:
-            flag_matches = _check_flag_command(flag, diff.command)
+            flag_matches = _check_flag_command(flag, file_diff.command)
 
         # Check if comment matches flag
         if flag_matches:
-            flag_matches = _check_flag_comment(flag, diff.comments)
+            flag_matches = _check_flag_comment(flag, file_diff.comments)
 
         # Handle a binary line that matches the flag
         if (
@@ -86,7 +95,7 @@ def check_flags(
             and is_binary
             and flag.regex["indiff"] == re.compile(".*")
         ):
-            diff.flagged_failures.append(
+            flagged_failure_list.append(
                 {
                     "id": flag.flag_id,
                     "description": flag.description,
@@ -101,8 +110,8 @@ def check_flags(
         # Handle any non-binary line that matches the flag
         elif flag_matches:
             (
-                flagged_failure_list,
-                unknown_failure_list,
+                temp_flagged_failure_list,
+                temp_unknown_failure_list,
                 minus_line.unmatched_intervals,
                 plus_line.unmatched_intervals,
             ) = failures_from_difflines(
@@ -115,20 +124,20 @@ def check_flags(
             if flag.regex["indiff"] != re.compile(
                 ".*"
             ) or flag.flag_id not in [
-                flag["id"] for flag in diff.flagged_failures
+                flag["id"] for flag in file_diff.flagged_failures
             ]:
-                for failure in flagged_failure_list:
+                for failure in temp_flagged_failure_list:
                     failure["metadata"] = flag.metadata
                     failure["severity"] = flag.severity
                     if flag.severity == "Low":
                         failure_summary.trivial_failures += 1
                     else:
                         failure_summary.nontrivial_failures += 1
-                failure_summary.unknown_failures += len(unknown_failure_list)
-                diff.flagged_failures.extend(flagged_failure_list)
-                diff.unknown_failures.extend(unknown_failure_list)
+                failure_summary.unknown_failures += len(temp_unknown_failure_list)
+                flagged_failure_list.extend(temp_flagged_failure_list)
+                unknown_failure_list.extend(temp_unknown_failure_list)
     
-    return failure_summary
+    return failure_summary, flagged_failure_list, unknown_failure_list
 
 def _check_flag_filepath(
     flag: Flag, source1: str, source2: str
