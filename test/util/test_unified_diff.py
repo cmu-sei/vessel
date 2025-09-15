@@ -30,13 +30,13 @@ import pytest
 from vessel.diff.helpers.diffline import DiffLine
 
 from test.fixture import get_test_flag
+from vessel.diff.helpers.failure import Failure
 from vessel.utils.unified_diff import (
     Diff,
     align_diff_lines,
     equal_entry_list,
     failures_from_difflines,
     intervals_to_str,
-    make_failure_dict,
     parse_unified_diff_header,
 )
 
@@ -441,9 +441,9 @@ TEST_DIFFLINES = [
         },
         {
             "flagged": [
-                make_failure_dict(
+                Failure(
                     minus_str="123", plus_str="456", flag=get_test_flag()
-                )
+                ).to_dict()
             ],
             "unknown": [],
             "minus_unmatched": portion.closedopen(0, 8),
@@ -458,9 +458,9 @@ TEST_DIFFLINES = [
         },
         {
             "flagged": [
-                make_failure_dict(
+                Failure(
                     minus_str="123", plus_str="456", flag=get_test_flag()
-                )
+                ).to_dict()
             ],
             "unknown": [],
             "minus_unmatched": portion.openclosed(2, 10),
@@ -475,12 +475,12 @@ TEST_DIFFLINES = [
         },
         {
             "flagged": [
-                make_failure_dict(
+                Failure(
                     minus_str="123", plus_str="456", flag=get_test_flag()
-                ),
-                make_failure_dict(
+                ).to_dict(),
+                Failure(
                     minus_str="321", plus_str="654", flag=get_test_flag()
-                ),
+                ).to_dict(),
             ],
             "unknown": [],
             "minus_unmatched": portion.open(2, 12),
@@ -502,70 +502,6 @@ def test_failures_from_difflines(test_input, expected):
     assert unknown == expected["unknown"]
     assert minus_unmatched == expected["minus_unmatched"]
     assert plus_unmatched == expected["plus_unmatched"]
-
-
-# -----------------------------------------------------------------------------
-# Tests for make_failure_dict
-# -----------------------------------------------------------------------------
-
-TEST_ISSUE_DICT_INPUT = [
-    (
-        {},
-        {
-            "minus_file_line_number": None,
-            "plus_file_line_number": None,
-            "minus_diff_line_number": None,
-            "plus_diff_line_number": None,
-            "minus_unmatched_str": None,
-            "plus_unmatched_str": None,
-        },
-    ),
-    (
-        {
-            "minus_line": DiffLine("example 123", 1, 2),
-            "plus_line": DiffLine("example 456", 3, 4),
-            "minus_str": "123",
-            "plus_str": "456",
-            "flag": None,
-        },
-        {
-            "minus_file_line_number": 2,
-            "plus_file_line_number": 4,
-            "minus_diff_line_number": 1,
-            "plus_diff_line_number": 3,
-            "minus_unmatched_str": "123",
-            "plus_unmatched_str": "456",
-        },
-    ),
-    (
-        {
-            "minus_line": DiffLine("example 123", 1, 2),
-            "plus_line": DiffLine("example 456", 3, 4),
-            "minus_str": "123",
-            "plus_str": "456",
-            "flag": get_test_flag(),
-        },
-        {
-            "id": "test_flag",
-            "description": "test flag",
-            "minus_file_line_number": 2,
-            "plus_file_line_number": 4,
-            "minus_diff_line_number": 1,
-            "plus_diff_line_number": 3,
-            "minus_matched_str": "123",
-            "plus_matched_str": "456",
-        },
-    ),
-]
-
-
-@pytest.mark.parametrize("test_input, expected", TEST_ISSUE_DICT_INPUT)
-def test_make_failure_dict(test_input, expected):
-    """Tests that the dict is created properly."""
-
-    dict = make_failure_dict(**test_input)
-
-    assert dict == expected
 
 
 # -----------------------------------------------------------------------------

@@ -300,31 +300,31 @@ def failures_from_difflines(
 
         if minus_match_interval is None:
             unknown_failures.append(
-                make_failure_dict(
+                Failure(
                     minus_line,
                     plus_line,
                     None,
                     plus_match_str,
-                ),
+                ).to_dict(),
             )
         elif plus_match_interval is None:
             unknown_failures.append(
-                make_failure_dict(
+                Failure(
                     minus_line,
                     plus_line,
                     minus_match_str,
                     None,
-                ),
+                ).to_dict(),
             )
         elif minus_match_str != plus_match_str:
             flagged_failures.append(
-                make_failure_dict(
+                Failure(
                     minus_line,
                     plus_line,
                     minus_match_str,
                     plus_match_str,
                     flag,
-                ),
+                ).to_dict(),
             )
 
     return (

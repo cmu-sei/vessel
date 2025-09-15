@@ -32,13 +32,12 @@ from typing import Any, Optional
 import magic
 
 from vessel.diff.helpers.diffline import DiffLine
+from vessel.diff.helpers.failure import Failure
 from vessel.diff.helpers.flag import Flag
 from vessel.utils.unified_diff import (
     Diff,
-    DiffLine,
     failures_from_difflines,
     intervals_to_str,
-    make_failure_dict,
 )
 
 
@@ -289,12 +288,12 @@ class DiffoscopeParser:
             if minus_unmatched_str != plus_unmatched_str:
                 self.unknown_failure_count += 1
                 diff.unknown_failures.append(
-                    make_failure_dict(
+                    Failure(
                         minus_line if minus_line else None,
                         plus_line if plus_line else None,
                         minus_unmatched_str,
-                        plus_unmatched_str,
-                    ),
+                        plus_unmatched_str
+                    ).to_dict(),
                 )
 
         self.diff_list.append(diff.to_slim_dict())
