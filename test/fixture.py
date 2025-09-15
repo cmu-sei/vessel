@@ -24,7 +24,7 @@
 # DM24-1321
 """Fixtures for all unit tests."""
 
-from vessel.utils.flag import Flag
+from vessel.diff.helpers.flag import Flag
 
 
 def get_test_flag():

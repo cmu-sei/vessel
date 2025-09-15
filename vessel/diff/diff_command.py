@@ -48,7 +48,7 @@ from vessel.utils.diffoscope import (
     DiffoscopeParser,
     build_diffoscope_command,
 )
-from vessel.utils.flag import Flag
+from vessel.diff.helpers.flag import Flag
 from vessel.utils.skopeo import skopeo_copy
 from vessel.utils.uri import ImageURI
 
