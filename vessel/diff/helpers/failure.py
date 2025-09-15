@@ -26,7 +26,10 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any
+from typing import Any, Optional
+
+from vessel.diff.helpers.diffline import DiffLine
+from vessel.diff.helpers.flag import Flag
 
 
 @dataclass
@@ -76,3 +79,80 @@ class FailureSummary:
             + self.trivial_failures
             + self.nontrivial_failures
         )
+
+
+class Failure:
+    """Represents a reproduciblity failure."""
+
+    def __init__(
+        self: "Failure",
+        minus_line: Optional[DiffLine] = None,
+        plus_line: Optional[DiffLine] = None,
+        minus_str: Optional[str] = None,
+        plus_str: Optional[str] = None,
+        flag: Optional[Flag] = None,
+        comments: Optional[list[str]] = None,
+    ) -> None:
+        """
+        
+            TODO: Comments are used only for binary, can they be passed to the parent? seems hard
+        """
+        self.minus_line = minus_line
+        self.plus_line = plus_line
+        self.minus_str = minus_str
+        self.plus_str = plus_str
+        self.flag = flag
+        self.comments = comments
+
+    def to_dict(self) -> dict[str, Any]:
+        """Returns this failure as a dictionary.
+        
+        A flag being passed implies that it was a flagged failure and the flag information
+        will be embedded in the dict.
+
+        Args:
+            minus_line: Diff line object containing the minus line
+            plus_line: Diff line object containing the plus line
+            minus_str: String that was matched or unmatched in the minus line
+            plus_str: String that was matched or unmatched in the plus line
+            flag: Dict item of the flag to have id and description
+
+        Returns:
+            A failure dict item.
+        """
+        if self.flag:
+            return {
+                "id": self.flag.flag_id,
+                "description": self.flag.description,
+                "minus_file_line_number": self.minus_line.file_line_number
+                if self.minus_line
+                else None,
+                "plus_file_line_number": self.plus_line.file_line_number
+                if self.plus_line
+                else None,
+                "minus_diff_line_number": self.minus_line.diff_line_number
+                if self.minus_line
+                else None,
+                "plus_diff_line_number": self.plus_line.diff_line_number
+                if self.plus_line
+                else None,
+                "minus_matched_str": self.minus_str,
+                "plus_matched_str": self.plus_str,
+            }
+
+        return {
+            "minus_file_line_number": self.minus_line.file_line_number
+            if self.minus_line
+            else None,
+            "plus_file_line_number": self.plus_line.file_line_number
+            if self.plus_line
+            else None,
+            "minus_diff_line_number": self.minus_line.diff_line_number
+            if self.minus_line
+            else None,
+            "plus_diff_line_number": self.plus_line.diff_line_number
+            if self.plus_line
+            else None,
+            "minus_unmatched_str": self.minus_str,
+            "plus_unmatched_str": self.plus_str,
+        }

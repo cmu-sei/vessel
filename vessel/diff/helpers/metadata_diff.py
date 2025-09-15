@@ -65,7 +65,7 @@ class MetadataDiffs:
     """Encapsulates a list of metadata diffs."""
 
     def __init__(self, diffs: list[MetadataDiff] = []):
-        "Constructor."
+        """Constructor."""
         self.diffs = diffs
         """List of diffs in OCI image metadata/config."""
 

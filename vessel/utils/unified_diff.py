@@ -80,9 +80,9 @@ class Diff:
             dict_obj["comments"] = self.comments
         dict_obj["unified_diff"] = self.unified_diff
         if self.flagged_failures:
-            dict_obj["flagged_failures"] = self.flagged_failures
+            dict_obj["flagged_failures"] = [failure.to_dict() for failure in self.flagged_failures]
         if self.unknown_failures:
-            dict_obj["unknown_failures"] = self.unknown_failures
+            dict_obj["unknown_failures"] = [failure.to_dict() for failure in self.unknown_failures]
 
         return dict_obj
 
@@ -360,68 +360,6 @@ def failures_from_difflines(
         minus_line.unmatched_intervals,
         plus_line.unmatched_intervals,
     )
-
-
-def make_failure_dict(
-    minus_line: Optional[DiffLine] = None,
-    plus_line: Optional[DiffLine] = None,
-    minus_str: Optional[str] = None,
-    plus_str: Optional[str] = None,
-    flag: Optional[Flag] = None,
-) -> dict[str, Any]:
-    """Create failure dict object.
-
-    Used to ensure consistency in all failure objects that
-    will be written to final output file. A flag being passed
-    implies that it was a flagged failure and the flag information
-    will be embedded in the dict.
-
-    Args:
-        minus_line: Diff line object containing the minus line
-        plus_line: Diff line object containing the plus line
-        minus_str: String that was matched or unmatched in the minus line
-        plus_str: String that was matched or unmatched in the plus line
-        flag: Dict item of the flag to have id and description
-
-    Returns:
-        A failure dict item.
-    """
-    if flag:
-        return {
-            "id": flag.flag_id,
-            "description": flag.description,
-            "minus_file_line_number": minus_line.file_line_number
-            if minus_line
-            else None,
-            "plus_file_line_number": plus_line.file_line_number
-            if plus_line
-            else None,
-            "minus_diff_line_number": minus_line.diff_line_number
-            if minus_line
-            else None,
-            "plus_diff_line_number": plus_line.diff_line_number
-            if plus_line
-            else None,
-            "minus_matched_str": minus_str,
-            "plus_matched_str": plus_str,
-        }
-
-    return {
-        "minus_file_line_number": minus_line.file_line_number
-        if minus_line
-        else None,
-        "plus_file_line_number": plus_line.file_line_number
-        if plus_line
-        else None,
-        "minus_diff_line_number": minus_line.diff_line_number
-        if minus_line
-        else None,
-        "plus_diff_line_number": plus_line.diff_line_number
-        if plus_line
-        else None,
-        "minus_unmatched_str": minus_str,
-        "plus_unmatched_str": plus_str,
-    }
 
 
 def intervals_to_str(
