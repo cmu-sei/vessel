@@ -39,56 +39,6 @@ from vessel.diff.helpers.flag import Flag
 logger = getLogger(__name__)
 
 
-class Diff:
-    """Class to hold all the data used when parsing a diffoscope detail."""
-
-    def __init__(
-        self: "Diff",
-        source1: str,
-        source2: str,
-        comments: list,
-        raw_unified_diff: str,
-    ) -> None:
-        """Initializer for Diff class."""
-        self.source1 = source1
-        self.source2 = source2
-        self.unified_diff: list[str] = raw_unified_diff.splitlines()
-        self.comments: list[str] = comments
-        self.command: str = ""
-
-        self.flagged_failures: list[dict] = []
-        self.unknown_failures: list[dict] = []
-
-        self.minus_aligned_lines: list[DiffLine] = []
-        self.plus_aligned_lines: list[DiffLine] = []
-        self.minus_aligned_lines, self.plus_aligned_lines = align_diff_lines(
-            self.unified_diff,
-        )
-
-    def to_slim_dict(self: "Diff") -> dict[str, Any]:
-        """Returns diff object as a dict.
-
-        Returns a dict object only containing parts of the diff that are
-        populated. This is done to reduce the size of the output file.
-        """
-        dict_obj: dict[str, Any] = {
-            "source1": self.source1,
-            "source2": self.source2,
-        }
-        dict_obj["unified_diff_id"] = "ID not yet assigned"
-        if self.command:
-            dict_obj["command"] = self.command
-        if self.comments:
-            dict_obj["comments"] = self.comments
-        dict_obj["unified_diff"] = self.unified_diff
-        if self.flagged_failures:
-            dict_obj["flagged_failures"] = [failure for failure in self.flagged_failures]
-        if self.unknown_failures:
-            dict_obj["unknown_failures"] = [failure for failure in self.unknown_failures]
-
-        return dict_obj
-
-
 def equal_entry_list(
     list1: list[Any],
     list2: list[Any],

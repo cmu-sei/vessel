@@ -478,7 +478,7 @@ class DiffCommand:
             file_failure_summary: Summary of failures in file comparison
             meta_failure_summary: Summary of failures in metadata/config comparison
             diffs: List of diffs, each being a dict item returned
-                    from Diff.to_slim_dict()
+                    from Diff.to_dict()
             meta_diffs: List of diffs between OCI images metadata/configs.
             files_summary: File analysis of trivial/nontrivial failure
             checksum_summary: File checksum comparison result summary

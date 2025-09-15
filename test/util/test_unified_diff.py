@@ -31,45 +31,14 @@ from vessel.diff.helpers.diffline import DiffLine
 
 from test.fixture import get_test_flag
 from vessel.diff.helpers.failure import Failure
+from vessel.diff.helpers.file_diff import FileDiff
 from vessel.utils.unified_diff import (
-    Diff,
     align_diff_lines,
     equal_entry_list,
     failures_from_difflines,
     intervals_to_str,
     parse_unified_diff_header,
 )
-
-# -----------------------------------------------------------------------------
-# Tests for Diff.to_slim_dict
-# -----------------------------------------------------------------------------
-
-TEST_DIFF_CLASS_OBJECTS = [
-    (
-        Diff(
-            "src1",
-            "src2",
-            ["com1", "com2"],
-            "@@ -1,2 +1,3 @@\n 1\n-2\n+2!\n+3!\n",
-        ),
-        {
-            "source1": "src1",
-            "source2": "src2",
-            "unified_diff_id": "ID not yet assigned",
-            "comments": ["com1", "com2"],
-            "unified_diff": "@@ -1,2 +1,3 @@\n 1\n-2\n+2!\n+3!\n".splitlines(),
-        },
-    )
-]
-
-
-@pytest.mark.parametrize("test_input, expected", TEST_DIFF_CLASS_OBJECTS)
-def test_Diff_to_sim_dict(test_input, expected):
-    """Ensures Diff properly converts to a dict"""
-
-    dict = test_input.to_slim_dict()
-
-    assert dict == expected
 
 
 # -----------------------------------------------------------------------------

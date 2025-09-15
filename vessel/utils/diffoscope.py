@@ -34,8 +34,8 @@ import magic
 from vessel.diff.helpers.diffline import DiffLine
 from vessel.diff.helpers.failure import Failure
 from vessel.diff.helpers.flag import Flag
+from vessel.diff.helpers.file_diff import FileDiff
 from vessel.utils.unified_diff import (
-    Diff,
     failures_from_difflines,
     intervals_to_str,
 )
@@ -226,7 +226,7 @@ class DiffoscopeParser:
         if parent_comments:
             temp_comments.extend(parent_comments)
 
-        diff = Diff(
+        diff = FileDiff(
             detail["source1"],
             detail["source2"],
             temp_comments,
@@ -296,11 +296,11 @@ class DiffoscopeParser:
                     ).to_dict(),
                 )
 
-        self.diff_list.append(diff.to_slim_dict())
+        self.diff_list.append(diff.to_dict())
 
     def _check_flags(
         self: "DiffoscopeParser",
-        diff: Diff,
+        diff: FileDiff,
         minus_line: DiffLine,
         plus_line: DiffLine,
         is_binary: bool,
