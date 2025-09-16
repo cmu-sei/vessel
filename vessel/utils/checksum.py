@@ -390,10 +390,11 @@ def classify_checksum_mismatches(
         types = []
         seen_types = set()
         for failure in entry_flagged_failures:
-            key2 = f"{failure.flag.flag_id}|{failure.flag.description}"
-            if key2 not in seen_types:
-                types.append(key2)
-                seen_types.add(key2)
+            if failure.flag:
+                key2 = f"{failure.flag.flag_id}|{failure.flag.description}"
+                if key2 not in seen_types:
+                    types.append(key2)
+                    seen_types.add(key2)
         filetype1 = (
             hashed_files1[entry["path1"]].filetype
             if entry["path1"] in hashed_files1
@@ -422,9 +423,12 @@ def classify_checksum_mismatches(
             all_trivial = all(
                 failure.flag.severity == "Low"
                 for failure in entry_flagged_failures
+                if failure.flag
             )
             all_metadata = all(
-                failure.flag.metadata for failure in entry_flagged_failures
+                failure.flag.metadata
+                for failure in entry_flagged_failures
+                if failure.flag
             )
             # Only trivial, but all are metadata: treat as nontrivial/unknown
             if all_trivial and all_metadata:

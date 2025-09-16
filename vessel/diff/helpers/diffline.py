@@ -25,7 +25,7 @@
 
 from typing import Optional
 
-import portion
+import portion  # type: ignore
 
 
 class DiffLine:

@@ -127,10 +127,12 @@ def flag_failures(
             if flag.regex["indiff"] != re.compile(
                 ".*"
             ) or flag.flag_id not in [
-                failure.flag.flag_id for failure in file_diff.flagged_failures
+                failure.flag.flag_id
+                for failure in file_diff.flagged_failures
+                if failure.flag
             ]:
                 for failure in temp_flagged_failure_list:
-                    if failure.flag.severity == "Low":
+                    if failure.flag and failure.flag.severity == "Low":
                         failure_summary.trivial_failure_count += 1
                     else:
                         failure_summary.nontrivial_failure_count += 1

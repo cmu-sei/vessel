@@ -129,7 +129,7 @@ class DiffCommand:
                         FailureSummary(),
                         FailureSummary(),
                         FailureSummary(),
-                        [],
+                        FileDiffs(),
                         MetadataDiffs(),
                         [],
                         {},

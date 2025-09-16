@@ -29,11 +29,11 @@ import re
 from pathlib import Path
 from typing import Optional
 
-from vessel.utils.umoci import UMOCI_UNPACK_PATH
 from vessel.diff.helpers.failure import Failure, FailureSummary
 from vessel.diff.helpers.file_diff import FileDiff, FileDiffs
 from vessel.diff.helpers.flag import Flag
 from vessel.utils.flag_failures import flag_failures
+from vessel.utils.umoci import UMOCI_UNPACK_PATH
 from vessel.utils.unified_diff import (
     intervals_to_str,
 )
@@ -274,7 +274,7 @@ class DiffoscopeParser:
             # being evaluated
             if is_binary:
                 if len(file_diff.flagged_failures) == 0:
-                    self.unknown_failure_count += 1
+                    self.failure_summary.unknown_failure_count += 1
                     file_diff.unknown_failures.append(
                         Failure(
                             comments=[
@@ -304,7 +304,7 @@ class DiffoscopeParser:
                 else None
             )
             if minus_unmatched_str != plus_unmatched_str:
-                self.unknown_failure_count += 1
+                self.failure_summary.unknown_failure_count += 1
                 file_diff.unknown_failures.append(
                     Failure(
                         minus_line if minus_line else None,
