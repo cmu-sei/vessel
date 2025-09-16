@@ -183,8 +183,8 @@ class DiffoscopeParser:
             for child in detail["details"]:
                 # Ignore anything without the umoci-unpack- path that shouldn't be showing in diffs
                 if (
-                    child["source1"][0] != "/"
-                    or child["source2"][0] != "/"
+                    not Path(child["source1"][0]).is_absolute()
+                    or not Path(child["source2"][0]).is_absolute()
                     or (
                         umociRegex.search(child["source1"])
                         and umociRegex.search(child["source2"])
