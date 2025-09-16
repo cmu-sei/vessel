@@ -23,8 +23,7 @@
 #
 # DM24-1321
 
-"""Utility class for flag operations"""
-# TODO rename this file
+"""Utility class for flag operations."""
 
 import re
 from pathlib import Path
@@ -38,16 +37,15 @@ from vessel.diff.helpers.flag import Flag
 from vessel.utils.unified_diff import failures_from_difflines
 
 
-# TODO Better naming for this and all functions
-def check_flags(
+def flag_failures(
     flags: list[Flag],
-    filetype_lookup1,
-    filetype_lookup2,
+    filetype_lookup1: dict[str, str] | None,
+    filetype_lookup2: dict[str, str] | None,
     file_diff: FileDiff,
     minus_line: DiffLine,
     plus_line: DiffLine,
     is_binary: bool,
-) -> tuple[FailureSummary, list, list]:  # TODO List typing
+) -> tuple[FailureSummary, list[Failure], list[Failure]]:
     """Check a FileDiff against all Flags and return summary, and list of flagged and unknown failures.
 
     Take in a FileDiff, iterate through all of the Flags and check if each matches the difference and
@@ -57,8 +55,8 @@ def check_flags(
     Args:
         flags: List of Flags to be checked against
         file_diff: FileDiff object to be checked
-        filetype_lookup1: TODO
-        filetype_lookpu2: TODO
+        filetype_lookup1: Lookup for filetypes of all files in source1
+        filetype_lookpu2: Lookup for filetypes of all files in source2
         minus_line: Line of the minus file in the unified diff to be checked
         plus_line: Line of the plus file in the unified diff to be checked
         is_binary: Boolean to determine if the FileDiff is from a binary file or not
@@ -67,8 +65,8 @@ def check_flags(
         Failure
     """
     failure_summary = FailureSummary()
-    flagged_failure_list = []  # list[Failure] TODO
-    unknown_failure_list = []  # list[Failure] TODO
+    flagged_failure_list: list[Failure] = []
+    unknown_failure_list: list[Failure] = []
 
     for flag in flags:
         flag_matches = True
@@ -132,7 +130,7 @@ def check_flags(
                 failure.flag.flag_id for failure in file_diff.flagged_failures
             ]:
                 for failure in temp_flagged_failure_list:
-                    if flag.severity == "Low":
+                    if failure.flag.severity == "Low":
                         failure_summary.trivial_failures += 1
                     else:
                         failure_summary.nontrivial_failures += 1
@@ -146,7 +144,7 @@ def check_flags(
 
 
 def _check_flag_filepath(flag: Flag, source1: str, source2: str) -> bool:
-    """Check difference sources against filepath regex of flag.
+    """Check if both sources match filepath regex of flag.
 
     Args:
         flag: Flag to check against
@@ -164,7 +162,7 @@ def _check_flag_filepath(flag: Flag, source1: str, source2: str) -> bool:
 def _check_flag_filetype(
     flag: Flag, filetype_lookup1, filetype_lookup2, source1: str, source2: str
 ) -> bool:
-    """Check difference sources against filetype regex of flag.
+    """Check if both sources match filetype regex of flag.
 
     Perform check of source filetypes. If both files exist locally, use
     magic library for data type otherwise use types from the metadata.
@@ -199,7 +197,7 @@ def _check_flag_filetype(
 
 
 def _check_flag_command(flag: Flag, command: str) -> bool:
-    """Check difference command against command regex of flag.
+    """Check if command matches the command regex of flag.
 
     Command of the difference will be populated if the diff was found by diffoscope
     using a command such as stat {}.
@@ -215,7 +213,7 @@ def _check_flag_command(flag: Flag, command: str) -> bool:
 
 
 def _check_flag_comment(flag: Flag, comments: list) -> bool:
-    """Check difference comments against comment regex of flag.
+    """Check if any comment matches the comment regex of flag.
 
     Checks if any comment of the command matches, or if the comment list is
     empty and the regex is set to accept any value.

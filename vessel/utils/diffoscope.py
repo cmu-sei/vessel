@@ -32,7 +32,7 @@ from typing import Optional
 from vessel.diff.helpers.failure import Failure, FailureSummary
 from vessel.diff.helpers.file_diff import FileDiff, FileDiffs
 from vessel.diff.helpers.flag import Flag
-from vessel.utils.flag_check import check_flags
+from vessel.utils.flag_failures import flag_failures
 from vessel.utils.unified_diff import (
     intervals_to_str,
 )
@@ -246,7 +246,7 @@ class DiffoscopeParser:
             strict=False,
         ):
             failure_summary, flagged_failure_list, unknown_failure_list = (
-                check_flags(
+                flag_failures(
                     self.flags,
                     self.filetype_lookup1,
                     self.filetype_lookup2,
