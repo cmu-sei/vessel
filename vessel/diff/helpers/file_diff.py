@@ -23,7 +23,6 @@
 #
 # DM24-1321
 
-"""@@@@@"""
 
 from typing import Any
 
@@ -32,7 +31,7 @@ from vessel.utils.unified_diff import align_diff_lines
 
 
 class FileDiff:
-    """An entry describing a diff between two files."""
+    """Class describing a diff between two files."""
 
     def __init__(
         self: "FileDiff",

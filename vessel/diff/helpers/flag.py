@@ -23,8 +23,6 @@
 #
 # DM24-1321
 
-"""Utility class for flags."""
-
 import re
 from re import Pattern
 

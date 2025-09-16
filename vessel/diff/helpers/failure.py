@@ -23,6 +23,8 @@
 #
 # DM24-1321
 
+"""Classes to represent reproducibility failures."""
+
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
@@ -35,8 +37,6 @@ from vessel.diff.helpers.flag import Flag
 @dataclass
 class FailureSummary:
     """Represents a summary of failures in OCI image."""
-
-    # TODO: Make these unknown_failure_count, then adjust the to_dict to output as it is now
 
     unknown_failure_count: int = 0
     """Number of failures that did not match a flag."""
@@ -101,10 +101,7 @@ class Failure:
         flag: Optional[Flag] = None,
         comments: Optional[list[str]] = None,
     ) -> None:
-        """
-
-        TODO: Comments are used only for binary, can they be passed to the parent? seems hard
-        """
+        """Construtor."""
         self.minus_line = minus_line
         self.plus_line = plus_line
         self.minus_str = minus_str
