@@ -417,11 +417,6 @@ class DiffCommand:
         parser = DiffoscopeParser(
             diffoscope_json, self.flags, filetype_lookup1, filetype_lookup2
         )
-        file_failure_summary = FailureSummary(
-            parser.unknown_failure_count,
-            parser.trivial_failure_count,
-            parser.nontrivial_failure_count,
-        )
 
         # Now check flags for image metadata diffs.
         meta_diffs, meta_summary = metadata_diff.match_flags(
@@ -430,11 +425,11 @@ class DiffCommand:
 
         # Create totals with metadata/config failures.
         total_failure_summary = FailureSummary(
-            unknown_failure_count=file_failure_summary.unknown_failures
+            unknown_failure_count=parser.failure_summary.unknown_failures
             + meta_summary.unknown_failures,
-            trivial_failure_count=file_failure_summary.trivial_failures
+            trivial_failure_count=parser.failure_summary.trivial_failures
             + meta_summary.trivial_failures,
-            nontrivial_failure_count=file_failure_summary.nontrivial_failures
+            nontrivial_failure_count=parser.failure_summary.nontrivial_failures
             + meta_summary.nontrivial_failures,
         )
 
@@ -450,7 +445,7 @@ class DiffCommand:
         # Write outputs to files.
         self._write_to_files(
             total_failure_summary=total_failure_summary,
-            file_failure_summary=file_failure_summary,
+            file_failure_summary=parser.failure_summary,
             meta_failure_summary=meta_summary,
             diffs=parser.diff_list,
             meta_diffs=meta_diffs,

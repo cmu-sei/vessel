@@ -29,7 +29,7 @@ import re
 from pathlib import Path
 from typing import Any, Optional
 
-from vessel.diff.helpers.failure import Failure
+from vessel.diff.helpers.failure import Failure, FailureSummary
 from vessel.diff.helpers.flag import Flag
 from vessel.diff.helpers.file_diff import FileDiff
 from vessel.utils.flag_check import check_flags
@@ -143,12 +143,11 @@ class DiffoscopeParser:
         self.filetype_lookup1 = filetype_lookup1
         self.filetype_lookup2 = filetype_lookup2
 
-        self.unknown_failure_count: int = 0
-        self.trivial_failure_count: int = 0
-        self.nontrivial_failure_count: int = 0
+        self.failure_summary = FailureSummary()
         self.diff_list: list[dict[str, Any]] = []
 
         self._recurse(self.diffoscope_json)
+        self.failure_summary.calculate_aggregated_values()
 
     def _recurse(
         self: "DiffoscopeParser",
@@ -247,9 +246,9 @@ class DiffoscopeParser:
             strict=False,
         ):
             failure_summary, flagged_failure_list, unknown_failure_list = check_flags(self.flags, self.filetype_lookup1, self.filetype_lookup2, file_diff, minus_line, plus_line, is_binary)
-            self.trivial_failure_count += failure_summary.trivial_failures
-            self.nontrivial_failure_count += failure_summary.nontrivial_failures
-            self.unknown_failure_count += failure_summary.unknown_failures
+            self.failure_summary.unknown_failures += failure_summary.unknown_failures
+            self.failure_summary.trivial_failures += failure_summary.trivial_failures
+            self.failure_summary.nontrivial_failures += failure_summary.nontrivial_failures
             file_diff.flagged_failures = flagged_failure_list
             file_diff.unknown_failures = unknown_failure_list
 

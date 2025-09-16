@@ -24,7 +24,7 @@
 # DM24-1321
 
 """Utility class for flag operations"""
-
+# TODO rename this file
 
 from pathlib import Path
 import re
@@ -35,7 +35,7 @@ from vessel.diff.helpers.file_diff import FileDiff
 from vessel.diff.helpers.flag import Flag
 from vessel.utils.unified_diff import failures_from_difflines
 
-
+# TODO Better naming for this and all functions
 def check_flags(
     flags: list[Flag],
     filetype_lookup1,
