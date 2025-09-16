@@ -30,10 +30,10 @@
 # -----------------------------------------------------------------------------
 
 import pytest
+
 from test.fixture import get_test_flag
 from vessel.diff.helpers.diffline import DiffLine
 from vessel.diff.helpers.failure import Failure
-
 
 TEST_ISSUE_DICT_INPUT = [
     (

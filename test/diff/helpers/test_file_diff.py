@@ -25,6 +25,7 @@
 """Tests for FileDiff classes."""
 
 import pytest
+
 from vessel.diff.helpers.file_diff import FileDiff
 
 # -----------------------------------------------------------------------------

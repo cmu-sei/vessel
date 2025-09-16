@@ -27,11 +27,9 @@
 import portion
 import pytest
 
-from vessel.diff.helpers.diffline import DiffLine
-
 from test.fixture import get_test_flag
+from vessel.diff.helpers.diffline import DiffLine
 from vessel.diff.helpers.failure import Failure
-from vessel.diff.helpers.file_diff import FileDiff
 from vessel.utils.unified_diff import (
     align_diff_lines,
     equal_entry_list,
@@ -39,7 +37,6 @@ from vessel.utils.unified_diff import (
     intervals_to_str,
     parse_unified_diff_header,
 )
-
 
 # -----------------------------------------------------------------------------
 # Tests for DiffLine

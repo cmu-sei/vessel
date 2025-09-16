@@ -27,7 +27,6 @@
 
 from typing import Any
 
-from vessel.diff.helpers.diffline import DiffLine
 from vessel.diff.helpers.failure import Failure
 from vessel.utils.unified_diff import align_diff_lines
 
@@ -73,12 +72,16 @@ class FileDiff:
         if self.comments:
             dict_obj["comments"] = self.comments
         if self.flagged_failures:
-            dict_obj["flagged_failures"] = [failure.to_dict() for failure in self.flagged_failures]
+            dict_obj["flagged_failures"] = [
+                failure.to_dict() for failure in self.flagged_failures
+            ]
         if self.unknown_failures:
-            dict_obj["unknown_failures"] = [failure.to_dict() for failure in self.unknown_failures]
+            dict_obj["unknown_failures"] = [
+                failure.to_dict() for failure in self.unknown_failures
+            ]
 
         return dict_obj
-    
+
 
 class FileDiffs:
     """Encapsulates a list of file diffs."""

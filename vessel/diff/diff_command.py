@@ -37,6 +37,7 @@ import yaml
 from vessel.diff.helpers import metadata_diff
 from vessel.diff.helpers.failure import FailureSummary
 from vessel.diff.helpers.file_diff import FileDiffs
+from vessel.diff.helpers.flag import Flag
 from vessel.diff.helpers.metadata_diff import MetadataDiffs
 from vessel.utils import oci, umoci
 from vessel.utils.checksum import (
@@ -49,7 +50,6 @@ from vessel.utils.diffoscope import (
     DiffoscopeParser,
     build_diffoscope_command,
 )
-from vessel.diff.helpers.flag import Flag
 from vessel.utils.skopeo import skopeo_copy
 from vessel.utils.uri import ImageURI
 

@@ -168,7 +168,12 @@ def failures_from_difflines(
     minus_line: DiffLine,
     plus_line: DiffLine,
     flag: Flag,
-) -> tuple[list[Failure], list[Failure], portion.interval.Interval, portion.interval.Interval]:
+) -> tuple[
+    list[Failure],
+    list[Failure],
+    portion.interval.Interval,
+    portion.interval.Interval,
+]:
     """Checks lines against flag indiff regex and returns matched intervals.
 
     Input is two lines and their unmatched intervals. Checks each line for

@@ -96,8 +96,8 @@ class Failure:
         comments: Optional[list[str]] = None,
     ) -> None:
         """
-        
-            TODO: Comments are used only for binary, can they be passed to the parent? seems hard
+
+        TODO: Comments are used only for binary, can they be passed to the parent? seems hard
         """
         self.minus_line = minus_line
         self.plus_line = plus_line
@@ -108,7 +108,7 @@ class Failure:
 
     def to_dict(self) -> dict[str, Any]:
         """Returns this failure as a dictionary.
-        
+
         A flag being passed implies that it was a flagged failure and the flag information
         will be embedded in the dict.
 
@@ -130,12 +130,10 @@ class Failure:
                     "description": self.flag.description,
                     "metadata": self.flag.metadata,
                     "severity": self.flag.severity,
-                    "comments": self.comments
+                    "comments": self.comments,
                 }
             else:
-                return {
-                    "comments": self.comments
-                }
+                return {"comments": self.comments}
 
         # Handle nonbinary flagged
         elif self.flag:
@@ -159,7 +157,7 @@ class Failure:
                 "metadata": self.flag.metadata,
                 "severity": self.flag.severity,
             }
-        
+
         # Handle nonbinary unknown
         return {
             "minus_file_line_number": self.minus_line.file_line_number

@@ -338,7 +338,6 @@ def summarize_checksums(
     }
 
 
-
 def make_checksum_dict(
     path1: str,
     path2: str,
@@ -425,8 +424,7 @@ def classify_checksum_mismatches(
                 for failure in entry_flagged_failures
             )
             all_metadata = all(
-                failure.flag.metadata
-                for failure in entry_flagged_failures
+                failure.flag.metadata for failure in entry_flagged_failures
             )
             # Only trivial, but all are metadata: treat as nontrivial/unknown
             if all_trivial and all_metadata:

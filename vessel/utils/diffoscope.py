@@ -30,8 +30,8 @@ from pathlib import Path
 from typing import Optional
 
 from vessel.diff.helpers.failure import Failure, FailureSummary
-from vessel.diff.helpers.flag import Flag
 from vessel.diff.helpers.file_diff import FileDiff, FileDiffs
+from vessel.diff.helpers.flag import Flag
 from vessel.utils.flag_check import check_flags
 from vessel.utils.unified_diff import (
     intervals_to_str,
@@ -245,10 +245,26 @@ class DiffoscopeParser:
             file_diff.plus_aligned_lines,
             strict=False,
         ):
-            failure_summary, flagged_failure_list, unknown_failure_list = check_flags(self.flags, self.filetype_lookup1, self.filetype_lookup2, file_diff, minus_line, plus_line, is_binary)
-            self.failure_summary.unknown_failures += failure_summary.unknown_failures
-            self.failure_summary.trivial_failures += failure_summary.trivial_failures
-            self.failure_summary.nontrivial_failures += failure_summary.nontrivial_failures
+            failure_summary, flagged_failure_list, unknown_failure_list = (
+                check_flags(
+                    self.flags,
+                    self.filetype_lookup1,
+                    self.filetype_lookup2,
+                    file_diff,
+                    minus_line,
+                    plus_line,
+                    is_binary,
+                )
+            )
+            self.failure_summary.unknown_failures += (
+                failure_summary.unknown_failures
+            )
+            self.failure_summary.trivial_failures += (
+                failure_summary.trivial_failures
+            )
+            self.failure_summary.nontrivial_failures += (
+                failure_summary.nontrivial_failures
+            )
             file_diff.flagged_failures = flagged_failure_list
             file_diff.unknown_failures = unknown_failure_list
 
@@ -259,11 +275,13 @@ class DiffoscopeParser:
                 if len(file_diff.flagged_failures) == 0:
                     self.unknown_failure_count += 1
                     file_diff.unknown_failures.append(
-                        Failure(comments=[
-                            "Flag indiff regex are not ran on binary "
-                            "unified diff. This file did not match any "
-                            "flags.",
-                        ])
+                        Failure(
+                            comments=[
+                                "Flag indiff regex are not ran on binary "
+                                "unified diff. This file did not match any "
+                                "flags.",
+                            ]
+                        )
                     )
 
                 break
@@ -291,7 +309,7 @@ class DiffoscopeParser:
                         minus_line if minus_line else None,
                         plus_line if plus_line else None,
                         minus_unmatched_str,
-                        plus_unmatched_str
+                        plus_unmatched_str,
                     ),
                 )
 
