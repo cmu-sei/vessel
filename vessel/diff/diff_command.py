@@ -36,6 +36,7 @@ import yaml
 
 from vessel.diff.helpers import metadata_diff
 from vessel.diff.helpers.failure import FailureSummary
+from vessel.diff.helpers.file_diff import FileDiffs
 from vessel.diff.helpers.metadata_diff import MetadataDiffs
 from vessel.utils import oci, umoci
 from vessel.utils.checksum import (
@@ -447,7 +448,7 @@ class DiffCommand:
             total_failure_summary=total_failure_summary,
             file_failure_summary=parser.failure_summary,
             meta_failure_summary=meta_summary,
-            diffs=parser.diff_list,
+            file_diffs=parser.diff_list,
             meta_diffs=meta_diffs,
             files_summary=files_summary,
             checksum_summary=checksum_summary,
@@ -458,7 +459,7 @@ class DiffCommand:
         total_failure_summary: FailureSummary,
         file_failure_summary: FailureSummary,
         meta_failure_summary: FailureSummary,
-        diffs: list[dict[str, Any]],
+        file_diffs: FileDiffs,
         meta_diffs: MetadataDiffs,
         files_summary: list[dict[str, Any]],
         checksum_summary: dict[str, Any],
@@ -484,11 +485,10 @@ class DiffCommand:
         unified_diff_id = 1
         unified_diff_dict = {}
 
-        for diff in diffs:
-            unified_diff_dict[unified_diff_id] = diff["unified_diff"]
-            diff["unified_diff_id"] = unified_diff_id
+        for diff in file_diffs.diffs:
+            unified_diff_dict[unified_diff_id] = diff.unified_diff
+            diff.unified_diff_id = unified_diff_id
             unified_diff_id += 1
-            diff.pop("unified_diff")
 
         summary_json = {
             "summary": {
@@ -531,7 +531,7 @@ class DiffCommand:
                 },
             },
             "files": files_summary or [],
-            "diffs": diffs,
+            "diffs": file_diffs.to_dict_list(),
             "meta_diffs": meta_diffs.to_dict_list(),
         }
 

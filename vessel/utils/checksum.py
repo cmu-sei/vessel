@@ -33,6 +33,8 @@ from typing import Any, Optional
 
 import magic
 
+from vessel.diff.helpers.failure import Failure
+from vessel.diff.helpers.file_diff import FileDiffs
 from vessel.utils.diffoscope import build_diff_lookup
 
 logger = getLogger(__name__)
@@ -110,7 +112,7 @@ def load_checksum_metadata(path):
 
 
 def generate_filesummary_and_checksum(
-    diff_list: list[dict],
+    diff_list: FileDiffs,
     rootfs_path1: Optional[Path] = None,
     rootfs_path2: Optional[Path] = None,
     hashed_files1: Optional[dict[str, "FileHash"]] = None,
@@ -222,7 +224,7 @@ def hash_folder_contents(folder_path: Path) -> dict[str, FileHash]:
 
 
 def summarize_checksums(
-    diff_lookup: dict[tuple[str, str], list[dict[str, Any]]],
+    diff_lookup: dict[tuple[str, str], FileDiffs],
     folder_path1: Path,
     hashed_files1: dict[str, FileHash],
     folder_path2: Path,
@@ -358,7 +360,7 @@ def make_checksum_dict(
 
 def classify_checksum_mismatches(
     checksum_summary: dict[str, Any],
-    diff_lookup: dict[tuple[str, str], list[dict[str, Any]]],
+    diff_lookup: dict[tuple[str, str], FileDiffs],
     hashed_files1: dict[str, FileHash],
     hashed_files2: dict[str, FileHash],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -379,19 +381,17 @@ def classify_checksum_mismatches(
     nontrivial_diffs = []
     for entry in checksum_summary.get("checksum_mismatches", []):
         key = (entry["path1"], entry["path2"])
-        entry_diffs = diff_lookup.get(key, [])
-        entry_flagged_failures = []
-        entry_unknown_failures = []
-        for diff in entry_diffs:
-            flagged = diff.get("flagged_failures", [])
-            unknowns = diff.get("unknown_failures", [])
-            entry_flagged_failures.extend(flagged)
-            entry_unknown_failures.extend(unknowns)
+        entry_diffs = diff_lookup.get(key, FileDiffs())
+        entry_flagged_failures: list[Failure] = []
+        entry_unknown_failures: list[Failure] = []
+        for diff in entry_diffs.diffs:
+            entry_flagged_failures.extend(diff.flagged_failures)
+            entry_unknown_failures.extend(diff.unknown_failures)
 
         types = []
         seen_types = set()
-        for f in entry_flagged_failures:
-            key2 = f"{f['id']}|{f['description']}"
+        for failure in entry_flagged_failures:
+            key2 = f"{failure.flag.flag_id}|{failure.flag.description}"
             if key2 not in seen_types:
                 types.append(key2)
                 seen_types.add(key2)
@@ -421,11 +421,11 @@ def classify_checksum_mismatches(
         # If there are flagged failures (and no unknowns), trivial only if all flagged failures are severity Low and at least one nonmetadata
         elif entry_flagged_failures:
             all_trivial = all(
-                failure.get("severity") == "Low"
+                failure.flag.severity == "Low"
                 for failure in entry_flagged_failures
             )
             all_metadata = all(
-                failure.get("metadata", False)
+                failure.flag.metadata
                 for failure in entry_flagged_failures
             )
             # Only trivial, but all are metadata: treat as nontrivial/unknown

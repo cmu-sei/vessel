@@ -168,7 +168,7 @@ def failures_from_difflines(
     minus_line: DiffLine,
     plus_line: DiffLine,
     flag: Flag,
-) -> tuple[list, list, portion.interval.Interval, portion.interval.Interval]:
+) -> tuple[list[Failure], list[Failure], portion.interval.Interval, portion.interval.Interval]:
     """Checks lines against flag indiff regex and returns matched intervals.
 
     Input is two lines and their unmatched intervals. Checks each line for
@@ -187,8 +187,8 @@ def failures_from_difflines(
     :return: List of flagged failures, list of unknown failures, updated intervals
                 in each line that haven't been matched by regex
     """
-    flagged_failures: list[dict[str, Any]] = []
-    unknown_failures: list[dict[str, Any]] = []
+    flagged_failures: list[Failure] = []
+    unknown_failures: list[Failure] = []
     minus_matched_intervals = (
         [
             match.span()
@@ -256,7 +256,7 @@ def failures_from_difflines(
                     plus_line,
                     None,
                     plus_match_str,
-                ).to_dict(),
+                ),
             )
         elif plus_match_interval is None:
             unknown_failures.append(
@@ -265,7 +265,7 @@ def failures_from_difflines(
                     plus_line,
                     minus_match_str,
                     None,
-                ).to_dict(),
+                ),
             )
         elif minus_match_str != plus_match_str:
             flagged_failures.append(
@@ -275,7 +275,7 @@ def failures_from_difflines(
                     minus_match_str,
                     plus_match_str,
                     flag,
-                ).to_dict(),
+                ),
             )
 
     return (

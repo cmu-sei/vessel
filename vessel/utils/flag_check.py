@@ -30,7 +30,7 @@ from pathlib import Path
 import re
 import magic
 from vessel.diff.helpers.diffline import DiffLine
-from vessel.diff.helpers.failure import FailureSummary
+from vessel.diff.helpers.failure import Failure, FailureSummary
 from vessel.diff.helpers.file_diff import FileDiff
 from vessel.diff.helpers.flag import Flag
 from vessel.utils.unified_diff import failures_from_difflines
@@ -96,16 +96,14 @@ def check_flags(
             and flag.regex["indiff"] == re.compile(".*")
         ):
             flagged_failure_list.append(
-                {
-                    "id": flag.flag_id,
-                    "description": flag.description,
-                    "metadata": getattr(flag, "metadata", False),
-                    "comments": [
+                Failure(
+                    flag=flag,
+                    comments=[
                         "Flag indiff regex are not ran on binary "
                         "unified diff. However this matched all "
                         "of the other criteria for this flag.",
-                    ],
-                },
+                    ]
+                )
             )
         # Handle any non-binary line that matches the flag
         elif flag_matches:
@@ -124,11 +122,9 @@ def check_flags(
             if flag.regex["indiff"] != re.compile(
                 ".*"
             ) or flag.flag_id not in [
-                flag["id"] for flag in file_diff.flagged_failures
+                failure.flag.flag_id for failure in file_diff.flagged_failures
             ]:
                 for failure in temp_flagged_failure_list:
-                    failure["metadata"] = flag.metadata
-                    failure["severity"] = flag.severity
                     if flag.severity == "Low":
                         failure_summary.trivial_failures += 1
                     else:

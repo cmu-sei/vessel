@@ -27,11 +27,11 @@
 
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 from vessel.diff.helpers.failure import Failure, FailureSummary
 from vessel.diff.helpers.flag import Flag
-from vessel.diff.helpers.file_diff import FileDiff
+from vessel.diff.helpers.file_diff import FileDiff, FileDiffs
 from vessel.utils.flag_check import check_flags
 from vessel.utils.unified_diff import (
     intervals_to_str,
@@ -82,8 +82,8 @@ def build_diffoscope_command(
 
 
 def build_diff_lookup(
-    diff_list: list[dict[str, Any]],
-) -> dict[tuple[str, str], list[dict[str, Any]]]:
+    diff_list: FileDiffs,
+) -> dict[tuple[str, str], FileDiffs]:
     """Build a lookup dictionary for diff results, keyed by (relative_path1, relative_path2).
 
     Args:
@@ -101,15 +101,15 @@ def build_diff_lookup(
             return path[idx + len("rootfs/") :]
         return path
 
-    lookup: dict[Any, Any] = {}
-    for diff in diff_list:
+    lookup: dict[tuple[str, str], FileDiffs] = {}
+    for diff in diff_list.diffs:
         key = (
-            relative_path_after_rootfs(diff["source1"]),
-            relative_path_after_rootfs(diff["source2"]),
+            relative_path_after_rootfs(diff.source1),
+            relative_path_after_rootfs(diff.source2),
         )
         if key not in lookup:
-            lookup[key] = []
-        lookup[key].append(diff)
+            lookup[key] = FileDiffs()
+        lookup[key].diffs.append(diff)
 
     return lookup
 
@@ -144,7 +144,7 @@ class DiffoscopeParser:
         self.filetype_lookup2 = filetype_lookup2
 
         self.failure_summary = FailureSummary()
-        self.diff_list: list[dict[str, Any]] = []
+        self.diff_list: FileDiffs = FileDiffs()
 
         self._recurse(self.diffoscope_json)
         self.failure_summary.calculate_aggregated_values()
@@ -259,13 +259,11 @@ class DiffoscopeParser:
                 if len(file_diff.flagged_failures) == 0:
                     self.unknown_failure_count += 1
                     file_diff.unknown_failures.append(
-                        {
-                            "comments": [
-                                "Flag indiff regex are not ran on binary "
-                                "unified diff. This file did not match any "
-                                "flags.",
-                            ],
-                        },
+                        Failure(comments=[
+                            "Flag indiff regex are not ran on binary "
+                            "unified diff. This file did not match any "
+                            "flags.",
+                        ])
                     )
 
                 break
@@ -294,7 +292,7 @@ class DiffoscopeParser:
                         plus_line if plus_line else None,
                         minus_unmatched_str,
                         plus_unmatched_str
-                    ).to_dict(),
+                    ),
                 )
 
-        self.diff_list.append(file_diff.to_dict())
+        self.diff_list.diffs.append(file_diff)

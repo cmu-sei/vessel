@@ -28,6 +28,7 @@
 from typing import Any
 
 from vessel.diff.helpers.diffline import DiffLine
+from vessel.diff.helpers.failure import Failure
 from vessel.utils.unified_diff import align_diff_lines
 
 
@@ -38,7 +39,7 @@ class FileDiff:
         self: "FileDiff",
         source1: str,
         source2: str,
-        comments: list,
+        comments: list[str],
         raw_unified_diff: str,
     ) -> None:
         """Initializer for Diff class."""
@@ -47,9 +48,10 @@ class FileDiff:
         self.unified_diff: list[str] = raw_unified_diff.splitlines()
         self.comments: list[str] = comments
 
+        self.unified_diff_id = -1
         self.command: str = ""
-        self.flagged_failures: list[dict] = []
-        self.unknown_failures: list[dict] = []
+        self.flagged_failures: list[Failure] = []
+        self.unknown_failures: list[Failure] = []
 
         self.minus_aligned_lines, self.plus_aligned_lines = align_diff_lines(
             self.unified_diff,
@@ -65,16 +67,15 @@ class FileDiff:
             "source1": self.source1,
             "source2": self.source2,
         }
-        dict_obj["unified_diff_id"] = "ID not yet assigned"
+        dict_obj["unified_diff_id"] = self.unified_diff_id
         if self.command:
             dict_obj["command"] = self.command
         if self.comments:
             dict_obj["comments"] = self.comments
-        dict_obj["unified_diff"] = self.unified_diff
         if self.flagged_failures:
-            dict_obj["flagged_failures"] = [failure for failure in self.flagged_failures]
+            dict_obj["flagged_failures"] = [failure.to_dict() for failure in self.flagged_failures]
         if self.unknown_failures:
-            dict_obj["unknown_failures"] = [failure for failure in self.unknown_failures]
+            dict_obj["unknown_failures"] = [failure.to_dict() for failure in self.unknown_failures]
 
         return dict_obj
     
@@ -82,9 +83,12 @@ class FileDiff:
 class FileDiffs:
     """Encapsulates a list of file diffs."""
 
-    def __init__(self, diffs: list[FileDiff] = []):
+    def __init__(self, diffs: list[FileDiff] | None = None):
         """Constructor."""
-        self.diffs = diffs
+        if diffs:
+            self.diffs = diffs
+        else:
+            self.diffs = []
         """List of diffs in files."""
 
     def to_dict_list(self) -> list[dict[str, Any]]:
