@@ -50,7 +50,7 @@ class DiffLine:
             return (
                 self.text == other.text
                 and self.diff_line_number == other.diff_line_number
-                and self.file_line_number == self.file_line_number
+                and self.file_line_number == other.file_line_number
                 and self.unmatched_intervals == other.unmatched_intervals
             )
         return False

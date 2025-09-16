@@ -109,6 +109,18 @@ class Failure:
         self.flag = flag
         self.binary = binary
 
+    def __eq__(self, other: object):
+        if isinstance(other, Failure):
+            return (
+                self.minus_line == other.minus_line
+                and self.plus_line == other.plus_line
+                and self.minus_str == other.minus_str
+                and self.plus_str == other.plus_str
+                and self.flag == other.flag
+                and self.binary == other.binary
+            )
+        return False
+    
     def to_dict(self) -> dict[str, Any]:
         """Returns this failure as a dictionary.
 

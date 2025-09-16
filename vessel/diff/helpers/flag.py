@@ -58,6 +58,17 @@ class Flag:
 
         self.compile()
 
+    def __eq__(self, other: object):
+        if isinstance(other, Flag):
+            return (
+                self.flag_id == other.flag_id
+                and self.description == other.description
+                and self.severity == other.severity
+                and self.metadata == other.metadata
+                and self.regex == other.regex
+            )
+        return False
+
     def compile(self) -> None:
         """Compile regex strings and store them in self.regex, handle errors."""
         for key, pattern in self.regex_str.items():

@@ -48,7 +48,7 @@ from vessel.diff.helpers.failure import Failure, FailureSummary
             {
                 "flagged_failure_count": 0,
                 "total_failure_count": 0,
-            }
+            },
         ),
         (
             {
@@ -61,7 +61,7 @@ from vessel.diff.helpers.failure import Failure, FailureSummary
                 "total_failure_count": 35,
             },
         ),
-    ]
+    ],
 )
 def test_failure_summary(test_input, expected):
     """Test FailureSummary."""
