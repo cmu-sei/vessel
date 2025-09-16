@@ -131,10 +131,10 @@ def flag_failures(
             ]:
                 for failure in temp_flagged_failure_list:
                     if failure.flag.severity == "Low":
-                        failure_summary.trivial_failures += 1
+                        failure_summary.trivial_failure_count += 1
                     else:
-                        failure_summary.nontrivial_failures += 1
-                failure_summary.unknown_failures += len(
+                        failure_summary.nontrivial_failure_count += 1
+                failure_summary.unknown_failure_count += len(
                     temp_unknown_failure_list
                 )
                 flagged_failure_list.extend(temp_flagged_failure_list)

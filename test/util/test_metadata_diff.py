@@ -76,10 +76,10 @@ def test_match_flags():
         else:
             assert not diff.matched_flag
 
-    assert summary.total_failures == 4
-    assert summary.flagged_failures == 3
-    assert summary.trivial_failures == 2
-    assert summary.nontrivial_failures == 1
+    assert summary.total_failure_count == 4
+    assert summary.flagged_failure_count == 3
+    assert summary.trivial_failure_count == 2
+    assert summary.nontrivial_failure_count == 1
 
 
 @pytest.mark.parametrize(

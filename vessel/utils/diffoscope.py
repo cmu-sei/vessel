@@ -257,14 +257,14 @@ class DiffoscopeParser:
                     is_binary,
                 )
             )
-            self.failure_summary.unknown_failures += (
-                failure_summary.unknown_failures
+            self.failure_summary.unknown_failure_count += (
+                failure_summary.unknown_failure_count
             )
-            self.failure_summary.trivial_failures += (
-                failure_summary.trivial_failures
+            self.failure_summary.trivial_failure_count += (
+                failure_summary.trivial_failure_count
             )
-            self.failure_summary.nontrivial_failures += (
-                failure_summary.nontrivial_failures
+            self.failure_summary.nontrivial_failure_count += (
+                failure_summary.nontrivial_failure_count
             )
             file_diff.flagged_failures = flagged_failure_list
             file_diff.unknown_failures = unknown_failure_list

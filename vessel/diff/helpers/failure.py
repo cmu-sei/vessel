@@ -38,24 +38,30 @@ class FailureSummary:
 
     # TODO: Make these unknown_failure_count, then adjust the to_dict to output as it is now
 
-    unknown_failures: int = 0
+    unknown_failure_count: int = 0
     """Number of failures that did not match a flag."""
 
-    flagged_failures: int = 0
+    flagged_failure_count: int = 0
     """Number of failures that did match a flag."""
 
-    trivial_failures: int = 0
+    trivial_failure_count: int = 0
     """Number of failures that matched a flag with a severity of as Low."""
 
-    nontrivial_failures: int = 0
+    nontrivial_failure_count: int = 0
     """Number of failures that matched a flag with a severity different than Low."""
 
-    total_failures: int = 0
+    total_failure_count: int = 0
     """Total number of failures found."""
 
     def to_dict(self) -> dict[str, Any]:
         """Returns this as a dictionary."""
-        return asdict(self)
+        return {
+            "unknown_failures": self.unknown_failure_count,
+            "flagged_failures": self.flagged_failure_count,
+            "trivial_failures": self.trivial_failure_count,
+            "nontrivial_failures": self.nontrivial_failure_count,
+            "total_failures": self.total_failure_count,
+        }
 
     def __init__(
         self,
@@ -64,22 +70,22 @@ class FailureSummary:
         nontrivial_failure_count: int = 0,
     ):
         """Constructor, gets 3 independent values (unknown, trivial, nontrivial), aggregates the rest."""
-        self.unknown_failures = unknown_failure_count
-        self.trivial_failures = trivial_failure_count
-        self.nontrivial_failures = nontrivial_failure_count
+        self.unknown_failure_count = unknown_failure_count
+        self.trivial_failure_count = trivial_failure_count
+        self.nontrivial_failure_count = nontrivial_failure_count
 
         # Calculate the aggregated values as well.
         self.calculate_aggregated_values()
 
     def calculate_aggregated_values(self) -> None:
         """Calculates and sets the aggregated values from the three basic ones."""
-        self.flagged_failures = (
-            self.trivial_failures + self.nontrivial_failures
+        self.flagged_failure_count = (
+            self.trivial_failure_count + self.nontrivial_failure_count
         )
-        self.total_failures = (
-            self.unknown_failures
-            + self.trivial_failures
-            + self.nontrivial_failures
+        self.total_failure_count = (
+            self.unknown_failure_count
+            + self.trivial_failure_count
+            + self.nontrivial_failure_count
         )
 
 

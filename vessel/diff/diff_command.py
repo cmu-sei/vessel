@@ -426,12 +426,12 @@ class DiffCommand:
 
         # Create totals with metadata/config failures.
         total_failure_summary = FailureSummary(
-            unknown_failure_count=parser.failure_summary.unknown_failures
-            + meta_summary.unknown_failures,
-            trivial_failure_count=parser.failure_summary.trivial_failures
-            + meta_summary.trivial_failures,
-            nontrivial_failure_count=parser.failure_summary.nontrivial_failures
-            + meta_summary.nontrivial_failures,
+            unknown_failure_count=parser.failure_summary.unknown_failure_count
+            + meta_summary.unknown_failure_count,
+            trivial_failure_count=parser.failure_summary.trivial_failure_count
+            + meta_summary.trivial_failure_count,
+            nontrivial_failure_count=parser.failure_summary.nontrivial_failure_count
+            + meta_summary.nontrivial_failure_count,
         )
 
         # Create summaries for hashes and checksum.
