@@ -103,11 +103,7 @@ def flag_failures(
             flagged_failure_list.append(
                 Failure(
                     flag=flag,
-                    comments=[
-                        "Flag indiff regex are not ran on binary "
-                        "unified diff. However this matched all "
-                        "of the other criteria for this flag.",
-                    ],
+                    binary=True,
                 )
             )
         # Handle any non-binary line that matches the flag

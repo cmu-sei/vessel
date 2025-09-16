@@ -99,7 +99,7 @@ class Failure:
         minus_str: Optional[str] = None,
         plus_str: Optional[str] = None,
         flag: Optional[Flag] = None,
-        comments: Optional[list[str]] = None,
+        binary: Optional[bool] = None,
     ) -> None:
         """Construtor."""
         self.minus_line = minus_line
@@ -107,7 +107,7 @@ class Failure:
         self.minus_str = minus_str
         self.plus_str = plus_str
         self.flag = flag
-        self.comments = comments
+        self.binary = binary
 
     def to_dict(self) -> dict[str, Any]:
         """Returns this failure as a dictionary.
@@ -125,18 +125,28 @@ class Failure:
         Returns:
             A failure dict item.
         """
-        # Handle binary elements that have comments in the Failure
-        if self.comments:
+        # Handle binary elements
+        if self.binary:
             if self.flag:
                 return {
                     "id": self.flag.flag_id,
                     "description": self.flag.description,
                     "metadata": self.flag.metadata,
                     "severity": self.flag.severity,
-                    "comments": self.comments,
+                    "comments": [
+                        "Flag indiff regex are not ran on binary "
+                        "unified diff. However this matched all "
+                        "of the other criteria for this flag.",
+                    ],
                 }
             else:
-                return {"comments": self.comments}
+                return {
+                    "comments": [
+                        "Flag indiff regex are not ran on binary "
+                        "unified diff. This file did not match any "
+                        "flags."
+                    ]
+                }
 
         # Handle nonbinary flagged
         elif self.flag:

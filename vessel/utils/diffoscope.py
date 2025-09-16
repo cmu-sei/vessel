@@ -275,15 +275,7 @@ class DiffoscopeParser:
             if is_binary:
                 if len(file_diff.flagged_failures) == 0:
                     self.failure_summary.unknown_failure_count += 1
-                    file_diff.unknown_failures.append(
-                        Failure(
-                            comments=[
-                                "Flag indiff regex are not ran on binary "
-                                "unified diff. This file did not match any "
-                                "flags.",
-                            ]
-                        )
-                    )
+                    file_diff.unknown_failures.append(Failure(binary=True))
 
                 break
 

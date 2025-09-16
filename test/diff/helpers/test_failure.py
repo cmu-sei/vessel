@@ -33,60 +33,128 @@ import pytest
 
 from test.fixture import get_test_flag
 from vessel.diff.helpers.diffline import DiffLine
-from vessel.diff.helpers.failure import Failure
-
-TEST_ISSUE_DICT_INPUT = [
-    (
-        {},
-        {
-            "minus_file_line_number": None,
-            "plus_file_line_number": None,
-            "minus_diff_line_number": None,
-            "plus_diff_line_number": None,
-            "minus_unmatched_str": None,
-            "plus_unmatched_str": None,
-        },
-    ),
-    (
-        {
-            "minus_line": DiffLine("example 123", 1, 2),
-            "plus_line": DiffLine("example 456", 3, 4),
-            "minus_str": "123",
-            "plus_str": "456",
-            "flag": None,
-        },
-        {
-            "minus_file_line_number": 2,
-            "plus_file_line_number": 4,
-            "minus_diff_line_number": 1,
-            "plus_diff_line_number": 3,
-            "minus_unmatched_str": "123",
-            "plus_unmatched_str": "456",
-        },
-    ),
-    (
-        {
-            "minus_line": DiffLine("example 123", 1, 2),
-            "plus_line": DiffLine("example 456", 3, 4),
-            "minus_str": "123",
-            "plus_str": "456",
-            "flag": get_test_flag(),
-        },
-        {
-            "id": "test_flag",
-            "description": "test flag",
-            "minus_file_line_number": 2,
-            "plus_file_line_number": 4,
-            "minus_diff_line_number": 1,
-            "plus_diff_line_number": 3,
-            "minus_matched_str": "123",
-            "plus_matched_str": "456",
-        },
-    ),
-]
+from vessel.diff.helpers.failure import Failure, FailureSummary
 
 
-@pytest.mark.parametrize("test_input, expected", TEST_ISSUE_DICT_INPUT)
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        (
+            {
+                "unknown_failure_count": 0,
+                "trivial_failure_count": 0,
+                "nontrivial_failure_count": 0,
+            },
+            {
+                "flagged_failure_count": 0,
+                "total_failure_count": 0,
+            }
+        ),
+        (
+            {
+                "unknown_failure_count": 5,
+                "trivial_failure_count": 10,
+                "nontrivial_failure_count": 20,
+            },
+            {
+                "flagged_failure_count": 30,
+                "total_failure_count": 35,
+            },
+        ),
+    ]
+)
+def test_failure_summary(test_input, expected):
+    """Test FailureSummary."""
+
+    summary = FailureSummary(**test_input)
+
+    assert summary.flagged_failure_count == expected["flagged_failure_count"]
+    assert summary.total_failure_count == expected["total_failure_count"]
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        (
+            {},
+            {
+                "minus_file_line_number": None,
+                "plus_file_line_number": None,
+                "minus_diff_line_number": None,
+                "plus_diff_line_number": None,
+                "minus_unmatched_str": None,
+                "plus_unmatched_str": None,
+            },
+        ),
+        (
+            {
+                "minus_line": DiffLine("example 123", 1, 2),
+                "plus_line": DiffLine("example 456", 3, 4),
+                "minus_str": "123",
+                "plus_str": "456",
+                "flag": None,
+            },
+            {
+                "minus_file_line_number": 2,
+                "plus_file_line_number": 4,
+                "minus_diff_line_number": 1,
+                "plus_diff_line_number": 3,
+                "minus_unmatched_str": "123",
+                "plus_unmatched_str": "456",
+            },
+        ),
+        (
+            {
+                "minus_line": DiffLine("example 123", 1, 2),
+                "plus_line": DiffLine("example 456", 3, 4),
+                "minus_str": "123",
+                "plus_str": "456",
+                "flag": get_test_flag(),
+            },
+            {
+                "id": "test_flag",
+                "description": "test flag",
+                "minus_file_line_number": 2,
+                "plus_file_line_number": 4,
+                "minus_diff_line_number": 1,
+                "plus_diff_line_number": 3,
+                "minus_matched_str": "123",
+                "plus_matched_str": "456",
+                "metadata": False,
+                "severity": "Low",
+            },
+        ),
+        (
+            {
+                "flag": get_test_flag(),
+                "binary": True,
+            },
+            {
+                "id": "test_flag",
+                "description": "test flag",
+                "metadata": False,
+                "severity": "Low",
+                "comments": [
+                    "Flag indiff regex are not ran on binary "
+                    "unified diff. However this matched all "
+                    "of the other criteria for this flag.",
+                ],
+            },
+        ),
+        (
+            {
+                "binary": True,
+            },
+            {
+                "comments": [
+                    "Flag indiff regex are not ran on binary "
+                    "unified diff. This file did not match any "
+                    "flags."
+                ]
+            },
+        ),
+    ],
+)
 def test_failure_to_dict(test_input, expected):
     """Tests that the failure.to_dict() is created properly."""
 
