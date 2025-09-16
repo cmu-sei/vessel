@@ -77,17 +77,18 @@ class DiffCommand:
 
         Processes command-line arguments.
         """
+        self.input_files: list[str] = input_files
+        self.data_dir: str = data_dir
+        self.mode: str = mode
+        self.output_dir: str = output_dir
+        self.profile_enabled: bool = profile_enabled
+
         self.flags: list[Flag] = []
         self.meta_flags: list[metadata_diff.MetadataFlag] = []
-        self.input_files: list[str] = input_files
-        self.mode: str = mode
-        self.data_dir: str = data_dir
-        self.output_dir: str = output_dir
         self.temp_dir: Optional[tempfile.TemporaryDirectory[str]] = None
         self.image_uris: list[ImageURI] = []
         self.oci_image_paths: list[str] = []
         self.oci_runtime_paths: list[str] = []
-        self.profile_enabled: bool = profile_enabled
 
     def execute(self: "DiffCommand") -> bool:
         """Executes a diff operation.

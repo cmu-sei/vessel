@@ -46,13 +46,11 @@ class FileDiff:
         self.source2 = source2
         self.unified_diff: list[str] = raw_unified_diff.splitlines()
         self.comments: list[str] = comments
-        self.command: str = ""
 
+        self.command: str = ""
         self.flagged_failures: list[dict] = []
         self.unknown_failures: list[dict] = []
 
-        self.minus_aligned_lines: list[DiffLine] = []
-        self.plus_aligned_lines: list[DiffLine] = []
         self.minus_aligned_lines, self.plus_aligned_lines = align_diff_lines(
             self.unified_diff,
         )

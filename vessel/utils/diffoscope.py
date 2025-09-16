@@ -34,7 +34,6 @@ from vessel.diff.helpers.flag import Flag
 from vessel.diff.helpers.file_diff import FileDiff
 from vessel.utils.flag_check import check_flags
 from vessel.utils.unified_diff import (
-    failures_from_difflines,
     intervals_to_str,
 )
 
