@@ -33,6 +33,7 @@ from vessel.utils.uri import ImageURI
 
 logger = getLogger(__name__)
 
+UMOCI_UNPACK_PATH = "/umoci-unpack-"
 
 def umoci_unpack(
     oci_image_paths: list[str], image_uris: list[ImageURI], data_dir: str
@@ -55,7 +56,7 @@ def umoci_unpack(
         image_uris,
         strict=True,
     ):
-        umoci_output_path = f"{data_dir}/umoci-unpack-{uri.output_identifier}"
+        umoci_output_path = f"{data_dir}{UMOCI_UNPACK_PATH}{uri.output_identifier}"
         oci_runtime_paths.append(umoci_output_path)
 
         run_umoci(

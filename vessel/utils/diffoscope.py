@@ -29,6 +29,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
+from vessel.utils.umoci import UMOCI_UNPACK_PATH
 from vessel.diff.helpers.failure import Failure, FailureSummary
 from vessel.diff.helpers.file_diff import FileDiff, FileDiffs
 from vessel.diff.helpers.flag import Flag
@@ -172,7 +173,7 @@ class DiffoscopeParser:
                 as sometimes the comments that relate to a child are in
                 the parent detail
         """
-        umociRegex = re.compile(r"/umoci-unpack-")
+        umociRegex = re.compile(UMOCI_UNPACK_PATH)
 
         if detail["unified_diff"] is not None:
             self._parse_detail(
