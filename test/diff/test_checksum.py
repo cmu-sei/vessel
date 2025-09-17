@@ -535,8 +535,6 @@ def test_classify_checksum_mismatches(test_input, expected):
     """Test classify_checksum_mismatches."""
     output = classify_checksum_mismatches(**test_input)
 
-    print(output)
-
     assert output == expected
 
 
