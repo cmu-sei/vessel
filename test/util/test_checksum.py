@@ -29,7 +29,7 @@ import re
 
 import pytest
 
-from test.fixture import make_test_flag, make_test_file_diff
+from test.fixture import make_test_file_diff, make_test_flag
 from vessel.diff.helpers.failure import Failure
 from vessel.diff.helpers.file_diff import FileDiffs
 from vessel.utils.checksum import (
@@ -277,7 +277,17 @@ def test_summarize_checksums(test_input, expected):
                 "diff_lookup": {
                     ("path1", "path1"): FileDiffs(
                         [
-                            make_test_file_diff(flagged_failures=[Failure(flag=make_test_flag(flag_id="TIME007", description="File listing time difference in different format.", metadata=True))])
+                            make_test_file_diff(
+                                flagged_failures=[
+                                    Failure(
+                                        flag=make_test_flag(
+                                            flag_id="TIME007",
+                                            description="File listing time difference in different format.",
+                                            metadata=True,
+                                        )
+                                    )
+                                ]
+                            )
                         ],
                     ),
                 },
@@ -325,8 +335,27 @@ def test_summarize_checksums(test_input, expected):
                 "diff_lookup": {
                     ("path1", "path1"): FileDiffs(
                         [
-                            make_test_file_diff(flagged_failures=[Failure(flag=make_test_flag(flag_id="TIME007", description="File listing time difference in different format.", metadata=True))]),
-                            make_test_file_diff(flagged_failures=[Failure(flag=make_test_flag(flag_id="TIME008", description="Logging time difference."))])
+                            make_test_file_diff(
+                                flagged_failures=[
+                                    Failure(
+                                        flag=make_test_flag(
+                                            flag_id="TIME007",
+                                            description="File listing time difference in different format.",
+                                            metadata=True,
+                                        )
+                                    )
+                                ]
+                            ),
+                            make_test_file_diff(
+                                flagged_failures=[
+                                    Failure(
+                                        flag=make_test_flag(
+                                            flag_id="TIME008",
+                                            description="Logging time difference.",
+                                        )
+                                    )
+                                ]
+                            ),
                         ],
                     )
                 },
@@ -375,7 +404,17 @@ def test_summarize_checksums(test_input, expected):
                 "diff_lookup": {
                     ("path1", "path1"): FileDiffs(
                         [
-                            make_test_file_diff(flagged_failures=[Failure(flag=make_test_flag(flag_id="RAND006", description="Generated certificate differences.", severity="High"))])
+                            make_test_file_diff(
+                                flagged_failures=[
+                                    Failure(
+                                        flag=make_test_flag(
+                                            flag_id="RAND006",
+                                            description="Generated certificate differences.",
+                                            severity="High",
+                                        )
+                                    )
+                                ]
+                            )
                         ],
                     ),
                 },
@@ -421,11 +460,9 @@ def test_summarize_checksums(test_input, expected):
                     "only_in_image2": [],
                 },
                 "diff_lookup": {
-                    ("unknownfile", "unknownfile"): FileDiffs([
-                        make_test_file_diff(
-                            unknown_failures=[Failure()]
-                        )
-                    ])
+                    ("unknownfile", "unknownfile"): FileDiffs(
+                        [make_test_file_diff(unknown_failures=[Failure()])]
+                    )
                 },
                 "hashed_files1": {
                     "path1": FileHash("path1", "ASCII text", "h1")
@@ -467,7 +504,10 @@ def test_summarize_checksums(test_input, expected):
                     "only_in_image2": [],
                 },
                 "diff_lookup": {
-                    ("path1", "path1"): FileDiffs() # No flagged failures nor unknown failures
+                    (
+                        "path1",
+                        "path1",
+                    ): FileDiffs()  # No flagged failures nor unknown failures
                 },
                 "hashed_files1": {
                     "path1": FileHash("path1", "ASCII text", "h1")

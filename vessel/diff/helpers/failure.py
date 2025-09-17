@@ -120,7 +120,7 @@ class Failure:
                 and self.binary == other.binary
             )
         return False
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Returns this failure as a dictionary.
 

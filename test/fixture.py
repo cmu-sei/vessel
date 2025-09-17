@@ -24,7 +24,7 @@
 # DM24-1321
 """Fixtures for all unit tests."""
 
-from typing import Optional
+
 from vessel.diff.helpers.failure import Failure
 from vessel.diff.helpers.file_diff import FileDiff
 from vessel.diff.helpers.flag import Flag
@@ -54,16 +54,17 @@ def make_test_file_diff(
 
     return file_diff
 
+
 def make_test_flag(
-    flag_id = "test_flag",
-    description = "test flag",
-    filepath = ".*",
-    filetype = ".*",
-    command = ".*",
-    comment = ".*",
-    indiff = r"\d+",
-    severity = "Low",
-    metadata = False,
+    flag_id="test_flag",
+    description="test flag",
+    filepath=".*",
+    filetype=".*",
+    command=".*",
+    comment=".*",
+    indiff=r"\d+",
+    severity="Low",
+    metadata=False,
 ) -> Flag:
     return Flag(
         flag_id=flag_id,

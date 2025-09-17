@@ -408,7 +408,11 @@ TEST_DIFFLINES = [
         {
             "flagged": [
                 Failure(
-                    minus_line=DiffLine("example 123"), plus_line=DiffLine("example 456"), minus_str="123", plus_str="456", flag=make_test_flag()
+                    minus_line=DiffLine("example 123"),
+                    plus_line=DiffLine("example 456"),
+                    minus_str="123",
+                    plus_str="456",
+                    flag=make_test_flag(),
                 )
             ],
             "unknown": [],
@@ -425,7 +429,11 @@ TEST_DIFFLINES = [
         {
             "flagged": [
                 Failure(
-                    minus_line=DiffLine("123 example"), plus_line=DiffLine("456 example"), minus_str="123", plus_str="456", flag=make_test_flag()
+                    minus_line=DiffLine("123 example"),
+                    plus_line=DiffLine("456 example"),
+                    minus_str="123",
+                    plus_str="456",
+                    flag=make_test_flag(),
                 )
             ],
             "unknown": [],
@@ -442,10 +450,18 @@ TEST_DIFFLINES = [
         {
             "flagged": [
                 Failure(
-                    minus_line=DiffLine("123 example 321"), plus_line=DiffLine("456 example 654"), minus_str="123", plus_str="456", flag=make_test_flag()
+                    minus_line=DiffLine("123 example 321"),
+                    plus_line=DiffLine("456 example 654"),
+                    minus_str="123",
+                    plus_str="456",
+                    flag=make_test_flag(),
                 ),
                 Failure(
-                    minus_line=DiffLine("123 example 321"), plus_line=DiffLine("456 example 654"), minus_str="321", plus_str="654", flag=make_test_flag()
+                    minus_line=DiffLine("123 example 321"),
+                    plus_line=DiffLine("456 example 654"),
+                    minus_str="321",
+                    plus_str="654",
+                    flag=make_test_flag(),
                 ),
             ],
             "unknown": [],

@@ -109,9 +109,7 @@ class FileDiffs:
 
     def __eq__(self, other: object):
         if isinstance(other, FileDiffs):
-            return (
-                self.diffs == other.diffs
-            )
+            return self.diffs == other.diffs
         return False
 
     def to_dict_list(self) -> list[dict[str, Any]]:
