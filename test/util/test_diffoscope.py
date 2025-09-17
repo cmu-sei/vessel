@@ -27,6 +27,7 @@
 
 import pytest
 
+from vessel.diff.helpers.file_diff import FileDiff, FileDiffs
 from vessel.utils.diffoscope import (
     build_diff_lookup,
     build_diffoscope_command,
@@ -82,72 +83,72 @@ def test_build_diffoscope_command():
     [
         # Two matching paths
         (
-            [
-                {
-                    "source1": "source1/rootfs/path1",
-                    "source2": "source2/rootfs/path1",
-                    "unified_diff_id": "",
-                    "unified_diff": "",
-                },
-                {
-                    "source1": "source1/rootfs/path2",
-                    "source2": "source2/rootfs/path2",
-                    "unified_diff_id": "",
-                    "unified_diff": "",
-                },
-            ],
+            FileDiffs([
+                FileDiff(
+                    "source1/rootfs/path1",
+                    "source2/rootfs/path1",
+                    [],
+                    "@@ -1,8 +1,8 @@\n",
+                ),
+                FileDiff(
+                    "source1/rootfs/path2",
+                    "source2/rootfs/path2",
+                    [],
+                    "@@ -1,8 +1,8 @@\n",    
+                )
+            ]),
             {
-                ("path1", "path1"): [
-                    {
-                        "source1": "source1/rootfs/path1",
-                        "source2": "source2/rootfs/path1",
-                        "unified_diff_id": "",
-                        "unified_diff": "",
-                    },
-                ],
-                ("path2", "path2"): [
-                    {
-                        "source1": "source1/rootfs/path2",
-                        "source2": "source2/rootfs/path2",
-                        "unified_diff_id": "",
-                        "unified_diff": "",
-                    },
-                ],
+                ("path1", "path1"): FileDiffs([
+                    FileDiff(
+                        "source1/rootfs/path1",
+                        "source2/rootfs/path1",
+                        [],
+                        "@@ -1,8 +1,8 @@\n",
+                    )
+                ]),
+                ("path2", "path2"): FileDiffs([
+                    FileDiff(
+                        "source1/rootfs/path2",
+                        "source2/rootfs/path2",
+                        [],
+                        "@@ -1,8 +1,8 @@\n",
+                    )
+                ]),
             },
         ),
         # One matching path, one mismatched path
         (
-            [
-                {
-                    "source1": "source1/rootfs/path1",
-                    "source2": "source2/rootfs/path1",
-                    "unified_diff_id": "",
-                    "unified_diff": "",
-                },
-                {
-                    "source1": "source1/rootfs/path2",
-                    "source2": "source2/rootfs/path3",
-                    "unified_diff_id": "",
-                    "unified_diff": "",
-                },
-            ],
+            FileDiffs([
+                FileDiff(
+                    "source1/rootfs/path1",
+                    "source2/rootfs/path1",
+                    [],
+                    "@@ -1,8 +1,8 @@\n",
+                ),
+                FileDiff(
+                    "source1/rootfs/path2",
+                    "source2/rootfs/path3",
+                    [],
+                    "@@ -1,8 +1,8 @@\n",    
+                )
+            ]),
             {
-                ("path1", "path1"): [
-                    {
-                        "source1": "source1/rootfs/path1",
-                        "source2": "source2/rootfs/path1",
-                        "unified_diff_id": "",
-                        "unified_diff": "",
-                    },
-                ],
-                ("path2", "path3"): [
-                    {
-                        "source1": "source1/rootfs/path2",
-                        "source2": "source2/rootfs/path3",
-                        "unified_diff_id": "",
-                        "unified_diff": "",
-                    },
-                ],
+                ("path1", "path1"): FileDiffs([
+                    FileDiff(
+                        "source1/rootfs/path1",
+                        "source2/rootfs/path1",
+                        [],
+                        "@@ -1,8 +1,8 @@\n",
+                    )
+                ]),
+                ("path2", "path3"): FileDiffs([
+                    FileDiff(
+                        "source1/rootfs/path2",
+                        "source2/rootfs/path3",
+                        [],
+                        "@@ -1,8 +1,8 @@\n",
+                    )
+                ]),
             },
         ),
     ],

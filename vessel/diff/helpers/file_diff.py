@@ -55,6 +55,20 @@ class FileDiff:
             self.unified_diff,
         )
 
+    def __eq__(self, other: object):
+        if isinstance(other, FileDiff):
+            return (
+                self.source1 == other.source1
+                and self.source2 == other.source2
+                and self.comments == other.comments
+                and self.unified_diff == other.unified_diff
+                and self.unified_diff_id == other.unified_diff_id
+                and self.command == other.command
+                and self.flagged_failures == other.flagged_failures
+                and self.unknown_failures == other.unknown_failures
+            )
+        return False
+
     def to_dict(self: "FileDiff") -> dict[str, Any]:
         """Returns diff object as a dict.
 
@@ -92,6 +106,13 @@ class FileDiffs:
         else:
             self.diffs = []
         """List of diffs in files."""
+
+    def __eq__(self, other: object):
+        if isinstance(other, FileDiffs):
+            return (
+                self.diffs == other.diffs
+            )
+        return False
 
     def to_dict_list(self) -> list[dict[str, Any]]:
         """Returns this diff as a list of dictionaries."""
