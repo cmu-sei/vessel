@@ -27,7 +27,7 @@
 from typing import Any
 
 from vessel.diff.helpers.failure import Failure
-from vessel.utils.unified_diff import align_diff_lines
+from vessel.diff.helpers.unified_diff import align_diff_lines
 
 
 class FileDiff:

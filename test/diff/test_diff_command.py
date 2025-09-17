@@ -32,13 +32,13 @@ import pytest
 
 from test.fixture import make_test_file_diff
 from vessel.diff.diff_command import DiffCommand
+from vessel.diff.helpers.checksum import FileHash
 from vessel.diff.helpers.failure import FailureSummary
 from vessel.diff.helpers.file_diff import FileDiffs
 from vessel.diff.helpers.metadata_diff import (
     MetadataDiff,
     MetadataDiffs,
 )
-from vessel.utils.checksum import FileHash
 
 
 def test_write_to_files_and_unified_diffs(tmp_path):

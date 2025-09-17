@@ -30,15 +30,15 @@ import re
 import pytest
 
 from test.fixture import make_test_file_diff, make_test_flag
-from vessel.diff.helpers.failure import Failure
-from vessel.diff.helpers.file_diff import FileDiffs
-from vessel.utils.checksum import (
+from vessel.diff.helpers.checksum import (
     FileHash,
     classify_checksum_mismatches,
     generate_filesummary_and_checksum,
     hash_folder_contents,
     summarize_checksums,
 )
+from vessel.diff.helpers.failure import Failure
+from vessel.diff.helpers.file_diff import FileDiffs
 
 
 def test_hash_folder_contents(tmp_path):

@@ -33,9 +33,9 @@ from typing import Any, Optional
 
 import magic
 
+from vessel.diff.helpers.diffoscope import build_diff_lookup
 from vessel.diff.helpers.failure import Failure
 from vessel.diff.helpers.file_diff import FileDiffs
-from vessel.utils.diffoscope import build_diff_lookup
 
 logger = getLogger(__name__)
 

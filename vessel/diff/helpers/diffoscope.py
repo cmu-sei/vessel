@@ -32,11 +32,11 @@ from typing import Optional
 from vessel.diff.helpers.failure import Failure, FailureSummary
 from vessel.diff.helpers.file_diff import FileDiff, FileDiffs
 from vessel.diff.helpers.flag import Flag
-from vessel.utils.flag_failures import flag_failures
-from vessel.utils.umoci import UMOCI_UNPACK_PATH
-from vessel.utils.unified_diff import (
+from vessel.diff.helpers.flag_failures import flag_failures
+from vessel.diff.helpers.unified_diff import (
     intervals_to_str,
 )
+from vessel.utils.umoci import UMOCI_UNPACK_PATH
 
 
 def build_diffoscope_command(

@@ -28,11 +28,11 @@
 import pytest
 
 from test.fixture import make_test_file_diff
-from vessel.diff.helpers.file_diff import FileDiffs
-from vessel.utils.diffoscope import (
+from vessel.diff.helpers.diffoscope import (
     build_diff_lookup,
     build_diffoscope_command,
 )
+from vessel.diff.helpers.file_diff import FileDiffs
 
 
 def test_build_diffoscope_command():

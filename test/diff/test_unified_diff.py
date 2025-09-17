@@ -30,7 +30,7 @@ import pytest
 from test.fixture import make_test_flag
 from vessel.diff.helpers.diffline import DiffLine
 from vessel.diff.helpers.failure import Failure
-from vessel.utils.unified_diff import (
+from vessel.diff.helpers.unified_diff import (
     align_diff_lines,
     equal_entry_list,
     failures_from_difflines,

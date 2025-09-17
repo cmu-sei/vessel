@@ -34,7 +34,7 @@ from vessel.diff.helpers.diffline import DiffLine
 from vessel.diff.helpers.failure import Failure, FailureSummary
 from vessel.diff.helpers.file_diff import FileDiff
 from vessel.diff.helpers.flag import Flag
-from vessel.utils.unified_diff import failures_from_difflines
+from vessel.diff.helpers.unified_diff import failures_from_difflines
 
 
 def flag_failures(
