@@ -165,6 +165,8 @@ class Failure:
             return {
                 "id": self.flag.flag_id,
                 "description": self.flag.description,
+                "metadata": self.flag.metadata,
+                "severity": self.flag.severity,
                 "minus_file_line_number": self.minus_line.file_line_number
                 if self.minus_line
                 else None,
@@ -179,8 +181,6 @@ class Failure:
                 else None,
                 "minus_matched_str": self.minus_str,
                 "plus_matched_str": self.plus_str,
-                "metadata": self.flag.metadata,
-                "severity": self.flag.severity,
             }
 
         # Handle nonbinary unknown
