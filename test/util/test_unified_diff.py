@@ -408,8 +408,8 @@ TEST_DIFFLINES = [
         {
             "flagged": [
                 Failure(
-                    minus_str="123", plus_str="456", flag=get_test_flag()
-                ).to_dict()
+                    minus_line=DiffLine("example 123"), plus_line=DiffLine("example 456"), minus_str="123", plus_str="456", flag=get_test_flag()
+                )
             ],
             "unknown": [],
             "minus_unmatched": portion.closedopen(0, 8),
@@ -425,8 +425,8 @@ TEST_DIFFLINES = [
         {
             "flagged": [
                 Failure(
-                    minus_str="123", plus_str="456", flag=get_test_flag()
-                ).to_dict()
+                    minus_line=DiffLine("123 example"), plus_line=DiffLine("456 example"), minus_str="123", plus_str="456", flag=get_test_flag()
+                )
             ],
             "unknown": [],
             "minus_unmatched": portion.openclosed(2, 10),
@@ -442,11 +442,11 @@ TEST_DIFFLINES = [
         {
             "flagged": [
                 Failure(
-                    minus_str="123", plus_str="456", flag=get_test_flag()
-                ).to_dict(),
+                    minus_line=DiffLine("123 example 321"), plus_line=DiffLine("456 example 654"), minus_str="123", plus_str="456", flag=get_test_flag()
+                ),
                 Failure(
-                    minus_str="321", plus_str="654", flag=get_test_flag()
-                ).to_dict(),
+                    minus_line=DiffLine("123 example 321"), plus_line=DiffLine("456 example 654"), minus_str="321", plus_str="654", flag=get_test_flag()
+                ),
             ],
             "unknown": [],
             "minus_unmatched": portion.open(2, 12),
@@ -463,6 +463,10 @@ def test_failures_from_difflines(test_input, expected):
     flagged, unknown, minus_unmatched, plus_unmatched = (
         failures_from_difflines(**test_input)
     )
+
+    for failure in expected["flagged"]:
+        failure.minus_line.unmatched_intervals = expected["minus_unmatched"]
+        failure.plus_line.unmatched_intervals = expected["plus_unmatched"]
 
     assert flagged == expected["flagged"]
     assert unknown == expected["unknown"]
