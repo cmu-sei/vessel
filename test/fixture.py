@@ -24,7 +24,6 @@
 # DM24-1321
 """Fixtures for all unit tests."""
 
-
 from vessel.diff.helpers.failure import Failure
 from vessel.diff.helpers.file_diff import FileDiff
 from vessel.diff.helpers.flag import Flag
