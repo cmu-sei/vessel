@@ -27,7 +27,7 @@
 import portion
 import pytest
 
-from test.fixture import get_test_flag
+from test.fixture import make_test_flag
 from vessel.diff.helpers.diffline import DiffLine
 from vessel.diff.helpers.failure import Failure
 from vessel.utils.unified_diff import (
@@ -403,12 +403,12 @@ TEST_DIFFLINES = [
         {
             "minus_line": DiffLine("example 123"),
             "plus_line": DiffLine("example 456"),
-            "flag": get_test_flag(),
+            "flag": make_test_flag(),
         },
         {
             "flagged": [
                 Failure(
-                    minus_line=DiffLine("example 123"), plus_line=DiffLine("example 456"), minus_str="123", plus_str="456", flag=get_test_flag()
+                    minus_line=DiffLine("example 123"), plus_line=DiffLine("example 456"), minus_str="123", plus_str="456", flag=make_test_flag()
                 )
             ],
             "unknown": [],
@@ -420,12 +420,12 @@ TEST_DIFFLINES = [
         {
             "minus_line": DiffLine("123 example"),
             "plus_line": DiffLine("456 example"),
-            "flag": get_test_flag(),
+            "flag": make_test_flag(),
         },
         {
             "flagged": [
                 Failure(
-                    minus_line=DiffLine("123 example"), plus_line=DiffLine("456 example"), minus_str="123", plus_str="456", flag=get_test_flag()
+                    minus_line=DiffLine("123 example"), plus_line=DiffLine("456 example"), minus_str="123", plus_str="456", flag=make_test_flag()
                 )
             ],
             "unknown": [],
@@ -437,15 +437,15 @@ TEST_DIFFLINES = [
         {
             "minus_line": DiffLine("123 example 321"),
             "plus_line": DiffLine("456 example 654"),
-            "flag": get_test_flag(),
+            "flag": make_test_flag(),
         },
         {
             "flagged": [
                 Failure(
-                    minus_line=DiffLine("123 example 321"), plus_line=DiffLine("456 example 654"), minus_str="123", plus_str="456", flag=get_test_flag()
+                    minus_line=DiffLine("123 example 321"), plus_line=DiffLine("456 example 654"), minus_str="123", plus_str="456", flag=make_test_flag()
                 ),
                 Failure(
-                    minus_line=DiffLine("123 example 321"), plus_line=DiffLine("456 example 654"), minus_str="321", plus_str="654", flag=get_test_flag()
+                    minus_line=DiffLine("123 example 321"), plus_line=DiffLine("456 example 654"), minus_str="321", plus_str="654", flag=make_test_flag()
                 ),
             ],
             "unknown": [],

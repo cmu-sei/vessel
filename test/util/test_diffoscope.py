@@ -27,6 +27,7 @@
 
 import pytest
 
+from test.fixture import make_test_file_diff
 from vessel.diff.helpers.file_diff import FileDiff, FileDiffs
 from vessel.utils.diffoscope import (
     build_diff_lookup,
@@ -84,34 +85,26 @@ def test_build_diffoscope_command():
         # Two matching paths
         (
             FileDiffs([
-                FileDiff(
+                make_test_file_diff(
                     "source1/rootfs/path1",
                     "source2/rootfs/path1",
-                    [],
-                    "@@ -1,8 +1,8 @@\n",
                 ),
-                FileDiff(
+                make_test_file_diff(
                     "source1/rootfs/path2",
                     "source2/rootfs/path2",
-                    [],
-                    "@@ -1,8 +1,8 @@\n",    
                 )
             ]),
             {
                 ("path1", "path1"): FileDiffs([
-                    FileDiff(
+                    make_test_file_diff(
                         "source1/rootfs/path1",
                         "source2/rootfs/path1",
-                        [],
-                        "@@ -1,8 +1,8 @@\n",
                     )
                 ]),
                 ("path2", "path2"): FileDiffs([
-                    FileDiff(
+                    make_test_file_diff(
                         "source1/rootfs/path2",
                         "source2/rootfs/path2",
-                        [],
-                        "@@ -1,8 +1,8 @@\n",
                     )
                 ]),
             },
@@ -119,34 +112,26 @@ def test_build_diffoscope_command():
         # One matching path, one mismatched path
         (
             FileDiffs([
-                FileDiff(
+                make_test_file_diff(
                     "source1/rootfs/path1",
                     "source2/rootfs/path1",
-                    [],
-                    "@@ -1,8 +1,8 @@\n",
                 ),
-                FileDiff(
+                make_test_file_diff(
                     "source1/rootfs/path2",
                     "source2/rootfs/path3",
-                    [],
-                    "@@ -1,8 +1,8 @@\n",    
                 )
             ]),
             {
                 ("path1", "path1"): FileDiffs([
-                    FileDiff(
+                    make_test_file_diff(
                         "source1/rootfs/path1",
-                        "source2/rootfs/path1",
-                        [],
-                        "@@ -1,8 +1,8 @@\n",
-                    )
+                        "source2/rootfs/path1"
+                    ),
                 ]),
                 ("path2", "path3"): FileDiffs([
-                    FileDiff(
+                    make_test_file_diff(
                         "source1/rootfs/path2",
-                        "source2/rootfs/path3",
-                        [],
-                        "@@ -1,8 +1,8 @@\n",
+                        "source2/rootfs/path3"
                     )
                 ]),
             },

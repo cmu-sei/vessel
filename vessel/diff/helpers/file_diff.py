@@ -43,8 +43,8 @@ class FileDiff:
         """Initializer for Diff class."""
         self.source1 = source1
         self.source2 = source2
-        self.unified_diff: list[str] = raw_unified_diff.splitlines()
         self.comments: list[str] = comments
+        self.unified_diff: list[str] = raw_unified_diff.splitlines()
 
         self.unified_diff_id = -1
         self.command: str = ""

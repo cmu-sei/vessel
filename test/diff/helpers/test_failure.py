@@ -31,7 +31,7 @@
 
 import pytest
 
-from test.fixture import get_test_flag
+from test.fixture import make_test_flag
 from vessel.diff.helpers.diffline import DiffLine
 from vessel.diff.helpers.failure import Failure, FailureSummary
 
@@ -109,7 +109,7 @@ def test_failure_summary(test_input, expected):
                 "plus_line": DiffLine("example 456", 3, 4),
                 "minus_str": "123",
                 "plus_str": "456",
-                "flag": get_test_flag(),
+                "flag": make_test_flag(),
             },
             {
                 "id": "test_flag",
@@ -126,7 +126,7 @@ def test_failure_summary(test_input, expected):
         ),
         (
             {
-                "flag": get_test_flag(),
+                "flag": make_test_flag(),
                 "binary": True,
             },
             {

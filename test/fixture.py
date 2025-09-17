@@ -24,20 +24,57 @@
 # DM24-1321
 """Fixtures for all unit tests."""
 
+from typing import Optional
+from vessel.diff.helpers.failure import Failure
+from vessel.diff.helpers.file_diff import FileDiff
 from vessel.diff.helpers.flag import Flag
 
 
-def get_test_flag():
+def make_test_file_diff(
+    source1: str = "",
+    source2: str = "",
+    comments: list[str] = [],
+    raw_unified_diff: str = "@@ -1,8 +1,8 @@\n",
+    unified_diff_id: int = -1,
+    command: str = "",
+    flagged_failures: list[Failure] = [],
+    unknown_failures: list[Failure] = [],
+) -> FileDiff:
+    file_diff = FileDiff(
+        source1,
+        source2,
+        comments,
+        raw_unified_diff,
+    )
+
+    file_diff.unified_diff_id = unified_diff_id
+    file_diff.command = command
+    file_diff.flagged_failures = flagged_failures
+    file_diff.unknown_failures = unknown_failures
+
+    return file_diff
+
+def make_test_flag(
+    flag_id = "test_flag",
+    description = "test flag",
+    filepath = ".*",
+    filetype = ".*",
+    command = ".*",
+    comment = ".*",
+    indiff = r"\d+",
+    severity = "Low",
+    metadata = False,
+) -> Flag:
     return Flag(
-        flag_id="test_flag",
-        description="test flag",
-        filepath=".*",
-        filetype=".*",
-        command=".*",
-        comment=".*",
-        indiff=r"\d+",
-        severity="Low",
-        metadata=False,
+        flag_id=flag_id,
+        description=description,
+        filepath=filepath,
+        filetype=filetype,
+        command=command,
+        comment=comment,
+        indiff=indiff,
+        severity=severity,
+        metadata=metadata,
     )
 
 
