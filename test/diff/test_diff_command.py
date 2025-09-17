@@ -30,8 +30,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from test.fixture import make_test_file_diff
 from vessel.diff.diff_command import DiffCommand
 from vessel.diff.helpers.failure import FailureSummary
+from vessel.diff.helpers.file_diff import FileDiffs
 from vessel.diff.helpers.metadata_diff import (
     MetadataDiff,
     MetadataDiffs,
@@ -45,10 +47,12 @@ def test_write_to_files_and_unified_diffs(tmp_path):
         [], "file", str(tmp_path), str(tmp_path), profile_enabled=False
     )
 
-    diffs = [
-        {"unified_diff": "diff1", "meta": 123},
-        {"unified_diff": "diff2", "meta": 456},
-    ]
+    diffs = FileDiffs(
+        [
+            make_test_file_diff(),
+            make_test_file_diff()
+        ]
+    )
 
     files_summary = [
         {
@@ -160,7 +164,7 @@ def test_process_and_save_results_invokes_dependencies(
     diffoscope_output = tmp_path.joinpath("diff.json")
     diffoscope_output.write_text("{}")
 
-    diff_command._process_and_save_results(
+    diff_command._process_and_write_results(
         image1_path=tmp_path,
         image2_path=tmp_path,
         diffoscope_output_path=diffoscope_output,
