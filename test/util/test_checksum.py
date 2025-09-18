@@ -32,6 +32,7 @@ import pytest
 from vessel.utils.checksum import (
     FileHash,
     classify_checksum_mismatches,
+    generate_filesummary_and_checksum,
     hash_folder_contents,
     summarize_checksums,
 )
@@ -528,3 +529,56 @@ def test_classify_checksum_mismatches(test_input, expected):
     """Test classify_checksum_mismatches."""
     output = classify_checksum_mismatches(**test_input)
     assert output == expected
+
+
+def test_generate_filesummary_and_checksum_from_rootfs(tmp_path):
+    """Test generate_filesummary_and_checksum with two rootfs directories"""
+    rootfs1 = tmp_path / "rootfs1"
+    rootfs2 = tmp_path / "rootfs2"
+    rootfs1.mkdir()
+    rootfs2.mkdir()
+    (rootfs1 / "foo.txt").write_text("same_content")
+    (rootfs2 / "foo.txt").write_text("same_content")
+    (rootfs1 / "unique1.txt").write_text("only1")
+    (rootfs2 / "unique2.txt").write_text("only2")
+
+    files_summary, checksum_summary = generate_filesummary_and_checksum(
+        diff_list=[],
+        rootfs_path1=rootfs1,
+        rootfs_path2=rootfs2,
+    )
+
+    assert checksum_summary["total_common_files"] == 1
+    assert len(checksum_summary["only_in_image1"]) == 1
+    assert len(checksum_summary["only_in_image2"]) == 1
+    assert "unique1.txt" in checksum_summary["only_in_image1"][0]
+    assert "unique2.txt" in checksum_summary["only_in_image2"][0]
+    assert files_summary[0]["image1"] == str(rootfs1)
+    assert files_summary[0]["image2"] == str(rootfs2)
+
+
+def test_generate_filesummary_and_checksum_from_hashes():
+    """Test generate_filesummary_and_checksum using hashed metadata directly"""
+    hashed_files1 = {
+        "foo.txt": FileHash("foo.txt", "ASCII text", "hashsame"),
+        "bar.txt": FileHash("bar.txt", "ASCII text", "hashbar1"),
+    }
+    hashed_files2 = {
+        "foo.txt": FileHash("foo.txt", "ASCII text", "hashsame"),
+        "baz.txt": FileHash("baz.txt", "ASCII text", "hashbaz2"),
+    }
+
+    files_summary, checksum_summary = generate_filesummary_and_checksum(
+        diff_list=[],
+        hashed_files1=hashed_files1,
+        hashed_files2=hashed_files2,
+        image1_path="test_image1",
+        image2_path="test_image2",
+    )
+    assert checksum_summary["total_common_files"] == 1
+    assert len(checksum_summary["only_in_image1"]) == 1
+    assert len(checksum_summary["only_in_image2"]) == 1
+    assert checksum_summary["only_in_image1"][0] == "bar.txt"
+    assert checksum_summary["only_in_image2"][0] == "baz.txt"
+    assert files_summary[0]["image1"] == "test_image1"
+    assert files_summary[0]["image2"] == "test_image2"
