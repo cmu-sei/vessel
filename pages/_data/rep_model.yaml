@@ -2,7 +2,7 @@
 - Code: EXT001
   Name: add-without-checksum
   Severity: low
-  Message: ""
+  Message: "Failure caused by ADD instruction. When using Dockerfile ADD instruction, you should always specify --checksum parameter to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
@@ -11,7 +11,7 @@
 - Code: EXT002
   Name: curl-wget-remote
   Severity: low
-  Message: ""
+  Message: "Failure caused by ADD instruction. When using Dockerfile ADD instruction, you should always specify --checksum parameter to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
@@ -20,7 +20,7 @@
 - Code: EXT003
   Name: git-clone
   Severity: low
-  Message: ""
+  Message: "Failure caused by ADD instruction. You should use ADD, instead of git clone to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
@@ -29,7 +29,7 @@
 - Code: VER001
   Name: dockerfile-from-tag
   Severity: low
-  Message: "Dockerfile FROM should always use the @sha256 digest of an image explicitly."
+  Message: "Failure caused by FROM instruction. When using Dockerfile FROM instruction, you should always use the @sha256 digest of an image explicitly to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: true
   Repair_Support: true
@@ -38,7 +38,7 @@
 - Code: VER003
   Name: apt-install-version-pinning
   Severity: low
-  Message: "apt-get install should pin the package version"
+  Message: "Failure caused by apt-get install. When doing apt-get install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
@@ -47,7 +47,7 @@
 - Code: VER004
   Name: dnf-install-version-pinning
   Severity: low
-  Message: "dnf install should pin the package version"
+  Message: "Failure caused by dnf install. When doing dnf install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
@@ -56,7 +56,7 @@
 - Code: VER005
   Name: pip-install-version-pinning
   Severity: low
-  Message: "pin versions in pip"
+  Message: "Failure caused by pip install. When doing pip install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
@@ -65,7 +65,7 @@
 - Code: VER006
   Name: npm-install-version-pinning
   Severity: low
-  Message: "pin versions in npm"
+  Message: "Failure caused by npm install. When doing npm install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
@@ -74,7 +74,7 @@
 - Code: VER007
   Name: apk-add-version-pinning
   Severity: low
-  Message: "apk add should pin package version"
+  Message: "Failure caused by apk add. When doing apk add in Dockerfile, you should always pin the package version to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
@@ -83,7 +83,7 @@
 - Code: VER008
   Name: gem-install-version-pinning
   Severity: low
-  Message: "pin version in gem install"
+  Message: "Failure caused by gem install. When doing gem install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
@@ -92,7 +92,7 @@
 - Code: VER009
   Name: yum-install-version-pinning
   Severity: low
-  Message: "yum install should pin the package version"
+  Message: "Failure caused by yum install. When doing yum install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
@@ -101,7 +101,7 @@
 - Code: VER010
   Name: zypper-install-version-pinning
   Severity: low
-  Message: "pin versions in zypper"
+  Message: "Failure caused by zypper install. When doing zypper install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: true
   Repair_Support: false
@@ -110,7 +110,7 @@
 - Code: TIME001
   Name: Utilizing output of date command to files
   Severity: low
-  Message: ""
+  Message: "Ouput of date command was used by files, which led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -119,7 +119,7 @@
 - Code: TIME002
   Name: Container build without pinning date/time
   Severity: low
-  Message: "e.g. SOURCE_DATE_EPOCH"
+  Message: "Container build without pinning date/time. e.g. SOURCE_DATE_EPOCH, which led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -128,7 +128,7 @@
 - Code: TIME003
   Name: Java builds include current date/time
   Severity: low
-  Message: ""
+  Message: "Java builds include current date/time which led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -137,7 +137,7 @@
 - Code: TIME004
   Name: Git clone time difference
   Severity: low
-  Message: ""
+  Message: "Timestamp in git clone caused reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -146,7 +146,7 @@
 - Code: TIME005
   Name: Files in zip file have different timestamp
   Severity: low
-  Message: ""
+  Message: "Timestamp of files in zip file caused reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -155,7 +155,7 @@
 - Code: TIME006
   Name: Time difference for npm update check
   Severity: low
-  Message: ""
+  Message: "npm update check produced different timestamp which led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -164,7 +164,7 @@
 - Code: TIME007
   Name: File listing time difference
   Severity: low
-  Message: ""
+  Message: "File listing showed different timestamp which led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -173,7 +173,7 @@
 - Code: TIME008
   Name: Logging time difference
   Severity: low
-  Message: ""
+  Message: "Logging time difference led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -182,7 +182,7 @@
 - Code: TIME009
   Name: Date and time difference for Go builds
   Severity: low
-  Message: ""
+  Message: "Go builds have different timestamps and led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -191,7 +191,7 @@
 - Code: TIME010
   Name: Date and time difference for Go binary output
   Severity: low
-  Message: ""
+  Message: "Date and time difference for Go binary output led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -200,7 +200,7 @@
 - Code: TIME011
   Name: Modified time in git index file
   Severity: low
-  Message: ""
+  Message: "Modified time difference in git index file led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -209,7 +209,7 @@
 - Code: TIME012
   Name: Modified file time
   Severity: low
-  Message: ""
+  Message: "Modified file time difference led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -218,7 +218,7 @@
 - Code: TIME013
   Name: Created time in git index file
   Severity: low
-  Message: ""
+  Message: "Created time difference in git index file led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -227,7 +227,7 @@
 - Code: TIME014
   Name: Keybox created time diff
   Severity: low
-  Message: ""
+  Message: "Created time difference in keybox file caused reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -236,7 +236,7 @@
 - Code: TIME015
   Name: Keybox last maintained time diff
   Severity: low
-  Message: ""
+  Message: "Last maintained time difference in keybox file caused reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -245,7 +245,7 @@
 - Code: TIME016
   Name: pyc-moddate
   Severity: low
-  Message: "Python bytecode moddate differences"
+  Message: "Python bytecode moddate differences led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -254,7 +254,7 @@
 - Code: TIME017
   Name: ""
   Severity: low
-  Message: "Python last check time difference"
+  Message: "Python last check time difference led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -263,7 +263,7 @@
 - Code: TIME018
   Name: ""
   Severity: low
-  Message: "Time difference in unpacked db"
+  Message: "Time difference in unpacked db led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -272,7 +272,7 @@
 - Code: TIME019
   Name: ""
   Severity: low
-  Message: "Timer setup time difference"
+  Message: "Timer setup time difference led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -281,7 +281,7 @@
 - Code: TIME020
   Name: gcloud-last-update-check
   Severity: low
-  Message: "gcloud last_update_check.json timestamp"
+  Message: "Timestamp of gcloud last_update_check caused reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -290,7 +290,7 @@
 - Code: TIME021
   Name: gcloud-last-survey-prompt
   Severity: low
-  Message: "gcloud last_survey_prompt.yaml timestamp"
+  Message: "Timestamp of gcloud last_survey_prompt led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -299,7 +299,7 @@
 - Code: REC001
   Name: apt-recommended-deps
   Severity: low
-  Message: ""
+  Message: "apt-get install without --no-install-recommended installed unnecessary packages and led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -308,7 +308,7 @@
 - Code: REC002
   Name: dnf-recommended-deps
   Severity: low
-  Message: ""
+  Message: "dnf install without disabling recommended dependencies installed unnecessary packages and led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -317,7 +317,7 @@
 - Code: PLAT001
   Name: platform-pinning
   Severity: low
-  Message: ""
+  Message: "Docker build without pinning platform led to reproducibility issues."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -326,7 +326,7 @@
 - Code: PLAT002
   Name: ""
   Severity: low
-  Message: ""
+  Message: "Utilizing output of uname -m led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -335,7 +335,7 @@
 - Code: PLAT003
   Name: ""
   Severity: low
-  Message: ""
+  Message: "Utilizing output of uname -r led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -344,7 +344,7 @@
 - Code: PLAT004
   Name: git-index-device
   Severity: low
-  Message: ""
+  Message: "Device difference in git index file led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -353,7 +353,7 @@
 - Code: PLAT005
   Name: platform-vars
   Severity: low
-  Message: ""
+  Message: "Build using platform-specific variables led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -362,7 +362,7 @@
 - Code: CACHE001
   Name: apt-cache
   Severity: low
-  Message: ""
+  Message: "apt cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (rm -rf /var/lib/apt/lists/*)"
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -371,7 +371,7 @@
 - Code: CACHE002
   Name: dnf-cache
   Severity: low
-  Message: ""
+  Message: "dnf cache files caused reproducibility failure, should be cleaned up after dnf command to avoid reproducibility failure. (dnf clean all)"
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -380,7 +380,7 @@
 - Code: CACHE003
   Name: apk-cache
   Severity: low
-  Message: ""
+  Message: "apk cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add `--no-cache` option to `apk add`)"
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -389,7 +389,7 @@
 - Code: CACHE004
   Name: yum-cache
   Severity: low
-  Message: ""
+  Message: "yum cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add `yum clean all` after `yum install`)
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -398,7 +398,7 @@
 - Code: CACHE005
   Name: zypper-cache
   Severity: low
-  Message: ""
+  Message: "zypper cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add `zypper clean` after `zypper install`)"
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -407,7 +407,7 @@
 - Code: CACHE006
   Name: yarn-cache
   Severity: low
-  Message: ""
+  Message: "yarn cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add `yarn cache clean` after `yarn install`)"
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -416,7 +416,7 @@
 - Code: CACHE007
   Name: ldconfig-aux-cache
   Severity: low
-  Message: ""
+  Message: "ldconfig auxiliary cache caused reproducibility failure, should be cleaned up to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -425,7 +425,7 @@
 - Code: CACHE008
   Name: go-build-cache
   Severity: low
-  Message: ""
+  Message: "Go build cache caused reproducibility failure, should be cleaned up to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -434,7 +434,8 @@
 - Code: CACHE009
   Name: go-mod-download-cache
   Severity: low
-  Message: ""
+  Message: "Go mod download cache caused reproducibility failure, should be cleaned up to avoid reproducibility failure."
+  Diff_Support: false
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -443,7 +444,7 @@
 - Code: CACHE010
   Name: pip-cache
   Severity: low
-  Message: ""
+  Message: "pip cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -452,7 +453,7 @@
 - Code: CACHE011
   Name: pyc-cache
   Severity: low
-  Message: ""
+  Message: "Python pyc cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -461,7 +462,7 @@
 - Code: RAND001
   Name: gcc-random-seed
   Severity: low
-  Message: ""
+  Message: "GCC compilation to object files with link time optimization enabled to without setting the -frandom-seed flag -- which led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -470,7 +471,7 @@
 - Code: RAND002
   Name: git-inode
   Severity: low
-  Message: ""
+  Message: "Inode difference in Git index file led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -479,7 +480,7 @@
 - Code: RAND003
   Name: sqlite-transaction-id
   Severity: low
-  Message: ""
+  Message: "Difference in sqlite transaction ids led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -488,7 +489,7 @@
 - Code: RAND004
   Name: uuid-fontconfig
   Severity: low
-  Message: ""
+  Message: "uuid diferences in fontconfig cache filenames led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -497,7 +498,7 @@
 - Code: RAND005
   Name: etc-shadow
   Severity: low
-  Message: ""
+  Message: "/etc/shadow last password change difference led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -506,7 +507,7 @@
 - Code: RAND006
   Name: cert-gen
   Severity: low
-  Message: ""
+  Message: "Generated certificate differences led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -515,7 +516,7 @@
 - Code: RAND007
   Name: configure-tmp
   Severity: low
-  Message: ""
+  Message: "Configure log contains random temporary file names led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -524,7 +525,7 @@
 - Code: ENV001
   Name: print-env
   Severity: low
-  Message: ""
+  Message: "Print environment variables to files led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -533,7 +534,7 @@
 - Code: ENV002
   Name: env-unused
   Severity: low
-  Message: ""
+  Message: "Set environment variable to different values but never use them led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -542,7 +543,7 @@
 - Code: ENV003
   Name: system-locale
   Severity: low
-  Message: ""
+  Message: "System locale impacting ordering of file list in tar archive led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -551,7 +552,7 @@
 - Code: ENV004
   Name: different-build-args
   Severity: low
-  Message: ""
+  Message: "Different build arguments led to reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
