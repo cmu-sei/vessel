@@ -39,9 +39,9 @@ from vessel.diff.helpers.unified_diff import failures_from_difflines
 
 def flag_failures(
     flags: list[Flag],
+    file_diff: FileDiff,
     filetype_lookup1: dict[str, str] | None,
     filetype_lookup2: dict[str, str] | None,
-    file_diff: FileDiff,
     minus_line: DiffLine,
     plus_line: DiffLine,
     is_binary: bool,

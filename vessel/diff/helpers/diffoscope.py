@@ -249,9 +249,9 @@ class DiffoscopeParser:
             failure_summary, flagged_failure_list, unknown_failure_list = (
                 flag_failures(
                     self.flags,
+                    file_diff,
                     self.filetype_lookup1,
                     self.filetype_lookup2,
-                    file_diff,
                     minus_line,
                     plus_line,
                     is_binary,
