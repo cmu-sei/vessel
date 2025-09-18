@@ -296,8 +296,6 @@ class DiffoscopeParser:
                 else None
             )
             if minus_unmatched_str != plus_unmatched_str:
-                if file_diff.source1 == "/tmp/tmpvy6_cc1z/umoci-unpack-output_2025-05-21_10-11-01.tar.latest/rootfs/etc/ssh/ssh_host_ed25519_key":
-                    print('flagging here')
                 self.failure_summary.unknown_failure_count += 1
                 file_diff.unknown_failures.append(
                     Failure(
