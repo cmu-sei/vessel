@@ -380,7 +380,7 @@
 - Code: CACHE003
   Name: apk-cache
   Severity: low
-  Message: "apk cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add `--no-cache` option to `apk add`)"
+  Message: "apk cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add --no-cache option to apk add)"
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -389,7 +389,7 @@
 - Code: CACHE004
   Name: yum-cache
   Severity: low
-  Message: "yum cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add `yum clean all` after `yum install`)
+  Message: "yum cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add yum clean all after yum install)
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -398,7 +398,7 @@
 - Code: CACHE005
   Name: zypper-cache
   Severity: low
-  Message: "zypper cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add `zypper clean` after `zypper install`)"
+  Message: "zypper cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add zypper clean after zypper install)"
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
@@ -407,7 +407,7 @@
 - Code: CACHE006
   Name: yarn-cache
   Severity: low
-  Message: "yarn cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add `yarn cache clean` after `yarn install`)"
+  Message: "yarn cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add yarn cache clean after yarn install)"
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
