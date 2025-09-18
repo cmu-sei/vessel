@@ -266,8 +266,8 @@ class DiffoscopeParser:
             self.failure_summary.nontrivial_failure_count += (
                 failure_summary.nontrivial_failure_count
             )
-            file_diff.flagged_failures = flagged_failure_list
-            file_diff.unknown_failures = unknown_failure_list
+            file_diff.flagged_failures.extend(flagged_failure_list)
+            file_diff.unknown_failures.extend(unknown_failure_list)
 
             # Check so line by line comparison don't happen in binary diffs and
             # this is after all the flags have been checked so the diff is done
@@ -296,6 +296,8 @@ class DiffoscopeParser:
                 else None
             )
             if minus_unmatched_str != plus_unmatched_str:
+                if file_diff.source1 == "/tmp/tmpvy6_cc1z/umoci-unpack-output_2025-05-21_10-11-01.tar.latest/rootfs/etc/ssh/ssh_host_ed25519_key":
+                    print('flagging here')
                 self.failure_summary.unknown_failure_count += 1
                 file_diff.unknown_failures.append(
                     Failure(
