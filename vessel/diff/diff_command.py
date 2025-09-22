@@ -30,25 +30,26 @@ import subprocess
 import tempfile
 from logging import getLogger
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import yaml
 
 from vessel.diff.helpers import metadata_diff
-from vessel.diff.helpers.failure import FailureSummary
-from vessel.diff.helpers.metadata_diff import MetadataDiffs
-from vessel.utils import oci, umoci
-from vessel.utils.checksum import (
+from vessel.diff.helpers.checksum import (
     generate_filesummary_and_checksum,
     hash_folder_contents,
     load_checksum_metadata,
     write_checksum_metadata,
 )
-from vessel.utils.diffoscope import (
+from vessel.diff.helpers.diffoscope import (
+    DiffoscopeParser,
     build_diffoscope_command,
-    parse_diffoscope_output,
 )
-from vessel.utils.flag import Flag
+from vessel.diff.helpers.failure import FailureSummary
+from vessel.diff.helpers.file_diff import FileDiffs
+from vessel.diff.helpers.flag import Flag
+from vessel.diff.helpers.metadata_diff import MetadataDiffs
+from vessel.utils import oci, umoci
 from vessel.utils.skopeo import skopeo_copy
 from vessel.utils.uri import ImageURI
 
@@ -77,17 +78,18 @@ class DiffCommand:
 
         Processes command-line arguments.
         """
+        self.input_files: list[str] = input_files
+        self.data_dir: str = data_dir
+        self.mode: str = mode
+        self.output_dir: str = output_dir
+        self.profile_enabled: bool = profile_enabled
+
         self.flags: list[Flag] = []
         self.meta_flags: list[metadata_diff.MetadataFlag] = []
-        self.input_files: list[str] = input_files
-        self.mode: str = mode
-        self.data_dir: str = data_dir
-        self.output_dir: str = output_dir
-        self.temp_dir: tempfile.TemporaryDirectory[str] | None = None
+        self.temp_dir: Optional[tempfile.TemporaryDirectory[str]] = None
         self.image_uris: list[ImageURI] = []
         self.oci_image_paths: list[str] = []
         self.oci_runtime_paths: list[str] = []
-        self.profile_enabled: bool = profile_enabled
 
     def execute(self: "DiffCommand") -> bool:
         """Executes a diff operation.
@@ -127,7 +129,7 @@ class DiffCommand:
                         FailureSummary(),
                         FailureSummary(),
                         FailureSummary(),
-                        [],
+                        FileDiffs(),
                         MetadataDiffs(),
                         [],
                         {},
@@ -213,7 +215,7 @@ class DiffCommand:
         meta_diffs = MetadataDiffs.load_from_file(Path(metadata_json_path))
 
         # Call common method to parse diffs and generate output.
-        self._process_and_save_results(
+        self._process_and_write_results(
             image1_path=Path(image1_path),
             image2_path=Path(image2_path),
             diffoscope_output_path=Path(diffoscope_json_path),
@@ -348,7 +350,7 @@ class DiffCommand:
             self.output_dir,
             self.DIFFOSCOPE_OUTPUT_FILENAME,
         )
-        self._process_and_save_results(
+        self._process_and_write_results(
             image1_path=image1_path,
             image2_path=image2_path,
             diffoscope_output_path=diffoscope_output_path,
@@ -390,7 +392,7 @@ class DiffCommand:
         )
         return hashed_files1, hashed_files2
 
-    def _process_and_save_results(
+    def _process_and_write_results(
         self,
         image1_path: Path,
         image2_path: Path,
@@ -398,11 +400,10 @@ class DiffCommand:
         meta_diffs: MetadataDiffs,
         hashed_files1: dict[str, Any],
         hashed_files2: dict[str, Any],
-        filetype_lookup1: dict[str, str] | None = None,
-        filetype_lookup2: dict[str, str] | None = None,
+        filetype_lookup1: Optional[dict[str, str]] = None,
+        filetype_lookup2: Optional[dict[str, str]] = None,
     ) -> None:
-        """
-        Parses both diffoscope and metadata/config diffs, creates summaries and writes outputs.
+        """Parses both diffoscope and metadata/config diffs, creates summaries and writes outputs.
 
         Args:
             image1_path, image2_path: Path to first and second image filesystem
@@ -413,13 +414,10 @@ class DiffCommand:
         # First load diffoscope output and parse it for diffs.
         with diffoscope_output_path.open() as raw_diff_file:
             diffoscope_json = json.load(raw_diff_file)
-        unknown, trivial, nontrivial, diff_list = parse_diffoscope_output(
-            diffoscope_json,
-            self.flags,
-            filetype_lookup1=filetype_lookup1,
-            filetype_lookup2=filetype_lookup2,
+
+        parser = DiffoscopeParser(
+            diffoscope_json, self.flags, filetype_lookup1, filetype_lookup2
         )
-        file_failure_summary = FailureSummary(unknown, trivial, nontrivial)
 
         # Now check flags for image metadata diffs.
         meta_diffs, meta_summary = metadata_diff.match_flags(
@@ -428,17 +426,17 @@ class DiffCommand:
 
         # Create totals with metadata/config failures.
         total_failure_summary = FailureSummary(
-            unknown_failure_count=file_failure_summary.unknown_failures
-            + meta_summary.unknown_failures,
-            trivial_failure_count=file_failure_summary.trivial_failures
-            + meta_summary.trivial_failures,
-            nontrivial_failure_count=file_failure_summary.nontrivial_failures
-            + meta_summary.nontrivial_failures,
+            unknown_failure_count=parser.failure_summary.unknown_failure_count
+            + meta_summary.unknown_failure_count,
+            trivial_failure_count=parser.failure_summary.trivial_failure_count
+            + meta_summary.trivial_failure_count,
+            nontrivial_failure_count=parser.failure_summary.nontrivial_failure_count
+            + meta_summary.nontrivial_failure_count,
         )
 
         # Create summaries for hashes and checksum.
         files_summary, checksum_summary = generate_filesummary_and_checksum(
-            diff_list,
+            parser.diff_list,
             hashed_files1=hashed_files1,
             hashed_files2=hashed_files2,
             image1_path=str(image1_path),
@@ -448,9 +446,9 @@ class DiffCommand:
         # Write outputs to files.
         self._write_to_files(
             total_failure_summary=total_failure_summary,
-            file_failure_summary=file_failure_summary,
+            file_failure_summary=parser.failure_summary,
             meta_failure_summary=meta_summary,
-            diffs=diff_list,
+            file_diffs=parser.diff_list,
             meta_diffs=meta_diffs,
             files_summary=files_summary,
             checksum_summary=checksum_summary,
@@ -461,7 +459,7 @@ class DiffCommand:
         total_failure_summary: FailureSummary,
         file_failure_summary: FailureSummary,
         meta_failure_summary: FailureSummary,
-        diffs: list[dict[str, Any]],
+        file_diffs: FileDiffs,
         meta_diffs: MetadataDiffs,
         files_summary: list[dict[str, Any]],
         checksum_summary: dict[str, Any],
@@ -477,7 +475,7 @@ class DiffCommand:
             file_failure_summary: Summary of failures in file comparison
             meta_failure_summary: Summary of failures in metadata/config comparison
             diffs: List of diffs, each being a dict item returned
-                    from Diff.to_slim_dict()
+                    from Diff.to_dict()
             meta_diffs: List of diffs between OCI images metadata/configs.
             files_summary: File analysis of trivial/nontrivial failure
             checksum_summary: File checksum comparison result summary
@@ -487,11 +485,10 @@ class DiffCommand:
         unified_diff_id = 1
         unified_diff_dict = {}
 
-        for diff in diffs:
-            unified_diff_dict[unified_diff_id] = diff["unified_diff"]
-            diff["unified_diff_id"] = unified_diff_id
+        for diff in file_diffs.diffs:
+            unified_diff_dict[unified_diff_id] = diff.unified_diff
+            diff.unified_diff_id = unified_diff_id
             unified_diff_id += 1
-            diff.pop("unified_diff")
 
         summary_json = {
             "summary": {
@@ -534,7 +531,7 @@ class DiffCommand:
                 },
             },
             "files": files_summary or [],
-            "diffs": diffs,
+            "diffs": file_diffs.to_dict_list(),
             "meta_diffs": meta_diffs.to_dict_list(),
         }
 

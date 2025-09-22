@@ -27,51 +27,16 @@
 import portion
 import pytest
 
-from test.fixture import get_test_flag
-from vessel.utils.unified_diff import (
-    Diff,
-    DiffLine,
+from test.fixture import make_test_flag
+from vessel.diff.helpers.diffline import DiffLine
+from vessel.diff.helpers.failure import Failure
+from vessel.diff.helpers.unified_diff import (
     align_diff_lines,
     equal_entry_list,
     failures_from_difflines,
     intervals_to_str,
-    make_failure_dict,
     parse_unified_diff_header,
 )
-
-# -----------------------------------------------------------------------------
-# Tests for Diff.to_slim_dict
-# -----------------------------------------------------------------------------
-
-TEST_DIFF_CLASS_OBJECTS = [
-    (
-        Diff(
-            "src1",
-            "src2",
-            "par src1",
-            "par src2",
-            ["com1", "com2"],
-            "@@ -1,2 +1,3 @@\n 1\n-2\n+2!\n+3!\n",
-        ),
-        {
-            "source1": "src1",
-            "source2": "src2",
-            "unified_diff_id": "ID not yet assigned",
-            "comments": ["com1", "com2"],
-            "unified_diff": "@@ -1,2 +1,3 @@\n 1\n-2\n+2!\n+3!\n".splitlines(),
-        },
-    )
-]
-
-
-@pytest.mark.parametrize("test_input, expected", TEST_DIFF_CLASS_OBJECTS)
-def test_Diff_to_sim_dict(test_input, expected):
-    """Ensures Diff properly converts to a dict"""
-
-    dict = test_input.to_slim_dict()
-
-    assert dict == expected
-
 
 # -----------------------------------------------------------------------------
 # Tests for DiffLine
@@ -438,12 +403,16 @@ TEST_DIFFLINES = [
         {
             "minus_line": DiffLine("example 123"),
             "plus_line": DiffLine("example 456"),
-            "flag": get_test_flag(),
+            "flag": make_test_flag(),
         },
         {
             "flagged": [
-                make_failure_dict(
-                    minus_str="123", plus_str="456", flag=get_test_flag()
+                Failure(
+                    minus_line=DiffLine("example 123"),
+                    plus_line=DiffLine("example 456"),
+                    minus_str="123",
+                    plus_str="456",
+                    flag=make_test_flag(),
                 )
             ],
             "unknown": [],
@@ -455,12 +424,16 @@ TEST_DIFFLINES = [
         {
             "minus_line": DiffLine("123 example"),
             "plus_line": DiffLine("456 example"),
-            "flag": get_test_flag(),
+            "flag": make_test_flag(),
         },
         {
             "flagged": [
-                make_failure_dict(
-                    minus_str="123", plus_str="456", flag=get_test_flag()
+                Failure(
+                    minus_line=DiffLine("123 example"),
+                    plus_line=DiffLine("456 example"),
+                    minus_str="123",
+                    plus_str="456",
+                    flag=make_test_flag(),
                 )
             ],
             "unknown": [],
@@ -472,15 +445,23 @@ TEST_DIFFLINES = [
         {
             "minus_line": DiffLine("123 example 321"),
             "plus_line": DiffLine("456 example 654"),
-            "flag": get_test_flag(),
+            "flag": make_test_flag(),
         },
         {
             "flagged": [
-                make_failure_dict(
-                    minus_str="123", plus_str="456", flag=get_test_flag()
+                Failure(
+                    minus_line=DiffLine("123 example 321"),
+                    plus_line=DiffLine("456 example 654"),
+                    minus_str="123",
+                    plus_str="456",
+                    flag=make_test_flag(),
                 ),
-                make_failure_dict(
-                    minus_str="321", plus_str="654", flag=get_test_flag()
+                Failure(
+                    minus_line=DiffLine("123 example 321"),
+                    plus_line=DiffLine("456 example 654"),
+                    minus_str="321",
+                    plus_str="654",
+                    flag=make_test_flag(),
                 ),
             ],
             "unknown": [],
@@ -499,74 +480,14 @@ def test_failures_from_difflines(test_input, expected):
         failures_from_difflines(**test_input)
     )
 
+    for failure in expected["flagged"]:
+        failure.minus_line.unmatched_intervals = expected["minus_unmatched"]
+        failure.plus_line.unmatched_intervals = expected["plus_unmatched"]
+
     assert flagged == expected["flagged"]
     assert unknown == expected["unknown"]
     assert minus_unmatched == expected["minus_unmatched"]
     assert plus_unmatched == expected["plus_unmatched"]
-
-
-# -----------------------------------------------------------------------------
-# Tests for make_failure_dict
-# -----------------------------------------------------------------------------
-
-TEST_ISSUE_DICT_INPUT = [
-    (
-        {},
-        {
-            "minus_file_line_number": None,
-            "plus_file_line_number": None,
-            "minus_diff_line_number": None,
-            "plus_diff_line_number": None,
-            "minus_unmatched_str": None,
-            "plus_unmatched_str": None,
-        },
-    ),
-    (
-        {
-            "minus_line": DiffLine("example 123", 1, 2),
-            "plus_line": DiffLine("example 456", 3, 4),
-            "minus_str": "123",
-            "plus_str": "456",
-            "flag": None,
-        },
-        {
-            "minus_file_line_number": 2,
-            "plus_file_line_number": 4,
-            "minus_diff_line_number": 1,
-            "plus_diff_line_number": 3,
-            "minus_unmatched_str": "123",
-            "plus_unmatched_str": "456",
-        },
-    ),
-    (
-        {
-            "minus_line": DiffLine("example 123", 1, 2),
-            "plus_line": DiffLine("example 456", 3, 4),
-            "minus_str": "123",
-            "plus_str": "456",
-            "flag": get_test_flag(),
-        },
-        {
-            "id": "test_flag",
-            "description": "test flag",
-            "minus_file_line_number": 2,
-            "plus_file_line_number": 4,
-            "minus_diff_line_number": 1,
-            "plus_diff_line_number": 3,
-            "minus_matched_str": "123",
-            "plus_matched_str": "456",
-        },
-    ),
-]
-
-
-@pytest.mark.parametrize("test_input, expected", TEST_ISSUE_DICT_INPUT)
-def test_make_failure_dict(test_input, expected):
-    """Tests that the dict is created properly."""
-
-    dict = make_failure_dict(**test_input)
-
-    assert dict == expected
 
 
 # -----------------------------------------------------------------------------

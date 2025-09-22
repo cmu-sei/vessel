@@ -29,13 +29,16 @@ import re
 
 import pytest
 
-from vessel.utils.checksum import (
+from test.fixture import make_test_file_diff, make_test_flag
+from vessel.diff.helpers.checksum import (
     FileHash,
     classify_checksum_mismatches,
     generate_filesummary_and_checksum,
     hash_folder_contents,
     summarize_checksums,
 )
+from vessel.diff.helpers.failure import Failure
+from vessel.diff.helpers.file_diff import FileDiffs
 
 
 def test_hash_folder_contents(tmp_path):
@@ -272,18 +275,21 @@ def test_summarize_checksums(test_input, expected):
                     "only_in_image2": [],
                 },
                 "diff_lookup": {
-                    ("path1", "path1"): [
-                        {
-                            "flagged_failures": [
-                                {
-                                    "id": "TIME007",
-                                    "description": "File listing time difference in different format.",
-                                    "metadata": True,
-                                    "severity": "Low",
-                                }
-                            ]
-                        }
-                    ]
+                    ("path1", "path1"): FileDiffs(
+                        [
+                            make_test_file_diff(
+                                flagged_failures=[
+                                    Failure(
+                                        flag=make_test_flag(
+                                            flag_id="TIME007",
+                                            description="File listing time difference in different format.",
+                                            metadata=True,
+                                        )
+                                    )
+                                ]
+                            )
+                        ],
+                    ),
                 },
                 "hashed_files1": {
                     "path1": FileHash("path1", "ASCII text", "h1")
@@ -327,24 +333,31 @@ def test_summarize_checksums(test_input, expected):
                     "only_in_image2": [],
                 },
                 "diff_lookup": {
-                    ("path1", "path1"): [
-                        {
-                            "flagged_failures": [
-                                {
-                                    "id": "TIME007",
-                                    "description": "File listing time difference in different format.",
-                                    "metadata": True,
-                                    "severity": "Low",
-                                },
-                                {
-                                    "id": "TIME008",
-                                    "description": "Logging time difference.",
-                                    "metadata": False,
-                                    "severity": "Low",
-                                },
-                            ]
-                        }
-                    ]
+                    ("path1", "path1"): FileDiffs(
+                        [
+                            make_test_file_diff(
+                                flagged_failures=[
+                                    Failure(
+                                        flag=make_test_flag(
+                                            flag_id="TIME007",
+                                            description="File listing time difference in different format.",
+                                            metadata=True,
+                                        )
+                                    )
+                                ]
+                            ),
+                            make_test_file_diff(
+                                flagged_failures=[
+                                    Failure(
+                                        flag=make_test_flag(
+                                            flag_id="TIME008",
+                                            description="Logging time difference.",
+                                        )
+                                    )
+                                ]
+                            ),
+                        ],
+                    )
                 },
                 "hashed_files1": {
                     "path1": FileHash("path1", "ASCII text", "h1")
@@ -389,18 +402,21 @@ def test_summarize_checksums(test_input, expected):
                     "only_in_image2": [],
                 },
                 "diff_lookup": {
-                    ("path1", "path1"): [
-                        {
-                            "flagged_failures": [
-                                {
-                                    "id": "RAND006",
-                                    "description": "Generated certificate differences",
-                                    "metadata": False,
-                                    "severity": "Medium",
-                                }
-                            ]
-                        }
-                    ]
+                    ("path1", "path1"): FileDiffs(
+                        [
+                            make_test_file_diff(
+                                flagged_failures=[
+                                    Failure(
+                                        flag=make_test_flag(
+                                            flag_id="RAND006",
+                                            description="Generated certificate differences.",
+                                            severity="High",
+                                        )
+                                    )
+                                ]
+                            )
+                        ],
+                    ),
                 },
                 "hashed_files1": {
                     "path1": FileHash("path1", "ASCII text", "h1")
@@ -416,7 +432,7 @@ def test_summarize_checksums(test_input, expected):
                         "files1": "path1",
                         "files2": "path1",
                         "flagged_failure_types": [
-                            "RAND006|Generated certificate differences"
+                            "RAND006|Generated certificate differences."
                         ],
                         "filetype1": "ASCII text",
                         "filetype2": "ASCII text",
@@ -444,18 +460,9 @@ def test_summarize_checksums(test_input, expected):
                     "only_in_image2": [],
                 },
                 "diff_lookup": {
-                    ("unknownfile", "unknownfile"): [
-                        {
-                            "unknown_failures": [
-                                {
-                                    "minus_file_line_number": 2,
-                                    "plus_file_line_number": 2,
-                                    "minus_unmatched_str": "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDEg+yzqceNP49w",
-                                    "plus_unmatched_str": "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCzAlorKb6UtjG4",
-                                }
-                            ]
-                        }
-                    ]
+                    ("unknownfile", "unknownfile"): FileDiffs(
+                        [make_test_file_diff(unknown_failures=[Failure()])]
+                    )
                 },
                 "hashed_files1": {
                     "path1": FileHash("path1", "ASCII text", "h1")
@@ -497,11 +504,10 @@ def test_summarize_checksums(test_input, expected):
                     "only_in_image2": [],
                 },
                 "diff_lookup": {
-                    ("path1", "path1"): [
-                        {
-                            # No flagged failures nor unknown failures
-                        }
-                    ]
+                    (
+                        "path1",
+                        "path1",
+                    ): FileDiffs()  # No flagged failures nor unknown failures
                 },
                 "hashed_files1": {
                     "path1": FileHash("path1", "ASCII text", "h1")
@@ -528,6 +534,7 @@ def test_summarize_checksums(test_input, expected):
 def test_classify_checksum_mismatches(test_input, expected):
     """Test classify_checksum_mismatches."""
     output = classify_checksum_mismatches(**test_input)
+
     assert output == expected
 
 
@@ -543,7 +550,7 @@ def test_generate_filesummary_and_checksum_from_rootfs(tmp_path):
     (rootfs2 / "unique2.txt").write_text("only2")
 
     files_summary, checksum_summary = generate_filesummary_and_checksum(
-        diff_list=[],
+        diff_list=FileDiffs(),
         rootfs_path1=rootfs1,
         rootfs_path2=rootfs2,
     )
@@ -569,7 +576,7 @@ def test_generate_filesummary_and_checksum_from_hashes():
     }
 
     files_summary, checksum_summary = generate_filesummary_and_checksum(
-        diff_list=[],
+        diff_list=FileDiffs(),
         hashed_files1=hashed_files1,
         hashed_files2=hashed_files2,
         image1_path="test_image1",

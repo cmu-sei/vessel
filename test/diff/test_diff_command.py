@@ -30,13 +30,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from test.fixture import make_test_file_diff
 from vessel.diff.diff_command import DiffCommand
+from vessel.diff.helpers.checksum import FileHash
 from vessel.diff.helpers.failure import FailureSummary
+from vessel.diff.helpers.file_diff import FileDiffs
 from vessel.diff.helpers.metadata_diff import (
     MetadataDiff,
     MetadataDiffs,
 )
-from vessel.utils.checksum import FileHash
 
 
 def test_write_to_files_and_unified_diffs(tmp_path):
@@ -45,10 +47,7 @@ def test_write_to_files_and_unified_diffs(tmp_path):
         [], "file", str(tmp_path), str(tmp_path), profile_enabled=False
     )
 
-    diffs = [
-        {"unified_diff": "diff1", "meta": 123},
-        {"unified_diff": "diff2", "meta": 456},
-    ]
+    diffs = FileDiffs([make_test_file_diff(), make_test_file_diff()])
 
     files_summary = [
         {
@@ -138,10 +137,10 @@ def test_write_to_files_and_unified_diffs(tmp_path):
     assert meta_section["total_failures"] == 2
 
 
-@patch("vessel.diff.diff_command.parse_diffoscope_output")
+@patch("vessel.diff.diff_command.DiffoscopeParser")
 @patch("vessel.diff.diff_command.generate_filesummary_and_checksum")
 def test_process_and_save_results_invokes_dependencies(
-    mock_generate, mock_parse, tmp_path
+    mock_generate, mock_parser, tmp_path
 ):
     """
     Verify process_and_save_results parses diffoscope, generates summaries, and writes output files
@@ -150,7 +149,10 @@ def test_process_and_save_results_invokes_dependencies(
     files_summary = ["files_summary"]
     checksum_summary = {"checksum_summary": 1}
     mock_generate.return_value = (files_summary, checksum_summary)
-    mock_parse.return_value = (1, 2, 3, [{"dummy": "diff"}])
+
+    mocked_file_diffs = FileDiffs([make_test_file_diff()])
+    mock_parser.return_value.failure_summary = FailureSummary(1, 2, 3)
+    mock_parser.return_value.diff_list = mocked_file_diffs
 
     diff_command = DiffCommand(
         [], str(tmp_path), "file", str(tmp_path), profile_enabled=False
@@ -160,7 +162,7 @@ def test_process_and_save_results_invokes_dependencies(
     diffoscope_output = tmp_path.joinpath("diff.json")
     diffoscope_output.write_text("{}")
 
-    diff_command._process_and_save_results(
+    diff_command._process_and_write_results(
         image1_path=tmp_path,
         image2_path=tmp_path,
         diffoscope_output_path=diffoscope_output,
@@ -169,15 +171,16 @@ def test_process_and_save_results_invokes_dependencies(
         hashed_files2={"b": "y"},
     )
 
-    mock_parse.assert_called_once()
+    mock_parser.assert_called_once()
     mock_generate.assert_called_once()
 
     diff_command._write_to_files.assert_called_once()
     _, kwargs = diff_command._write_to_files.call_args
-    assert kwargs["file_failure_summary"].unknown_failures == 1
-    assert kwargs["file_failure_summary"].trivial_failures == 2
-    assert kwargs["file_failure_summary"].nontrivial_failures == 3
-    assert kwargs["diffs"] == [{"dummy": "diff"}]
+    assert kwargs["file_failure_summary"].unknown_failure_count == 1
+    assert kwargs["file_failure_summary"].trivial_failure_count == 2
+    assert kwargs["file_failure_summary"].nontrivial_failure_count == 3
+    assert isinstance(kwargs["file_diffs"], FileDiffs)
+    assert kwargs["file_diffs"].diffs
     assert "total_failure_summary" in kwargs
     assert "file_failure_summary" in kwargs
     assert "meta_failure_summary" in kwargs
@@ -237,9 +240,7 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
 
     with (
         patch("vessel.diff.diff_command.load_checksum_metadata") as mock_load,
-        patch(
-            "vessel.diff.diff_command.parse_diffoscope_output"
-        ) as mock_parse,
+        patch("vessel.diff.diff_command.DiffoscopeParser") as mock_parser,
         patch(
             "vessel.diff.diff_command.generate_filesummary_and_checksum"
         ) as mock_generate,
@@ -254,7 +255,11 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
             "img1_path",
             "img2_path",
         )
-        mock_parse.return_value = (1, 2, 3, [{"dummy": "diff"}])
+
+        mocked_file_diffs = FileDiffs([make_test_file_diff()])
+        mock_parser.return_value.failure_summary = FailureSummary(1, 2, 3)
+        mock_parser.return_value.diff_list = mocked_file_diffs
+
         mock_generate.return_value = (
             ["files_summary"],
             {"checksum_summary": 1},
@@ -278,26 +283,26 @@ def test_compare_diffoscope_and_checksum_json_success(tmp_path):
 
         # Assert load was called on the checksum path
         mock_load.assert_called_once_with(str(checksum_path))
-
-        # Assert parse received the diffoscope JSON, current flags, and the lookups built from hashed maps
-        parse_args, parse_kwargs = mock_parse.call_args
-        assert parse_args[1] == diff_command.flags
-        assert parse_kwargs["filetype_lookup1"] == {"a.txt": "ASCII text"}
-        assert parse_kwargs["filetype_lookup2"] == {
+        parser_args, parser_kwargs = mock_parser.call_args
+        assert parser_args[0] == {}  # diffoscope JSON
+        assert parser_args[1] == diff_command.flags
+        assert parser_args[2] == {"a.txt": "ASCII text"}  # filetype_lookup1
+        assert parser_args[3] == {
             "b.bin": "application/octet-stream"
-        }
+        }  # filetype_lookup2
 
         # _write_to_files should get FailureSummary objects and diffs
         mock_write.assert_called_once()
         _, kwargs = mock_write.call_args
-        assert kwargs["file_failure_summary"].unknown_failures == 1
-        assert kwargs["file_failure_summary"].trivial_failures == 2
-        assert kwargs["file_failure_summary"].nontrivial_failures == 3
-        assert kwargs["diffs"] == [{"dummy": "diff"}]
+        assert kwargs["file_failure_summary"].unknown_failure_count == 1
+        assert kwargs["file_failure_summary"].trivial_failure_count == 2
+        assert kwargs["file_failure_summary"].nontrivial_failure_count == 3
+        assert isinstance(kwargs["file_diffs"], FileDiffs)
+        assert kwargs["file_diffs"].diffs
         assert kwargs["files_summary"] == ["files_summary"]
         assert kwargs["checksum_summary"] == {"checksum_summary": 1}
-        assert kwargs["meta_failure_summary"].trivial_failures == 1
-        assert kwargs["meta_failure_summary"].nontrivial_failures == 1
+        assert kwargs["meta_failure_summary"].trivial_failure_count == 1
+        assert kwargs["meta_failure_summary"].nontrivial_failure_count == 1
 
         metadata_diffs_arg = kwargs["meta_diffs"]
         keys = [d.key for d in metadata_diffs_arg.diffs]
