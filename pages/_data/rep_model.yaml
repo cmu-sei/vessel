@@ -3,11 +3,9 @@ Rule_Columns:
   - Name
   - Severity
   - Message
-  - Diff Support?
-  - Lint Support?
-  - Repair Support?
-  - Hadolint Severity
-  - Hadolint Rule
+  - Diff?
+  - Lint?
+  - Repair?
 Categories:
   - Category: EXT
     Rules:

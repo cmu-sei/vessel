@@ -9,17 +9,47 @@
     <tbody>
         {% for row in include.rules %}
             <tr>
-                {% for col in row -%}
-                    <td>
-                        {% if forloop.first -%}
-                            {% assign code_num = col[1] | prepend: '000' | slice: -3, 3 %}
-                            {% assign code = include.category | append: code_num %}
-                            {{ code }}
-                        {% else %}
-                            {{ col[1] }}
-                        {% endif %}
-                    </td>
-                {% endfor -%}
+                <td>
+                    {% assign code_num = row.Code | prepend: '000' | slice: -3, 3 %}
+                    {% assign code = include.category | append: code_num %}
+                    {{ code }}
+                </td>
+                <td>
+                    {{ row.Name }}
+                </td>
+                <td> 
+                    {{ row.Severity }}
+                </td>
+                <td>
+                    {{ row.Message }}
+                    {% if row.Hadolint_Rule != "" -%}
+                        <details>
+                            <summary><i class="fa-solid fa-bolt" title="Hadolint"></i></summary>
+                            Rule: {{ row.Hadolint_Rule }} / Severity: {{ row.Hadolint_Severity | capitalize }}
+                        </details>
+                    {% endif -%}
+                </td>
+                <td>
+                    {% if row.Diff_Support == false -%}
+                        &#10060;
+                    {% else -%}
+                        &#9989;
+                    {% endif %}
+                </td>
+                <td>
+                    {% if row.Lint_Support == false -%}
+                        &#10060;
+                    {% else -%}
+                        &#9989;
+                    {% endif %}
+                </td>
+                <td>
+                    {% if row.Repair_Support == false -%}
+                        &#10060;
+                    {% else -%}
+                        &#9989;
+                    {% endif %}
+                </td>
             </tr>
         {% endfor -%}
     </tbody>
