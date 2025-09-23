@@ -33,8 +33,8 @@
   Diff_Support: false
   Lint_Support: true
   Repair_Support: true
-  Hadolint_Severity: warning
-  Hadolint_Rule: DL3006
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: VER003
   Name: apt-install-version-pinning
   Severity: low
@@ -135,16 +135,16 @@
   Hadolint_Severity: ""
   Hadolint_Rule: ""
 - Code: TIME004
-  Name: Git clone time difference
+  Name: Git clone time
   Severity: low
-  Message: "Timestamp in git clone caused reproducibility failure."
+  Message: "Timestamp difference in git clone caused reproducibility failure."
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
   Hadolint_Severity: ""
   Hadolint_Rule: ""
 - Code: TIME005
-  Name: Files in zip file have different timestamp
+  Name: Timestamp of files in zip 
   Severity: low
   Message: "Timestamp of files in zip file caused reproducibility failure."
   Diff_Support: false
@@ -153,7 +153,7 @@
   Hadolint_Severity: ""
   Hadolint_Rule: ""
 - Code: TIME006
-  Name: Time difference for npm update check
+  Name: Time in npm update check
   Severity: low
   Message: "npm update check produced different timestamp which led to reproducibility failure."
   Diff_Support: false
@@ -162,7 +162,7 @@
   Hadolint_Severity: ""
   Hadolint_Rule: ""
 - Code: TIME007
-  Name: File listing time difference
+  Name: File listing time
   Severity: low
   Message: "File listing showed different timestamp which led to reproducibility failure."
   Diff_Support: false
@@ -180,7 +180,7 @@
   Hadolint_Severity: ""
   Hadolint_Rule: ""
 - Code: TIME009
-  Name: Date and time difference for Go builds
+  Name: Date and time in Go builds
   Severity: low
   Message: "Go builds have different timestamps and led to reproducibility failure."
   Diff_Support: false
@@ -189,7 +189,7 @@
   Hadolint_Severity: ""
   Hadolint_Rule: ""
 - Code: TIME010
-  Name: Date and time difference for Go binary output
+  Name: Date and time in Go binary output
   Severity: low
   Message: "Date and time difference for Go binary output led to reproducibility failure."
   Diff_Support: false
@@ -252,7 +252,7 @@
   Hadolint_Severity: ""
   Hadolint_Rule: ""
 - Code: TIME017
-  Name: ""
+  Name: python-check-time
   Severity: low
   Message: "Python last check time difference led to reproducibility failure."
   Diff_Support: false
@@ -261,7 +261,7 @@
   Hadolint_Severity: ""
   Hadolint_Rule: "" 
 - Code: TIME018
-  Name: ""
+  Name: unpacked-db-time
   Severity: low
   Message: "Time difference in unpacked db led to reproducibility failure."
   Diff_Support: false
@@ -270,7 +270,7 @@
   Hadolint_Severity: ""
   Hadolint_Rule: ""
 - Code: TIME019
-  Name: ""
+  Name: timer-setup-time
   Severity: low
   Message: "Timer setup time difference led to reproducibility failure."
   Diff_Support: false
@@ -324,7 +324,7 @@
   Hadolint_Severity: ""
   Hadolint_Rule: ""
 - Code: PLAT002
-  Name: ""
+  Name: uname-kernel-output
   Severity: low
   Message: "Utilizing output of uname -m led to reproducibility failure."
   Diff_Support: false
@@ -333,7 +333,7 @@
   Hadolint_Severity: ""
   Hadolint_Rule: ""
 - Code: PLAT003
-  Name: ""
+  Name: uname-hardware-output
   Severity: low
   Message: "Utilizing output of uname -r led to reproducibility failure."
   Diff_Support: false
@@ -366,8 +366,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
-  Hadolint_Severity: info
-  Hadolint_Rule: DL3009
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: CACHE002
   Name: dnf-cache
   Severity: low
@@ -375,8 +375,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
-  Hadolint_Severity: warning
-  Hadolint_Rule: DL3040
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: CACHE003
   Name: apk-cache
   Severity: low
@@ -384,8 +384,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
-  Hadolint_Severity: info
-  Hadolint_Rule: DL3019
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: CACHE004
   Name: yum-cache
   Severity: low
@@ -393,8 +393,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
-  Hadolint_Severity: warning
-  Hadolint_Rule: DL3032
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: CACHE005
   Name: zypper-cache
   Severity: low
@@ -402,8 +402,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
-  Hadolint_Severity: warning
-  Hadolint_Rule: DL3036
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: CACHE006
   Name: yarn-cache
   Severity: low
@@ -411,8 +411,8 @@
   Diff_Support: false
   Lint_Support: false
   Repair_Support: false
-  Hadolint_Severity: info
-  Hadolint_Rule: DL3060
+  Hadolint_Severity: ""
+  Hadolint_Rule: ""
 - Code: CACHE007
   Name: ldconfig-aux-cache
   Severity: low
