@@ -384,8 +384,8 @@ Categories:
       Severity: low
       Message: "apt cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (rm -rf /var/lib/apt/lists/*)"
       Diff_Support: false
-      Lint_Support: false
-      Repair_Support: false
+      Lint_Support: true
+      Repair_Support: true
       Hadolint_Severity: ""
       Hadolint_Rule: ""
     - Code: 2
@@ -393,8 +393,8 @@ Categories:
       Severity: low
       Message: "dnf cache files caused reproducibility failure, should be cleaned up after dnf command to avoid reproducibility failure. (dnf clean all)"
       Diff_Support: false
-      Lint_Support: false
-      Repair_Support: false
+      Lint_Support: true
+      Repair_Support: true
       Hadolint_Severity: ""
       Hadolint_Rule: ""
     - Code: 3
@@ -402,8 +402,8 @@ Categories:
       Severity: low
       Message: "apk cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add --no-cache option to apk add)"
       Diff_Support: false
-      Lint_Support: false
-      Repair_Support: false
+      Lint_Support: true
+      Repair_Support: true
       Hadolint_Severity: ""
       Hadolint_Rule: ""
     - Code: 4
@@ -411,8 +411,8 @@ Categories:
       Severity: low
       Message: "yum cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add yum clean all after yum install)"
       Diff_Support: false
-      Lint_Support: false
-      Repair_Support: false
+      Lint_Support: true
+      Repair_Support: true
       Hadolint_Severity: ""
       Hadolint_Rule: ""
     - Code: 5
@@ -420,8 +420,8 @@ Categories:
       Severity: low
       Message: "zypper cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add zypper clean after zypper install)"
       Diff_Support: false
-      Lint_Support: false
-      Repair_Support: false
+      Lint_Support: true
+      Repair_Support: true
       Hadolint_Severity: ""
       Hadolint_Rule: ""
     - Code: 6
@@ -429,8 +429,8 @@ Categories:
       Severity: low
       Message: "yarn cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add yarn cache clean after yarn install)"
       Diff_Support: false
-      Lint_Support: false
-      Repair_Support: false
+      Lint_Support: true
+      Repair_Support: true
       Hadolint_Severity: ""
       Hadolint_Rule: ""
     - Code: 7
