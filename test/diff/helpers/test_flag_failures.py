@@ -127,7 +127,6 @@ def test_flag_failures_binary_match():
     assert summary.unknown_failure_count == 0
 
 
-
 def test_flag_failures_nonbinary_match_counts(monkeypatch):
     file_diff = generate_file_diff()
     minus = DiffLine("-old", 1, 1)
