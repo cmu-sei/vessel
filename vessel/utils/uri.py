@@ -35,6 +35,7 @@ class ImageURI:
     ) -> None:
         """Initializer for ImageURI class."""
         self.container_transport = container_transport
+
         self.image_name, self.tag = parse_container_transport(
             container_transport,
         )

@@ -32,91 +32,11 @@ from typing import Any, Optional
 
 import portion  # type: ignore
 
-from vessel.utils.flag import Flag
+from vessel.diff.helpers.diffline import DiffLine
+from vessel.diff.helpers.failure import Failure
+from vessel.diff.helpers.flag import Flag
 
 logger = getLogger(__name__)
-
-
-class Diff:
-    """Class to hold all the data used when parsing a unified diff."""
-
-    def __init__(
-        self: "Diff",
-        source1: str,
-        source2: str,
-        parent_source1: str,
-        parent_source2: str,
-        comments: list,
-        raw_unified_diff: str,
-    ) -> None:
-        """Initializer for Diff class."""
-        self.source1 = source1
-        self.source2 = source2
-        self.parent_source1 = parent_source1
-        self.parent_source2 = parent_source2
-        self.unified_diff: list[str] = raw_unified_diff.splitlines()
-        self.comments: list[str] = comments
-        self.command: str = ""
-
-        self.flagged_failures: list[dict] = []
-        self.unknown_failures: list[dict] = []
-
-        self.minus_aligned_lines: list[DiffLine] = []
-        self.plus_aligned_lines: list[DiffLine] = []
-        self.minus_aligned_lines, self.plus_aligned_lines = align_diff_lines(
-            self.unified_diff,
-        )
-
-    def to_slim_dict(self: "Diff") -> dict[str, Any]:
-        """Returns diff object as a dict.
-
-        Returns a dict object only containing parts of the diff that are
-        populated. This is done to reduce the size of the output file.
-        """
-        dict_obj: dict[str, Any] = {
-            "source1": self.source1,
-            "source2": self.source2,
-        }
-        dict_obj["unified_diff_id"] = "ID not yet assigned"
-        if self.command:
-            dict_obj["command"] = self.command
-        if self.comments:
-            dict_obj["comments"] = self.comments
-        dict_obj["unified_diff"] = self.unified_diff
-        if self.flagged_failures:
-            dict_obj["flagged_failures"] = self.flagged_failures
-        if self.unknown_failures:
-            dict_obj["unknown_failures"] = self.unknown_failures
-
-        return dict_obj
-
-
-class DiffLine:
-    """Class to hold data while processing a line in a unified diff."""
-
-    def __init__(
-        self: "DiffLine",
-        text: str,
-        diff_line_number: Optional[int] = None,
-        file_line_number: Optional[int] = None,
-    ) -> None:
-        """Initializer for DiffLine class."""
-        self.text = text
-        self.diff_line_number = diff_line_number
-        self.file_line_number = file_line_number
-        # Interval object containing the range of self.text that
-        #   have not been matched by any of the flag['indiff'] regex
-        self.unmatched_intervals = portion.closed(0, len(self.text) - 1)
-
-    def __eq__(self, other: object):
-        if isinstance(other, DiffLine):
-            return (
-                self.text == other.text
-                and self.diff_line_number == other.diff_line_number
-                and self.file_line_number == self.file_line_number
-                and self.unmatched_intervals == other.unmatched_intervals
-            )
-        return False
 
 
 def equal_entry_list(
@@ -248,7 +168,12 @@ def failures_from_difflines(
     minus_line: DiffLine,
     plus_line: DiffLine,
     flag: Flag,
-) -> tuple[list, list, portion.interval.Interval, portion.interval.Interval]:
+) -> tuple[
+    list[Failure],
+    list[Failure],
+    portion.interval.Interval,
+    portion.interval.Interval,
+]:
     """Checks lines against flag indiff regex and returns matched intervals.
 
     Input is two lines and their unmatched intervals. Checks each line for
@@ -267,8 +192,8 @@ def failures_from_difflines(
     :return: List of flagged failures, list of unknown failures, updated intervals
                 in each line that haven't been matched by regex
     """
-    flagged_failures: list[dict[str, Any]] = []
-    unknown_failures: list[dict[str, Any]] = []
+    flagged_failures: list[Failure] = []
+    unknown_failures: list[Failure] = []
     minus_matched_intervals = (
         [
             match.span()
@@ -331,7 +256,7 @@ def failures_from_difflines(
 
         if minus_match_interval is None:
             unknown_failures.append(
-                make_failure_dict(
+                Failure(
                     minus_line,
                     plus_line,
                     None,
@@ -340,7 +265,7 @@ def failures_from_difflines(
             )
         elif plus_match_interval is None:
             unknown_failures.append(
-                make_failure_dict(
+                Failure(
                     minus_line,
                     plus_line,
                     minus_match_str,
@@ -349,7 +274,7 @@ def failures_from_difflines(
             )
         elif minus_match_str != plus_match_str:
             flagged_failures.append(
-                make_failure_dict(
+                Failure(
                     minus_line,
                     plus_line,
                     minus_match_str,
@@ -364,68 +289,6 @@ def failures_from_difflines(
         minus_line.unmatched_intervals,
         plus_line.unmatched_intervals,
     )
-
-
-def make_failure_dict(
-    minus_line: Optional[DiffLine] = None,
-    plus_line: Optional[DiffLine] = None,
-    minus_str: Optional[str] = None,
-    plus_str: Optional[str] = None,
-    flag: Optional[Flag] = None,
-) -> dict[str, Any]:
-    """Create failure dict object.
-
-    Used to ensure consistency in all failure objects that
-    will be written to final output file. A flag being passed
-    implies that it was a flagged failure and the flag information
-    will be embedded in the dict.
-
-    Args:
-        minus_line: Diff line object containing the minus line
-        plus_line: Diff line object containing the plus line
-        minus_str: String that was matched or unmatched in the minus line
-        plus_str: String that was matched or unmatched in the plus line
-        flag: Dict item of the flag to have id and description
-
-    Returns:
-        A failure dict item.
-    """
-    if flag:
-        return {
-            "id": flag.flag_id,
-            "description": flag.description,
-            "minus_file_line_number": minus_line.file_line_number
-            if minus_line
-            else None,
-            "plus_file_line_number": plus_line.file_line_number
-            if plus_line
-            else None,
-            "minus_diff_line_number": minus_line.diff_line_number
-            if minus_line
-            else None,
-            "plus_diff_line_number": plus_line.diff_line_number
-            if plus_line
-            else None,
-            "minus_matched_str": minus_str,
-            "plus_matched_str": plus_str,
-        }
-
-    return {
-        "minus_file_line_number": minus_line.file_line_number
-        if minus_line
-        else None,
-        "plus_file_line_number": plus_line.file_line_number
-        if plus_line
-        else None,
-        "minus_diff_line_number": minus_line.diff_line_number
-        if minus_line
-        else None,
-        "plus_diff_line_number": plus_line.diff_line_number
-        if plus_line
-        else None,
-        "minus_unmatched_str": minus_str,
-        "plus_unmatched_str": plus_str,
-    }
 
 
 def intervals_to_str(

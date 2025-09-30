@@ -23,34 +23,45 @@
 #
 # DM24-1321
 
+"""Classes to represent reproducibility failures."""
+
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, Optional
+
+from vessel.diff.helpers.diffline import DiffLine
+from vessel.diff.helpers.flag import Flag
 
 
 @dataclass
 class FailureSummary:
     """Represents a summary of failures in OCI image."""
 
-    unknown_failures: int = 0
+    unknown_failure_count: int = 0
     """Number of failures that did not match a flag."""
 
-    flagged_failures: int = 0
+    flagged_failure_count: int = 0
     """Number of failures that did match a flag."""
 
-    trivial_failures: int = 0
+    trivial_failure_count: int = 0
     """Number of failures that matched a flag with a severity of as Low."""
 
-    nontrivial_failures: int = 0
+    nontrivial_failure_count: int = 0
     """Number of failures that matched a flag with a severity different than Low."""
 
-    total_failures: int = 0
+    total_failure_count: int = 0
     """Total number of failures found."""
 
     def to_dict(self) -> dict[str, Any]:
         """Returns this as a dictionary."""
-        return asdict(self)
+        return {
+            "unknown_failures": self.unknown_failure_count,
+            "flagged_failures": self.flagged_failure_count,
+            "trivial_failures": self.trivial_failure_count,
+            "nontrivial_failures": self.nontrivial_failure_count,
+            "total_failures": self.total_failure_count,
+        }
 
     def __init__(
         self,
@@ -59,20 +70,133 @@ class FailureSummary:
         nontrivial_failure_count: int = 0,
     ):
         """Constructor, gets 3 independent values (unknown, trivial, nontrivial), aggregates the rest."""
-        self.unknown_failures = unknown_failure_count
-        self.trivial_failures = trivial_failure_count
-        self.nontrivial_failures = nontrivial_failure_count
+        self.unknown_failure_count = unknown_failure_count
+        self.trivial_failure_count = trivial_failure_count
+        self.nontrivial_failure_count = nontrivial_failure_count
 
         # Calculate the aggregated values as well.
         self.calculate_aggregated_values()
 
     def calculate_aggregated_values(self) -> None:
         """Calculates and sets the aggregated values from the three basic ones."""
-        self.flagged_failures = (
-            self.trivial_failures + self.nontrivial_failures
+        self.flagged_failure_count = (
+            self.trivial_failure_count + self.nontrivial_failure_count
         )
-        self.total_failures = (
-            self.unknown_failures
-            + self.trivial_failures
-            + self.nontrivial_failures
+        self.total_failure_count = (
+            self.unknown_failure_count
+            + self.trivial_failure_count
+            + self.nontrivial_failure_count
         )
+
+
+class Failure:
+    """Represents a reproduciblity failure."""
+
+    def __init__(
+        self: "Failure",
+        minus_line: Optional[DiffLine] = None,
+        plus_line: Optional[DiffLine] = None,
+        minus_str: Optional[str] = None,
+        plus_str: Optional[str] = None,
+        flag: Optional[Flag] = None,
+        binary: Optional[bool] = None,
+    ) -> None:
+        """Construtor."""
+        self.minus_line = minus_line
+        self.plus_line = plus_line
+        self.minus_str = minus_str
+        self.plus_str = plus_str
+        self.flag = flag
+        self.binary = binary
+
+    def __eq__(self, other: object):
+        if isinstance(other, Failure):
+            return (
+                self.minus_line == other.minus_line
+                and self.plus_line == other.plus_line
+                and self.minus_str == other.minus_str
+                and self.plus_str == other.plus_str
+                and self.flag == other.flag
+                and self.binary == other.binary
+            )
+        return False
+
+    def to_dict(self) -> dict[str, Any]:
+        """Returns this failure as a dictionary.
+
+        A flag being passed implies that it was a flagged failure and the flag information
+        will be embedded in the dict.
+
+        Args:
+            minus_line: Diff line object containing the minus line
+            plus_line: Diff line object containing the plus line
+            minus_str: String that was matched or unmatched in the minus line
+            plus_str: String that was matched or unmatched in the plus line
+            flag: Dict item of the flag to have id and description
+
+        Returns:
+            A failure dict item.
+        """
+        # Handle binary elements
+        if self.binary:
+            if self.flag:
+                return {
+                    "id": self.flag.flag_id,
+                    "description": self.flag.description,
+                    "metadata": self.flag.metadata,
+                    "severity": self.flag.severity,
+                    "comments": [
+                        "Flag indiff regex are not ran on binary "
+                        "unified diff. However this matched all "
+                        "of the other criteria for this flag.",
+                    ],
+                }
+            else:
+                return {
+                    "comments": [
+                        "Flag indiff regex are not ran on binary "
+                        "unified diff. This file did not match any "
+                        "flags."
+                    ]
+                }
+
+        # Handle nonbinary flagged
+        elif self.flag:
+            return {
+                "id": self.flag.flag_id,
+                "description": self.flag.description,
+                "metadata": self.flag.metadata,
+                "severity": self.flag.severity,
+                "minus_file_line_number": self.minus_line.file_line_number
+                if self.minus_line
+                else None,
+                "plus_file_line_number": self.plus_line.file_line_number
+                if self.plus_line
+                else None,
+                "minus_diff_line_number": self.minus_line.diff_line_number
+                if self.minus_line
+                else None,
+                "plus_diff_line_number": self.plus_line.diff_line_number
+                if self.plus_line
+                else None,
+                "minus_matched_str": self.minus_str,
+                "plus_matched_str": self.plus_str,
+            }
+
+        # Handle nonbinary unknown
+        return {
+            "minus_file_line_number": self.minus_line.file_line_number
+            if self.minus_line
+            else None,
+            "plus_file_line_number": self.plus_line.file_line_number
+            if self.plus_line
+            else None,
+            "minus_diff_line_number": self.minus_line.diff_line_number
+            if self.minus_line
+            else None,
+            "plus_diff_line_number": self.plus_line.diff_line_number
+            if self.plus_line
+            else None,
+            "minus_unmatched_str": self.minus_str,
+            "plus_unmatched_str": self.plus_str,
+        }
