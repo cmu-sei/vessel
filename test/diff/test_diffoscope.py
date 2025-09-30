@@ -29,10 +29,12 @@ import pytest
 
 from test.fixture import make_test_file_diff
 from vessel.diff.helpers.diffoscope import (
+    DiffoscopeParser,
     build_diff_lookup,
     build_diffoscope_command,
 )
-from vessel.diff.helpers.file_diff import FileDiffs
+from vessel.diff.helpers.failure import FailureSummary
+from vessel.diff.helpers.file_diff import FileDiff, FileDiffs
 
 
 def test_build_diffoscope_command():
@@ -152,3 +154,144 @@ def test_build_diff_lookup(test_input, expected):
     """Test build_diff_lookup."""
     output = build_diff_lookup(test_input)
     assert output == expected
+
+
+def generate_detail():
+    """Helper to generate a diffoscope dict with valid unified diff"""
+    unified_diff = "\n".join(
+        [
+            "@@ -1,8 +1,8 @@",
+            " ",
+            "   Size: 4096      \tBlocks: 8          IO Block: 4096   directory",
+            " Device: 0,320\tLinks: 49",
+            " Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)",
+            " ",
+            "+Modify: 2025-08-08 17:43:33.000000000 +0000",
+            "-Modify: 2025-08-08 22:07:31.000000000 +0000",
+            " ",
+        ]
+    )
+    return {
+        "source1": "/tmp/tmpesh6umrr/umoci-unpack-output_2025-08-08_15-26-31.tar.latest/rootfs/usr/bin",
+        "source2": "/tmp/tmpesh6umrr/umoci-unpack-output_2025-08-08_11-01-49.tar.latest/rootfs/usr/bin",
+        "unified_diff": unified_diff,
+        "comments": ["Similarity: 0.90625%"],
+        "command": "stat {}",
+    }
+
+
+def test_parser_initialize_with_empty_json():
+    empty_json = {"unified_diff": None, "details": []}
+    parser = DiffoscopeParser(empty_json, flags=[])
+    assert isinstance(parser.failure_summary, FailureSummary)
+    assert parser.failure_summary.unknown_failure_count == 0
+    assert parser.failure_summary.trivial_failure_count == 0
+    assert parser.failure_summary.nontrivial_failure_count == 0
+    assert isinstance(parser.diff_list, FileDiffs)
+    assert len(parser.diff_list.diffs) == 0
+
+
+def test_parse_detail_adds_file_diff():
+    empty_json = {"unified_diff": None, "details": []}
+    parser = DiffoscopeParser(empty_json, flags=[])
+    detail = generate_detail()
+    parser._parse_detail(detail)
+    assert len(parser.diff_list.diffs) == 1
+    file_diff = parser.diff_list.diffs[0]
+    assert isinstance(file_diff, FileDiff)
+    assert "usr/bin" in file_diff.source1
+    assert "usr/bin" in file_diff.source2
+    assert any("Modify:" in line for line in file_diff.unified_diff)
+    assert "Similarity: 0.90625%" in file_diff.comments
+
+
+def test_recurse_invoke_parse_detail(monkeypatch):
+    """
+    Here we want to check _recurse actually calls _parse_detail when provided a diff
+    But we just want to test the flow, we utilize monkeypatch and a spy function to
+    make sure the _parse_detail was called
+    """
+    called = {}
+
+    def record_call(detail, *args, **kwargs):
+        called["seen"] = detail
+
+    empty_json = {"unified_diff": None, "details": []}
+    parser = DiffoscopeParser(empty_json, flags=[])
+    monkeypatch.setattr(parser, "_parse_detail", record_call)
+    parser._recurse(generate_detail())
+    assert "seen" in called
+
+
+def test_recurse_visits_children(monkeypatch):
+    """
+    Same as above, goes into children nodes and parse each one
+    Make sure all the sources are visited
+    """
+    visited = []
+
+    def record_parse_detail(detail, *args, **kwargs):
+        visited.append(detail["source1"])
+
+    empty_json = {"unified_diff": None, "details": []}
+    parser = DiffoscopeParser(empty_json, flags=[])
+    monkeypatch.setattr(parser, "_parse_detail", record_parse_detail)
+
+    parent = {
+        "source1": "/tmp/tmpesh6umrr/umoci-unpack-output_2025-08-08_15-26-31.tar.latest/rootfs/usr/lib",
+        "source2": "/tmp/tmpesh6umrr/umoci-unpack-output_2025-08-08_11-01-49.tar.latest/rootfs/usr/lib",
+        "unified_diff": None,
+        "details": [
+            {
+                "source1": "/tmp/tmpesh6umrr/umoci-unpack-output_2025-08-08_15-26-31.tar.latest/rootfs/usr/lib/.build-id/1a",
+                "source2": "/tmp/tmpesh6umrr/umoci-unpack-output_2025-08-08_11-01-49.tar.latest/rootfs/usr/lib/.build-id/1a",
+                "unified_diff": "\n".join(
+                    [
+                        "@@ -1,8 +1,8 @@",
+                        " ",
+                        "   Size: 4096      \tBlocks: 8          IO Block: 4096   directory",
+                        " Device: 0,320\tLinks: 49",
+                        " Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)",
+                        " ",
+                        "+Modify: 2025-08-08 19:26:39.000000000 +0000",
+                        "-Modify: 2025-08-08 15:02:20.000000000 +0000",
+                        " ",
+                    ]
+                ),
+                "command": "stat {}",
+                "comments": ["Similarity: 0.90625%"],
+            },
+            {
+                "source1": "/tmp/tmpesh6umrr/umoci-unpack-output_2025-08-08_15-26-31.tar.latest/rootfs/usr/lib/.build-id/83",
+                "source2": "/tmp/tmpesh6umrr/umoci-unpack-output_2025-08-08_11-01-49.tar.latest/rootfs/usr/lib/.build-id/83",
+                "unified_diff": "\n".join(
+                    [
+                        "@@ -1,8 +1,8 @@",
+                        " ",
+                        "   Size: 4096      \tBlocks: 8          IO Block: 4096   directory",
+                        " Device: 0,320\tLinks: 49",
+                        " Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)",
+                        " ",
+                        "+Modify: 2025-08-08 19:26:38.000000000 +0000",
+                        "-Modify: 2025-08-08 15:02:20.000000000 +0000",
+                        " ",
+                    ]
+                ),
+                "command": "stat {}",
+                "comments": ["Similarity: 0.90625%"],
+            },
+        ],
+    }
+
+    parser._recurse(parent)
+
+    assert any(
+        "/tmp/tmpesh6umrr/umoci-unpack-output_2025-08-08_15-26-31.tar.latest/rootfs/usr/lib/.build-id/1a"
+        in path
+        for path in visited
+    )
+    assert any(
+        "/tmp/tmpesh6umrr/umoci-unpack-output_2025-08-08_15-26-31.tar.latest/rootfs/usr/lib/.build-id/83"
+        in path
+        for path in visited
+    )

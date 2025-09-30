@@ -22,10 +22,12 @@
 # each subject to its own license.
 #
 # DM24-1321
+
 """Tests for FileDiff classes."""
 
 import pytest
 
+from vessel.diff.helpers.failure import Failure
 from vessel.diff.helpers.file_diff import FileDiff
 
 # -----------------------------------------------------------------------------
@@ -57,3 +59,24 @@ def test_file_diff_to_dict(test_input, expected):
     dict = test_input.to_dict()
 
     assert dict == expected
+
+
+def test_file_diff_to_dict_with_optional_args():
+    """
+    Ensures optional args like command, flagged_failures, unknown_failures,
+    are set correctly
+    """
+    diff = FileDiff("a", "b", ["c"], "@@ -1,1 +1,1 @@\n-old\n+new\n")
+    diff.unified_diff_id = 111
+    diff.command = "stat {}"
+    failure = Failure(binary=True)
+    diff.flagged_failures.append(failure)
+    diff.unknown_failures.append(failure)
+    result = diff.to_dict()
+    assert result["unified_diff_id"] == 111
+    assert result["command"] == "stat {}"
+    assert "comments" in result
+    assert "comments" in result["flagged_failures"][0]
+    assert "comments" in result["unknown_failures"][0]
+    assert "flagged_failures" in result
+    assert "unknown_failures" in result
