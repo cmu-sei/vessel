@@ -1,0 +1,583 @@
+Rule_Columns:
+  - Code
+  - Name
+  - Severity
+  - Message
+  - Diff?
+  - Lint?
+  - Repair?
+Categories:
+  - Category: EXT
+    Rules:
+    - Code: 1
+      Name: add-without-checksum
+      Severity: low
+      Message: "Failure caused by ADD instruction. When using Dockerfile ADD instruction, you should always specify --checksum parameter to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 2
+      Name: curl-wget-remote
+      Severity: low
+      Message: "Failure caused by ADD instruction. When using Dockerfile ADD instruction, you should always specify --checksum parameter to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 3
+      Name: git-clone
+      Severity: low
+      Message: "Failure caused by ADD instruction. You should use ADD, instead of git clone to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+  - Category: VER
+    Rules:
+    - Code: 1
+      Name: dockerfile-from-tag
+      Severity: low
+      Message: "Failure caused by FROM instruction. When using Dockerfile FROM instruction, you should always use the @sha256 digest of an image explicitly to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: true
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 3
+      Name: apt-install-version-pinning
+      Severity: low
+      Message: "Failure caused by apt-get install. When doing apt-get install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: false
+      Hadolint_Severity: warning
+      Hadolint_Rule: DL3008
+    - Code: 4
+      Name: dnf-install-version-pinning
+      Severity: low
+      Message: "Failure caused by dnf install. When doing dnf install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: false
+      Hadolint_Severity: warning
+      Hadolint_Rule: DL3041
+    - Code: 5
+      Name: pip-install-version-pinning
+      Severity: low
+      Message: "Failure caused by pip install. When doing pip install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: false
+      Hadolint_Severity: warning
+      Hadolint_Rule: DL3013
+    - Code: 6
+      Name: npm-install-version-pinning
+      Severity: low
+      Message: "Failure caused by npm install. When doing npm install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: false
+      Hadolint_Severity: warning
+      Hadolint_Rule: DL3016
+    - Code: 7
+      Name: apk-add-version-pinning
+      Severity: low
+      Message: "Failure caused by apk add. When doing apk add in Dockerfile, you should always pin the package version to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: false
+      Hadolint_Severity: warning
+      Hadolint_Rule: DL3018
+    - Code: 8
+      Name: gem-install-version-pinning
+      Severity: low
+      Message: "Failure caused by gem install. When doing gem install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: false
+      Hadolint_Severity: warning
+      Hadolint_Rule: DL3028
+    - Code: 9
+      Name: yum-install-version-pinning
+      Severity: low
+      Message: "Failure caused by yum install. When doing yum install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: false
+      Hadolint_Severity: warning
+      Hadolint_Rule: DL3033
+    - Code: 10
+      Name: zypper-install-version-pinning
+      Severity: low
+      Message: "Failure caused by zypper install. When doing zypper install in Dockerfile, you should always pin the package version to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: false
+      Hadolint_Severity: warning
+      Hadolint_Rule: DL3037
+  - Category: TIME
+    Rules:
+    - Code: 1
+      Name: Utilizing output of date command to files
+      Severity: low
+      Message: "Ouput of date command was used by files, which led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 2
+      Name: Container build without pinning date/time
+      Severity: low
+      Message: "Container build without pinning date/time. e.g. SOURCE_DATE_EPOCH, which led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 3
+      Name: Java builds include current date/time
+      Severity: low
+      Message: "Java builds include current date/time which led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 4
+      Name: Git clone time
+      Severity: low
+      Message: "Timestamp difference in git clone caused reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 5
+      Name: Timestamp of files in zip
+      Severity: low
+      Message: "Timestamp of files in zip file caused reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 6
+      Name: Time in npm update check
+      Severity: low
+      Message: "npm update check produced different timestamp which led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 7
+      Name: File listing time
+      Severity: low
+      Message: "File listing showed different timestamp which led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 8
+      Name: Logging time difference
+      Severity: low
+      Message: "Logging time difference led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 9
+      Name: Date and time in Go builds
+      Severity: low
+      Message: "Go builds have different timestamps and led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 10
+      Name: Date and time in Go binary output
+      Severity: low
+      Message: "Date and time difference for Go binary output led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 11
+      Name: Modified time in git index file
+      Severity: low
+      Message: "Modified time difference in git index file led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 12
+      Name: Modified file time
+      Severity: low
+      Message: "Modified file time difference led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 13
+      Name: Created time in git index file
+      Severity: low
+      Message: "Created time difference in git index file led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 14
+      Name: Keybox created time diff
+      Severity: low
+      Message: "Created time difference in keybox file caused reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 15
+      Name: Keybox last maintained time diff
+      Severity: low
+      Message: "Last maintained time difference in keybox file caused reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 16
+      Name: pyc-moddate
+      Severity: low
+      Message: "Python bytecode moddate differences led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 17
+      Name: python-check-time
+      Severity: low
+      Message: "Python last check time difference led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: "" 
+    - Code: 18
+      Name: unpacked-db-time
+      Severity: low
+      Message: "Time difference in unpacked db led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 19
+      Name: timer-setup-time
+      Severity: low
+      Message: "Timer setup time difference led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 20
+      Name: gcloud-last-update-check
+      Severity: low
+      Message: "Timestamp of gcloud last_update_check caused reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 20
+      Name: gcloud-last-survey-prompt
+      Severity: low
+      Message: "Timestamp of gcloud last_survey_prompt led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+  - Category: REC
+    Rules:
+    - Code: 1
+      Name: apt-recommended-deps
+      Severity: low
+      Message: "apt-get install without --no-install-recommended installed unnecessary packages and led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: info
+      Hadolint_Rule: DL3015
+    - Code: 2
+      Name: dnf-recommended-deps
+      Severity: low
+      Message: "dnf install without disabling recommended dependencies installed unnecessary packages and led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+  - Category: PLAT
+    Rules:
+    - Code: 1
+      Name: platform-pinning
+      Severity: low
+      Message: "Docker build without pinning platform led to reproducibility issues."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 2
+      Name: uname-kernel-output
+      Severity: low
+      Message: "Utilizing output of uname -m led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 3
+      Name: uname-hardware-output
+      Severity: low
+      Message: "Utilizing output of uname -r led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 4
+      Name: git-index-device
+      Severity: low
+      Message: "Device difference in git index file led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 5
+      Name: platform-vars
+      Severity: low
+      Message: "Build using platform-specific variables led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+  - Category: CACHE
+    Rules:
+    - Code: 1
+      Name: apt-cache
+      Severity: low
+      Message: "apt cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (rm -rf /var/lib/apt/lists/*)"
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: true
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 2
+      Name: dnf-cache
+      Severity: low
+      Message: "dnf cache files caused reproducibility failure, should be cleaned up after dnf command to avoid reproducibility failure. (dnf clean all)"
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: true
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 3
+      Name: apk-cache
+      Severity: low
+      Message: "apk cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add --no-cache option to apk add)"
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: true
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 4
+      Name: yum-cache
+      Severity: low
+      Message: "yum cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add yum clean all after yum install)"
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: true
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 5
+      Name: zypper-cache
+      Severity: low
+      Message: "zypper cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add zypper clean after zypper install)"
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: true
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 6
+      Name: yarn-cache
+      Severity: low
+      Message: "yarn cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure. (add yarn cache clean after yarn install)"
+      Diff_Support: false
+      Lint_Support: true
+      Repair_Support: true
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 7
+      Name: ldconfig-aux-cache
+      Severity: low
+      Message: "ldconfig auxiliary cache caused reproducibility failure, should be cleaned up to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 8
+      Name: go-build-cache
+      Severity: low
+      Message: "Go build cache caused reproducibility failure, should be cleaned up to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 9
+      Name: go-mod-download-cache
+      Severity: low
+      Message: "Go mod download cache caused reproducibility failure, should be cleaned up to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 10
+      Name: pip-cache
+      Severity: low
+      Message: "pip cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 11
+      Name: pyc-cache
+      Severity: low
+      Message: "Python pyc cache files caused reproducibility failure, should be cleaned up to avoid reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+  - Category: RAND
+    Rules:
+    - Code: 1
+      Name: gcc-random-seed
+      Severity: low
+      Message: "GCC compilation to object files with link time optimization enabled to without setting the -frandom-seed flag -- which led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 2
+      Name: git-inode
+      Severity: low
+      Message: "Inode difference in Git index file led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 3
+      Name: sqlite-transaction-id
+      Severity: low
+      Message: "Difference in sqlite transaction ids led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 4
+      Name: uuid-fontconfig
+      Severity: low
+      Message: "uuid diferences in fontconfig cache filenames led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 5
+      Name: etc-shadow
+      Severity: low
+      Message: "/etc/shadow last password change difference led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 6
+      Name: cert-gen
+      Severity: low
+      Message: "Generated certificate differences led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 7
+      Name: configure-tmp
+      Severity: low
+      Message: "Configure log contains random temporary file names led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+  - Category: ENV
+    Rules:
+    - Code: 1
+      Name: print-env
+      Severity: low
+      Message: "Print environment variables to files led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 2
+      Name: env-unused
+      Severity: low
+      Message: "Set environment variable to different values but never use them led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 3
+      Name: system-locale
+      Severity: low
+      Message: "System locale impacting ordering of file list in tar archive led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""
+    - Code: 4
+      Name: different-build-args
+      Severity: low
+      Message: "Different build arguments led to reproducibility failure."
+      Diff_Support: false
+      Lint_Support: false
+      Repair_Support: false
+      Hadolint_Severity: ""
+      Hadolint_Rule: ""

@@ -1,0 +1,56 @@
+<table class="model-table">
+    <thead>
+        <tr>
+            {% for col in site.data.rep_model.Rule_Columns -%}
+                <th>{{ col | capitalize -}}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in include.rules %}
+            <tr>
+                <td>
+                    {% assign code_num = row.Code | prepend: '000' | slice: -3, 3 %}
+                    {% assign code = include.category | append: code_num %}
+                    {{ code }}
+                </td>
+                <td>
+                    {{ row.Name }}
+                </td>
+                <td> 
+                    {{ row.Severity }}
+                </td>
+                <td>
+                    {{ row.Message }}
+                    {% if row.Hadolint_Rule != "" -%}
+                        <details>
+                            <summary><i class="fa-solid fa-bolt" title="Hadolint"></i></summary>
+                            Rule: {{ row.Hadolint_Rule }} / Severity: {{ row.Hadolint_Severity | capitalize }}
+                        </details>
+                    {% endif -%}
+                </td>
+                <td>
+                    {% if row.Diff_Support == false -%}
+                        &#10060;
+                    {% else -%}
+                        &#9989;
+                    {% endif %}
+                </td>
+                <td>
+                    {% if row.Lint_Support == false -%}
+                        &#10060;
+                    {% else -%}
+                        &#9989;
+                    {% endif %}
+                </td>
+                <td>
+                    {% if row.Repair_Support == false -%}
+                        &#10060;
+                    {% else -%}
+                        &#9989;
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor -%}
+    </tbody>
+</table>

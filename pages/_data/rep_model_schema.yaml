@@ -1,0 +1,73 @@
+$schema: http://json-schema.org/draft-07/schema#
+title: Reproducibly Model
+description: |
+  A yaml representation of VESSEL's Container Reproducibly Model
+version: v2
+type: object
+properites:
+  Rule_Columns:
+    type: array
+    Description: |
+      Should match the rule categories, used to render the table
+    items:
+      type: string
+      minLength: 1
+  Categories:
+    type: array
+    items:
+      type: object
+      required: [Category, Rules]
+      properties:
+        Category:
+          type: string
+          enum: [EXT, VER, TIME, REC, PLAT, CACHE, RAND, ENV]
+        Rules:
+          type: array
+          items:
+        $ref: '#/definitions/rule'
+definitions:
+  rule:
+    type: object
+    properties:
+      Code:
+        type: integer
+        description: "VESSEL Rule Number"
+      Name:
+        type: string
+        description: "Human-readable name of the rule."
+      Severity:
+        type: string
+        enum: [low, medium, high]  
+        description: "General severity level."
+      Message:
+        type: string
+        description: "Short description or message that explains the issue."
+      Diff_Support:
+        type: boolean
+        description: |
+          Indicates whether a diff-based tool can highlight the exact location
+          of the problem in source code.
+      Lint_Support:
+        type: boolean
+        description: |
+          Indicates whether a linter can detect this rule automatically.
+      Repair_Support:
+        type: boolean
+        description: |
+          Indicates whether an automated repair tool can fix this issue.
+      Hadolint_Severity:
+        type: string
+        description: "Severity as reported by Hadolint (optional)."
+      Hadolint_Rule:
+        type: string
+        description: "Hadolint rule identifier (optional)."
+    required:
+      - Code
+      - Name
+      - Severity
+      - Message
+      - Diff_Support
+      - Lint_Support
+      - Repair_Support
+      - Hadolint_Severity
+      - Hadolint_Rule

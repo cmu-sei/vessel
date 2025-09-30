@@ -175,6 +175,13 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 
+# Jekyll/Local GitHub Pages testing
+pages/.jekyll-cache
+pages/_site
+
 output/
+.vscode/
+
 input/
 .python-version
+
